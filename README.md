@@ -4,11 +4,6 @@ Here are my custom components for Sinopé thermostats in Home Assistant. (http:/
 
 ## Installation
 Copy the sinope.py component to your custom component climate directory.
-Example: 
-```
-cd /home/homeassistant/.homeassistant/custom_components/climate/
-wget https://raw.githubusercontent.com/lrogoff/sinope/master/custom_components/climate/sinope.py
-```
 
 Configure it then restart HA.
 
@@ -19,6 +14,16 @@ To enable your Sinopé thermostats management in your installation, add the foll
 ```yaml
 # Example configuration.yaml entry
 climate:
+  - platform: sinope
+    username: '<your e-mail-adress>'
+    password: '<your Neviweb password>'
+    gateway: '<your gateway name>'
+```
+
+To enable your Sinopé thermostats lights/dimmers in your installation, add the following to your `configuration.yaml` file:
+```yaml
+# Example configuration.yaml entry
+light:
   - platform: sinope
     username: '<your e-mail-adress>'
     password: '<your Neviweb password>'

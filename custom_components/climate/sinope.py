@@ -12,7 +12,7 @@ import json
 import re
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.climate import (ClimateDevice, PLATFORM_SCHEMA, STATE_HEAT, STATE_IDLE, ATTR_TEMPERATURE, ATTR_AWAY_MODE, SUPPORT_TARGET_TEMPERATURE)
+from homeassistant.components.climate import (ClimateDevice, PLATFORM_SCHEMA, STATE_HEAT, STATE_IDLE, ATTR_TEMPERATURE, ATTR_AWAY_MODE, ATTR_OPERATION_MODE, SUPPORT_TARGET_TEMPERATURE)
 from homeassistant.const import (CONF_USERNAME, CONF_PASSWORD, CONF_NAME, TEMP_CELSIUS)
 
 _LOGGER = logging.getLogger(__name__)
@@ -61,7 +61,8 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
 
     devices = []
     for id, device in sinope_data.data.items():
-        devices.append(SinopeThermostat(sinope_data, id, '{} {}'.format(name, device["info"]["name"])))
+        if device["info"]["type"] == 10:
+            devices.append(SinopeThermostat(sinope_data, id, '{} {}'.format(name, device["info"]["name"])))
 
     add_devices(devices, True)
 
@@ -177,7 +178,7 @@ class SinopeClient(object):
         self._gateway_data = {}
         self._cookies = None
         self._timeout = timeout
-		
+        
         self._post_login_page()
         self._get_data_gateway()
 
