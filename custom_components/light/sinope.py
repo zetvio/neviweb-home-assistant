@@ -19,7 +19,7 @@ _LOGGER = logging.getLogger(__name__)
 
 SUPPORT_FLAGS = (SUPPORT_BRIGHTNESS)
 
-DEFAULT_NAME = 'Sinope'
+DEFAULT_NAME = 'Sinope Dimmer'
 
 REQUESTS_TIMEOUT = 15
 
@@ -35,6 +35,14 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string
 })
 
+def brightness_to_percentage(byt):
+    """Convert brightness from absolute 0..255 to percentage."""
+    return int((byt*100.0)/255.0)
+
+
+def brightness_from_percentage(percent):
+    """Convert percentage to absolute value 0..255."""
+    return (percent*255.0)/100.0
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
     """Set up the Sinope sensor."""
@@ -54,11 +62,11 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     devices = []
     for id, device in sinope_data.data.items():
         if device["info"]["type"] == 112:
-            devices.append(SinopeLight(sinope_data, id, '{} {}'.format(name, device["info"]["name"])))
+            devices.append(SinopeDimmer(sinope_data, id, '{} {}'.format(name, device["info"]["name"])))
 
     add_devices(devices, True)
 
-class SinopeLight(Light):
+class SinopeDimmer(Light):
     """Implementation of a Sinope Device."""
 
     def __init__(self, sinope_data, device_id, name):
@@ -68,23 +76,10 @@ class SinopeLight(Light):
         self.device_id = device_id
         self.sinope_data = sinope_data
 
-        self._old_brightness = None
-        # self._target_temp  = None
-        # self._cur_temp = None
-        # self._brightness  = float(self.sinope_data.data[self.device_id]["info"]["tempMin"])
-        # self._max_temp  = float(self.sinope_data.data[self.device_id]["info"]["tempMax"])
-        # self._mode = None
-        # self._state = None
-        # self._away = False
-
     def update(self):
         """Get the latest data from Sinope and update the state."""
         self.sinope_data.update()
-        # self._target_temp  = float(self.sinope_data.data[self.device_id]["data"]["setpoint"])
-        self._brightness  = float(self.sinope_data.data[self.device_id]["data"]["intensity"])
-        # self._cur_temp =  float(self.sinope_data.data[self.device_id]["data"]["temperature"])
-        # self._mode = float(self.sinope_data.data[self.device_id]["data"]["mode"])
-        # self._state = float(self.sinope_data.data[self.device_id]["data"]["heatLevel"])
+        self._brightness  = brightness_from_percentage(float(self.sinope_data.data[self.device_id]["data"]["intensity"]))
 
     @property
     def supported_features(self):
@@ -107,7 +102,11 @@ class SinopeLight(Light):
 
     def turn_on(self, **kwargs):
         """Turn the light on."""
-        brightness = int(kwargs.get(ATTR_BRIGHTNESS, 50))
+        if kwargs.get(ATTR_BRIGHTNESS):
+            brightness = brightness_to_percentage(int(kwargs.get(ATTR_BRIGHTNESS)))
+        else:
+            """Brightness of 101 sets the light to last known brightness"""
+            brightness = 101;
         self.client.set_brightness(self.device_id, brightness)
 
     def turn_off(self, **kwargs):
@@ -115,48 +114,7 @@ class SinopeLight(Light):
         brightness = self._brightness
         if brightness is None or brightness == 0:
             return
-        self._old_brightness = kwargs.get(ATTR_BRIGHTNESS)
         self.client.set_brightness(self.device_id, 0)
-
-    # @property
-    # def temperature_unit(self):
-    #     """Return the unit of measurement."""
-    #     return TEMP_CELSIUS
-
-    # @property
-    # def target_temperature (self):
-    #     """Return the temperature we try to reach."""
-    #     return self._target_temp
-
-    # def set_temperature(self, **kwargs):
-    #     """Set new target temperature."""
-    #     temperature = kwargs.get(ATTR_TEMPERATURE)
-    #     if temperature is None:
-    #         return
-    #     self.client.set_temperature_device(self.device_id, temperature)
-    #     self._target_temp = temperature
-
-    # @property
-    # def current_temperature(self):
-    #     """Return the current temperature."""
-    #     return self._cur_temp
-
-    # @property
-    # def min_temp(self):
-    #     """Return the min temperature."""
-    #     return self._min_temp
-
-    # @property
-    # def max_temp(self):
-    #     """Return the max temperature."""
-    #     return self._max_temp
-
-    # @property
-    # def current_operation(self):
-    #     """Return current operation i.e. heat, cool, idle."""
-    #     if self._state:
-    #         return STATE_HEAT
-    #     return STATE_IDLE
 
     def mode(self):
         return self._mode
