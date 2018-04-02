@@ -21,7 +21,7 @@ SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE)
 
 DEFAULT_NAME = 'Sinope'
 
-REQUESTS_TIMEOUT = 15
+REQUESTS_TIMEOUT = 20
 
 HOST = "https://neviweb.com"
 LOGIN_URL = "{}/api/login".format(HOST)
@@ -212,7 +212,7 @@ class SinopeClient(object):
                     break
             raw_res = requests.get(GATEWAY_DEVICE_URL + str(self.gateway_id), headers=self._headers, cookies=self._cookies, timeout=self._timeout)
         except OSError:
-            raise PySinopeError("Can not get page")
+            raise PySinopeError("Can not get page data_gateway")
         # Update cookies
         self._cookies.update(raw_res.cookies)
         # Prepare data
@@ -226,7 +226,7 @@ class SinopeClient(object):
         try:
             raw_res = requests.get(DEVICE_DATA_URL + str(device) + "/data", headers=self._headers, cookies=self._cookies, timeout=self._timeout)
         except OSError:
-            raise PySinopeError("Can not get page")
+            raise PySinopeError("Can not get page data_device")
         # Update cookies
         self._cookies.update(raw_res.cookies)
         # Prepare data
