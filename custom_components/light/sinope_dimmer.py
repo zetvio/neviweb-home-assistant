@@ -20,7 +20,7 @@ SUPPORT_FLAGS = (SUPPORT_BRIGHTNESS)
 
 DEFAULT_NAME = 'Sinope dimmer'
 
-REQUESTS_TIMEOUT = 15
+REQUESTS_TIMEOUT = 20
 
 HOST = "https://neviweb.com"
 LOGIN_URL = "{}/api/login".format(HOST)
