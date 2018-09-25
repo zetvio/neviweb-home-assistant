@@ -16,12 +16,15 @@ import re
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.switch import (SwitchDevice, PLATFORM_SCHEMA)
 from homeassistant.const import (CONF_USERNAME, CONF_PASSWORD, CONF_NAME)
+from datetime import timedelta
+from homeassistant.helpers.event import track_time_interval
 
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME = 'Sinope switch'
 
-REQUESTS_TIMEOUT = 20
+REQUESTS_TIMEOUT = 30
+SCAN_INTERVAL = timedelta(seconds=900)
 
 HOST = "https://neviweb.com"
 LOGIN_URL = "{}/api/login".format(HOST)
