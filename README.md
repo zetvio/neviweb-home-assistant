@@ -28,6 +28,7 @@ light:
     username: '<your e-mail-adress>'
     password: '<your Neviweb password>'
     gateway: '<your gateway name>'
+    scan_interval: 900 #to limit access to neviwed every 15 minutes
 ```
 
 Configuration variables:
