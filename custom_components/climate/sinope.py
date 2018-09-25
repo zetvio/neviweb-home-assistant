@@ -14,6 +14,8 @@ import re
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.climate import (ClimateDevice, PLATFORM_SCHEMA, STATE_HEAT, STATE_IDLE, ATTR_TEMPERATURE, ATTR_AWAY_MODE, ATTR_OPERATION_MODE, SUPPORT_TARGET_TEMPERATURE)
 from homeassistant.const import (CONF_USERNAME, CONF_PASSWORD, CONF_NAME, TEMP_CELSIUS)
+from datetime import timedelta
+from homeassistant.helpers.event import track_time_interval
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,7 +23,8 @@ SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE)
 
 DEFAULT_NAME = 'Sinope'
 
-REQUESTS_TIMEOUT = 20
+REQUESTS_TIMEOUT = 30
+SCAN_INTERVAL = timedelta(seconds=900)
 
 HOST = "https://neviweb.com"
 LOGIN_URL = "{}/api/login".format(HOST)
@@ -50,14 +53,6 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
         return False
 
     name = config.get(CONF_NAME)
-    
-    # for device in data:
-        # print("Room: {}".format(device["name"]))
-        # print("Id: {}".format(device["id"]))
-        # print("Wattage: {}".format(device["wattage"]))
-        # print("Set Point: {}".format(device["info"]["setpoint"]))
-        # print("Temperature: {}".format(device["info"]["temperature"]))
-        # print("\n")
 
     devices = []
     for id, device in sinope_data.data.items():
