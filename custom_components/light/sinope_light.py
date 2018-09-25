@@ -15,6 +15,8 @@ import re
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.light import (Light, PLATFORM_SCHEMA, ATTR_BRIGHTNESS, SUPPORT_BRIGHTNESS)
 from homeassistant.const import (CONF_USERNAME, CONF_PASSWORD, CONF_NAME)
+from datetime import timedelta
+from homeassistant.helpers.event import track_time_interval
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -22,7 +24,8 @@ SUPPORT_FLAGS = (SUPPORT_BRIGHTNESS)
 
 DEFAULT_NAME = 'Sinope light'
 
-REQUESTS_TIMEOUT = 20
+REQUESTS_TIMEOUT = 30
+SCAN_INTERVAL = timedelta(seconds=900)
 
 HOST = "https://neviweb.com"
 LOGIN_URL = "{}/api/login".format(HOST)
