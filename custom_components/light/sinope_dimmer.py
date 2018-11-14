@@ -1,6 +1,8 @@
 """
-Support for Sinope.
-For more details about this platform, please refer to the documentation at
+Support for Sinope light.
+type 102 = light switch
+type 112 = light dimmer
+For more details about this platform, please refer to the documentation at  https://www.sinopetech.com/en/support/#api
 """
 import logging
 from datetime import timedelta
