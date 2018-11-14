@@ -1,7 +1,8 @@
 """
-Support for Sinope.
-
-For more details about this platform, please refer to the documentation at
+Support for Sinope thermostat.
+type 10 = thermostat TH1120RF 3000W and 4000W
+type ?? = thermostat TH1300RF 3600W
+For more details about this platform, please refer to the documentation at  https://www.sinopetech.com/en/support/#api
 """
 import logging
 from datetime import timedelta
