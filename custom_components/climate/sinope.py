@@ -1,7 +1,8 @@
 """
 Support for Sinope thermostat.
 type 10 = thermostat TH1120RF 3000W and 4000W
-type ?? = thermostat TH1300RF 3600W
+type 20 = thermostat TH1300RF 3600W floor
+type 21 = thermostat TH1400RF low voltage
 For more details about this platform, please refer to the documentation at  https://www.sinopetech.com/en/support/#api
 """
 import logging
@@ -57,7 +58,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
 
     devices = []
     for id, device in sinope_data.data.items():
-        if device["info"]["type"] == 10:
+        if device["info"]["type"] == 10 or device["info"]["type"] == 20 or device["info"]["type"] == 21:
             devices.append(SinopeThermostat(sinope_data, id, '{} {}'.format(name, device["info"]["name"])))
 
     add_devices(devices, True)
