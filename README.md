@@ -19,11 +19,6 @@ climate:
     password: '<your Neviweb password>'
     gateway: '<your gateway name>'
     scan_interval: 900 #to limit access to neviwed every 15 minutes  
-  - platform: sinope_floor
-    username: '<your e-mail-adress>'
-    password: '<your Neviweb password>'
-    gateway: '<your gateway name>'
-    scan_interval: 900 #to limit access to neviwed every 15 minutes  
 ```
 
 To enable your Sinopé lights/dimmers in your installation, add the following to your `configuration.yaml` file:
