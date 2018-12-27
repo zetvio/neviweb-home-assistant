@@ -14,14 +14,15 @@ import json
 import re
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.climate import (ClimateDevice, PLATFORM_SCHEMA, STATE_HEAT, STATE_IDLE, ATTR_TEMPERATURE, ATTR_AWAY_MODE, ATTR_OPERATION_MODE, SUPPORT_TARGET_TEMPERATURE)
-from homeassistant.const import (CONF_USERNAME, CONF_PASSWORD, CONF_NAME, TEMP_CELSIUS)
+from homeassistant.components.climate import (ClimateDevice, PLATFORM_SCHEMA, STATE_HEAT, STATE_IDLE, ATTR_TEMPERATURE, ATTR_AWAY_MODE, ATTR_OPERATION_MODE, ATTR_HOLD_MODE, SUPPORT_TARGET_TEMPERATURE, SUPPORT_OPERATION_MODE, STATE_AUTO, STATE_MANUAL)
+from homeassistant.const import (CONF_USERNAME, CONF_PASSWORD, CONF_NAME, TEMP_CELSIUS, STATE_OFF)
 from datetime import timedelta
 from homeassistant.helpers.event import track_time_interval
 
 _LOGGER = logging.getLogger(__name__)
 
-SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE)
+SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE |
+                 SUPPORT_OPERATION_MODE)
 
 DEFAULT_NAME = 'Sinope'
 
@@ -51,7 +52,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
         sinope_data = SinopeData(username, password, gateway)
         sinope_data.update()
     except requests.exceptions.HTTPError as error:
-        _LOGGER.error("Failt login: %s", error)
+        _LOGGER.error("Fail to login: %s", error)
         return False
 
     name = config.get(CONF_NAME)
@@ -72,12 +73,14 @@ class SinopeThermostat(ClimateDevice):
         self.client = sinope_data.client
         self.device_id = device_id
         self.sinope_data = sinope_data
-
         self._target_temp  = None
         self._cur_temp = None
         self._min_temp  = float(self.sinope_data.data[self.device_id]["info"]["tempMin"])
         self._max_temp  = float(self.sinope_data.data[self.device_id]["info"]["tempMax"])
         self._mode = None
+        self._alarm = None
+        self._operation_mode = None
+        self._operation_list = [STATE_OFF, STATE_MANUAL, STATE_AUTO]
         self._state = None
         self._away = False
 
@@ -86,8 +89,30 @@ class SinopeThermostat(ClimateDevice):
         self.sinope_data.update()
         self._target_temp  = float(self.sinope_data.data[self.device_id]["data"]["setpoint"])
         self._cur_temp =  float(self.sinope_data.data[self.device_id]["data"]["temperature"])
-        self._mode = float(self.sinope_data.data[self.device_id]["data"]["mode"])
-        self._state = float(self.sinope_data.data[self.device_id]["data"]["heatLevel"])
+        self._operation_mode = int(self.sinope_data.data[self.device_id]["data"]["mode"])
+        self._state = int(self.sinope_data.data[self.device_id]["data"]["heatLevel"])
+        self._alarm = int(self.sinope_data.data[self.device_id]["data"]["alarm"])
+        
+    def hass_operation_to_sinope(self, mode):
+        """Translate hass operation modes to sinope modes."""
+        if mode == STATE_OFF:
+            return 0
+        if mode == STATE_MANUAL:
+            return 2
+        if mode == STATE_AUTO:
+            return 3
+        _LOGGER.warning("Sinope have no setting for %s operation", mode)
+        
+    def sinope_operation_to_hass(self, mode):
+        """Translate sinope operation modes to hass operation modes."""
+        if self._operation_mode == 0:
+            return STATE_OFF
+        if self._operation_mode == 2:
+            return STATE_MANUAL
+        if self._operation_mode == 3:
+            return STATE_AUTO 
+        _LOGGER.warning("Operation mode %s could not be mapped to hass", self._operation_mode)
+        return None       
 
     @property
     def supported_features(self):
@@ -103,7 +128,12 @@ class SinopeThermostat(ClimateDevice):
     def temperature_unit(self):
         """Return the unit of measurement."""
         return TEMP_CELSIUS
-
+    
+    @property
+    def operation_list(self):
+        """Return the list of available operation modes."""
+        return self._operation_list
+    
     @property
     def target_temperature (self):
         """Return the temperature we try to reach."""
@@ -116,6 +146,12 @@ class SinopeThermostat(ClimateDevice):
             return
         self.client.set_temperature_device(self.device_id, temperature)
         self._target_temp = temperature
+        
+     def set_operation_mode(self, operation_mode):
+        """Set new target temperature."""
+        mode = self.hass_operation_to_sinope(operation_mode)
+        self.client.set_operation_mode(self.device_id, mode)
+        self._operation_mode = mode    
 
     @property
     def current_temperature(self):
@@ -131,16 +167,30 @@ class SinopeThermostat(ClimateDevice):
     def max_temp(self):
         """Return the max temperature."""
         return self._max_temp
-
+    
     @property
-    def current_operation(self):
-        """Return current operation i.e. heat, cool, idle."""
+    def state(self):
+        """Return current state i.e. heat, idle."""
         if self._state:
             return STATE_HEAT
         return STATE_IDLE
 
+    @property
+    def current_operation(self):
+        """Return current operation i.e. heat, cool, idle."""
+        if self._operation_mode is not None:
+            op_mode = self.sinope_operation_to_hass(self._operation_mode)
+            return op_mode
+
     def mode(self):
         return self._mode
+    
+    def away(self):
+        if self._operation_mode == 5:
+            return self._away
+
+    def alarm(self):
+        return self._alarm
 
 class SinopeData(object):
 
@@ -175,7 +225,6 @@ class SinopeClient(object):
         self._gateway_data = {}
         self._cookies = None
         self._timeout = timeout
-        
         self._post_login_page()
         self._get_data_gateway()
 
@@ -248,3 +297,12 @@ class SinopeClient(object):
             raw_res = requests.put(DEVICE_DATA_URL + str(device) + "/setpoint", data=data, headers=self._headers, cookies=self._cookies, timeout=self._timeout)
         except OSError:
             raise PySinopeError("Cannot set device temperature")
+            
+    def set_operation_mode(self, device, mode):
+        """Set device operation mode."""
+        data = {"mode": mode}
+        try:
+            raw_res = requests.put(DEVICE_DATA_URL + str(device) + "/mode", data=data, headers=self._headers, cookies=self._cookies, timeout=self._timeout)
+        except OSError:
+            raise PySinopeError("Cannot set device operation mode")	  
+    
