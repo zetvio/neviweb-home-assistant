@@ -15,7 +15,7 @@ import re
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.climate import (ClimateDevice, PLATFORM_SCHEMA, STATE_HEAT, STATE_IDLE, ATTR_TEMPERATURE, ATTR_AWAY_MODE, ATTR_OPERATION_MODE, ATTR_HOLD_MODE, SUPPORT_TARGET_TEMPERATURE, SUPPORT_OPERATION_MODE, STATE_AUTO, STATE_MANUAL)
-from homeassistant.const import (CONF_USERNAME, CONF_PASSWORD, CONF_NAME, TEMP_CELSIUS, STATE_OFF)
+from homeassistant.const import (CONF_USERNAME, CONF_PASSWORD, CONF_NAME, TEMP_CELSIUS, STATE_OFF, STATE_NOT_HOME)
 from datetime import timedelta
 from homeassistant.helpers.event import track_time_interval
 
@@ -80,7 +80,7 @@ class SinopeThermostat(ClimateDevice):
         self._mode = None
         self._alarm = None
         self._operation_mode = None
-        self._operation_list = [STATE_OFF, STATE_MANUAL, STATE_AUTO]
+        self._operation_list = [STATE_OFF, STATE_MANUAL, STATE_AUTO, STATE_NOT_HOME]
         self._state = None
         self._away = False
 
@@ -101,6 +101,8 @@ class SinopeThermostat(ClimateDevice):
             return 2
         if mode == STATE_AUTO:
             return 3
+        if mode == STATE_NOT_HOME:
+            return 5
         _LOGGER.warning("Sinope have no setting for %s operation", mode)
         
     def sinope_operation_to_hass(self, mode):
@@ -110,7 +112,9 @@ class SinopeThermostat(ClimateDevice):
         if self._operation_mode == 2:
             return STATE_MANUAL
         if self._operation_mode == 3:
-            return STATE_AUTO 
+            return STATE_AUTO
+        if self._operation_mode == 5:
+            return STATE_NOT_HOME
         _LOGGER.warning("Operation mode %s could not be mapped to hass", self._operation_mode)
         return None       
 
@@ -148,7 +152,7 @@ class SinopeThermostat(ClimateDevice):
         self._target_temp = temperature
         
      def set_operation_mode(self, operation_mode):
-        """Set new target temperature."""
+        """Set new operation mode."""
         mode = self.hass_operation_to_sinope(operation_mode)
         self.client.set_operation_mode(self.device_id, mode)
         self._operation_mode = mode    
@@ -185,9 +189,9 @@ class SinopeThermostat(ClimateDevice):
     def mode(self):
         return self._mode
     
-    def away(self):
+    def away_mode(self):
         if self._operation_mode == 5:
-            return self._away
+            return self._away_mode
 
     def alarm(self):
         return self._alarm
@@ -304,5 +308,4 @@ class SinopeClient(object):
         try:
             raw_res = requests.put(DEVICE_DATA_URL + str(device) + "/mode", data=data, headers=self._headers, cookies=self._cookies, timeout=self._timeout)
         except OSError:
-            raise PySinopeError("Cannot set device operation mode")	  
-    
+            raise PySinopeError("Cannot set device operation mode")
