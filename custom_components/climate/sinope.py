@@ -14,7 +14,7 @@ import json
 import re
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.climate import (ClimateDevice, PLATFORM_SCHEMA, STATE_HEAT, STATE_IDLE, ATTR_TEMPERATURE, ATTR_AWAY_MODE, ATTR_OPERATION_MODE, ATTR_HOLD_MODE, SUPPORT_TARGET_TEMPERATURE, SUPPORT_OPERATION_MODE, STATE_AUTO, STATE_MANUAL)
+from homeassistant.components.climate import (ClimateDevice, PLATFORM_SCHEMA, STATE_HEAT, STATE_IDLE, ATTR_TEMPERATURE, ATTR_AWAY_MODE, ATTR_OPERATION_MODE, ATTR_HOLD_MODE, SUPPORT_TARGET_TEMPERATURE, SUPPORT_OPERATION_MODE, STATE_AUTO, STATE_MANUAL, ATTR_MIN_TEMP, ATTR_MAX_TEMP)
 from homeassistant.const import (CONF_USERNAME, CONF_PASSWORD, CONF_NAME, TEMP_CELSIUS, STATE_OFF, STATE_NOT_HOME)
 from datetime import timedelta
 from homeassistant.helpers.event import track_time_interval
@@ -162,6 +162,14 @@ class SinopeThermostat(ClimateDevice):
         """Return the current temperature."""
         return self._cur_temp
 
+    @property
+    def device_state_attributes(self):
+        """Return the state attributes."""
+        return {ATTR_MIN_TEMP: self._min_temp,
+                ATTR_MAX_TEMP: self._max_temp,
+                'wattage': self._wattage,
+                'alarm': self._alarm}
+  
     @property
     def min_temp(self):
         """Return the min temperature."""
