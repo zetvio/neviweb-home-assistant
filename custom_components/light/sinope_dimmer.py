@@ -1,7 +1,7 @@
 """
 Support for Sinope light.
-type 102 = light switch
-type 112 = light dimmer
+type 102 = light switch SW2500RF
+type 112 = light dimmer DM2500RF
 For more details about this platform, please refer to the documentation at  https://www.sinopetech.com/en/support/#api
 """
 import logging
@@ -78,17 +78,55 @@ class SinopeDimmer(Light):
         self.client = sinope_data.client
         self.device_id = device_id
         self.sinope_data = sinope_data
-
+        self._alarm = None
+        self._mode = None
+        self._brightness = 255
+        self._operation_list = ['Manual', 'Auto', 'Away', 'Hold']
+        
     def update(self):
         """Get the latest data from Sinope and update the state."""
         self.sinope_data.update()
         self._brightness  = brightness_from_percentage(int(self.sinope_data.data[self.device_id]["data"]["intensity"]))
-      
+        self._alarm = int(self.sinope_data.data[self.device_id]["data"]["alarm"])
+        self._mode = int(self.sinope_data.data[self.device_id]["data"]["mode"])
+
+    def hass_operation_to_sinope(self, mode):
+        """Translate hass operation modes to sinope modes."""
+
+        if mode == 'Manual':
+            return 1
+        if mode == 'Auto':
+            return 2
+        if mode == 'Away':
+            return 3
+        if mode == 'Hold':
+            return 130
+        _LOGGER.warning("Sinope have no setting for %s mode", mode)
+        return None
+        
+    def sinope_operation_to_hass(self, mode):
+        """Translate sinope operation modes to hass operation modes."""
+        if mode == 1:
+            return 'Manual'
+        if mode == 2:
+            return 'Auto'
+        if mode == 3:
+            return 'Away'
+        if mode == 130:
+            return 'Hold'  
+        _LOGGER.warning("Mode %s could not be mapped to hass", self._operation_mode)
+        return None        
+        
     @property
     def supported_features(self):
         """Return the list of supported features."""
         return SUPPORT_FLAGS
 
+    @property
+    def operation_list(self):
+        """Return the list of available operation modes."""
+        return self._operation_list
+    
     @property
     def name(self):
         """Return the name of the sinope, if any."""
@@ -118,9 +156,27 @@ class SinopeDimmer(Light):
         if brightness is None or brightness == 0:
             return
         self.client.set_brightness(self.device_id, 0)
+  
+    def set_mode(self, operation_mode):
+        """Set new operation mode."""
+        mode = self.hass_operation_to_sinope(operation_mode)
+        self.client.set_mode(self.device_id, mode)
+        self._mode = mode
+
+    @property
+    def device_state_attributes(self):
+        """Return the state attributes."""
+        return {'alarm': self._alarm,
+                'mode': self._mode}
  
     def mode(self):
-        return self._mode
+        if self._mode is not None:
+            op_mode = self.sinope_operation_to_hass(self._mode)
+            return op_mode
+        """return self._mode"""
+
+    def alarm(self):
+        return self._alarm
 
 class SinopeData(object):
 
@@ -228,3 +284,11 @@ class SinopeClient(object):
             raw_res = requests.put(DEVICE_DATA_URL + str(device) + "/intensity", data=data, headers=self._headers, cookies=self._cookies, timeout=self._timeout)
         except OSError:
             raise PySinopeError("Cannot set device brightness")
+
+    def set_mode(self, device, mode):
+        """Set device operation mode."""
+        data = {"mode": mode}
+        try:
+            raw_res = requests.put(DEVICE_DATA_URL + str(device) + "/mode", data=data, headers=self._headers, cookies=self._cookies, timeout=self._timeout)
+        except OSError:
+            raise PySinopeError("Cannot set device operation mode")
