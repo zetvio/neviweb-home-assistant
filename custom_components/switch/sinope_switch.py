@@ -12,8 +12,8 @@ import json
 import re
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.switch import (SwitchDevice, PLATFORM_SCHEMA)
-from homeassistant.const import (CONF_USERNAME, CONF_PASSWORD, CONF_NAME)
+from homeassistant.components.switch import (SwitchDevice, PLATFORM_SCHEMA, ATTR_CURRENT_POWER_W, ATTR_TODAY_ENERGY_KWH)
+from homeassistant.const import (CONF_USERNAME, CONF_PASSWORD, CONF_NAME, ATTR_VOLTAGE)
 from datetime import timedelta
 from homeassistant.helpers.event import track_time_interval
 
@@ -68,17 +68,61 @@ class SinopeSwitch(SwitchDevice):
         self.client = sinope_data.client
         self.device_id = device_id
         self.sinope_data = sinope_data
+        self._alarm = None
+        self._mode = None
+        self._wattage = int(self.sinope_data.data[self.device_id]["info"]["wattage"])
+        self._load = 0
+        self._brightness = 100
+        self._operation_list = ['Manual', 'Auto', 'Away', 'Hold'] 	
 
     def update(self):
         """Get the latest data from Sinope and update the state."""
         self.sinope_data.update()
         self._brightness = int(self.sinope_data.data[self.device_id]["data"]["intensity"])
+        self._load = int(self.sinope_data.data[self.device_id]["data"]["powerWatt"])
+        self._mode = int(self.sinope_data.data[self.device_id]["data"]["mode"])
+        self._alarm = int(self.sinope_data.data[self.device_id]["data"]["alarm"])
+
+    def hass_operation_to_sinope(self, mode):
+        """Translate hass operation modes to sinope modes."""
+        if mode == 'Manual':
+            return 1
+        if mode == 'Auto':
+            return 2
+        if mode == 'Away':
+            return 3
+        if mode == 'Hold':
+            return 130
+        _LOGGER.warning("Sinope have no setting for %s mode", mode)
+        return None
+        
+    def sinope_operation_to_hass(self, mode):
+        """Translate sinope operation modes to hass operation modes."""
+        if mode == 1:
+            return 'Manual'
+        if mode == 2:
+            return 'Auto'
+        if mode == 3:
+            return 'Away'
+        if mode == 130:
+            return 'Hold'  
+        _LOGGER.warning("Mode %s could not be mapped to hass", self._operation_mode)
+        return None        
+
+    @property
+    def operation_list(self):
+        """Return the list of available operation modes."""
+        return self._operation_list
 
     @property
     def name(self):
         """Return the name of the sinope, if any."""
         return self.client_name
-      
+
+    @property
+    def brightness(self):
+        return self._brightness
+
     @property  
     def is_on(self):
         """Return current operation i.e. ON, OFF """
@@ -95,10 +139,38 @@ class SinopeSwitch(SwitchDevice):
         if brightness is None or brightness == 0:
             return
         self.client.set_brightness(self.device_id, 0)
-        
+
+    def set_mode(self, operation_mode):
+        """Set new operation mode."""
+        mode = self.hass_operation_to_sinope(operation_mode)
+        self.client.set_mode(self.device_id, mode)
+        self._mode = mode
+
+    @property
+    def device_state_attributes(self):
+        """Return the state attributes."""
+        return {'Alarm': self._alarm,
+                'Mode': self._mode,
+                'Wattage': self._wattage,
+                'Load': self._load}
+       
     @property
     def mode(self):
-        return self._mode
+        if self._mode is not None:
+            op_mode = self.sinope_operation_to_hass(self._mode)
+            return op_mode
+        """return self._mode"""
+
+    @property
+    def current_power_w(self):
+        """Return the current power usage in W."""
+        return self._load
+
+    def alarm(self):
+        return self._alarm
+
+    def load(self):
+        return self._load
 
 class SinopeData(object):
 
@@ -206,3 +278,11 @@ class SinopeClient(object):
             raw_res = requests.put(DEVICE_DATA_URL + str(device) + "/intensity", data=data, headers=self._headers, cookies=self._cookies, timeout=self._timeout)
         except OSError:
             raise PySinopeError("Cannot set device brightness")
+
+    def set_mode(self, device, mode):
+        """Set device operation mode."""
+        data = {"mode": mode}
+        try:
+            raw_res = requests.put(DEVICE_DATA_URL + str(device) + "/mode", data=data, headers=self._headers, cookies=self._cookies, timeout=self._timeout)
+        except OSError:
+            raise PySinopeError("Cannot set device operation mode")
