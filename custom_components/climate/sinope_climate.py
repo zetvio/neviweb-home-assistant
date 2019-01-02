@@ -24,7 +24,7 @@ _LOGGER = logging.getLogger(__name__)
 SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE |
                  SUPPORT_OPERATION_MODE)
 
-DEFAULT_NAME = 'Sinope'
+DEFAULT_NAME = 'Sinope climate'
 
 REQUESTS_TIMEOUT = 30
 SCAN_INTERVAL = timedelta(seconds=900)
