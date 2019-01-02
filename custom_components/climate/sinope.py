@@ -77,6 +77,7 @@ class SinopeThermostat(ClimateDevice):
         self._cur_temp = None
         self._min_temp  = float(self.sinope_data.data[self.device_id]["info"]["tempMin"])
         self._max_temp  = float(self.sinope_data.data[self.device_id]["info"]["tempMax"])
+        self._wattage = int(self.sinope_data.data[self.device_id]["info"]["wattage"])
         self._mode = None
         self._alarm = None
         self._operation_mode = None
