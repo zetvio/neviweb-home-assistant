@@ -81,7 +81,7 @@ class SinopeThermostat(ClimateDevice):
         self._mode = None
         self._alarm = None
         self._operation_mode = None
-        self._operation_list = [STATE_OFF, STATE_MANUAL, STATE_AUTO, STATE_NOT_HOME]
+        self._operation_list = [STATE_OFF, STATE_MANUAL, STATE_AUTO, STATE_NOT_HOME, STATE_STANDBY]
         self._state = None
         self._away = False
 
@@ -104,6 +104,8 @@ class SinopeThermostat(ClimateDevice):
             return 3
         if mode == STATE_NOT_HOME:
             return 5
+        if mode == STATE_STANDBY:
+            return 131
         _LOGGER.warning("Sinope have no setting for %s operation", mode)
         
     def sinope_operation_to_hass(self, mode):
@@ -116,6 +118,8 @@ class SinopeThermostat(ClimateDevice):
             return STATE_AUTO
         if self._operation_mode == 5:
             return STATE_NOT_HOME
+        if self._operation_mode == 131:
+            return STATE_STANDBY
         _LOGGER.warning("Operation mode %s could not be mapped to hass", self._operation_mode)
         return None       
 
