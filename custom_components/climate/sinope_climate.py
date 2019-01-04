@@ -305,6 +305,7 @@ class SinopeClient(object):
         for device in self._gateway_data:
             sinope_data.update({ device["id"] : { "info" : device, "data" : self._get_data_device(device["id"]) }})
         self._data = sinope_data
+        """_LOGGER.warning("Sinope data = %s", self._data)"""
 
     def get_data(self):
         """Return collected data"""
