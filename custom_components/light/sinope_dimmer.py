@@ -5,7 +5,6 @@ type 112 = light dimmer DM2500RF
 For more details about this platform, please refer to the documentation at  https://www.sinopetech.com/en/support/#api
 """
 import logging
-from datetime import timedelta
 
 import requests
 import voluptuous as vol
