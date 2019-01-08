@@ -6,7 +6,6 @@ type 21 = thermostat TH1400RF low voltage
 For more details about this platform, please refer to the documentation at  https://www.sinopetech.com/en/support/#api
 """
 import logging
-from datetime import timedelta
 
 import requests
 import voluptuous as vol
