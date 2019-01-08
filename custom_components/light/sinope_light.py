@@ -77,6 +77,7 @@ class SinopeLight(Light):
         self.client = sinope_data.client
         self.device_id = device_id
         self.sinope_data = sinope_data
+        self._id = int(self.sinope_data.data[self.device_id]["info"]["id"])
         self._alarm = None
         self._mode = None
         self._brightness = 255
@@ -131,6 +132,11 @@ class SinopeLight(Light):
         """Return the name of the sinope, if any."""
         return self.client_name
 
+    @property
+    def unique_id(self):
+        """Return unique ID based on Sinope ID."""
+        return self._id
+    
     @property
     def brightness(self):
         """Return intensity of light, 0=off, 100=on"""
