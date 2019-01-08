@@ -14,7 +14,7 @@ import re
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.climate import (ClimateDevice, PLATFORM_SCHEMA, STATE_HEAT, STATE_IDLE, ATTR_TEMPERATURE, ATTR_AWAY_MODE, ATTR_OPERATION_MODE, ATTR_HOLD_MODE, SUPPORT_TARGET_TEMPERATURE, SUPPORT_OPERATION_MODE, STATE_AUTO, STATE_MANUAL, ATTR_MIN_TEMP, ATTR_MAX_TEMP)
-from homeassistant.const import (CONF_USERNAME, CONF_PASSWORD, CONF_NAME, TEMP_CELSIUS, STATE_OFF, STATE_NOT_HOME)
+from homeassistant.const import (ATTR_ENTITY_ID, CONF_ID, CONF_USERNAME, CONF_PASSWORD, CONF_NAME, TEMP_CELSIUS, STATE_OFF, STATE_NOT_HOME)
 from datetime import timedelta
 from homeassistant.helpers.event import track_time_interval
 
@@ -75,6 +75,7 @@ class SinopeThermostat(ClimateDevice):
         self.client = sinope_data.client
         self.device_id = device_id
         self.sinope_data = sinope_data
+        self._id = int(self.sinope_data.data[self.device_id]["info"]["id"])
         self._target_temp  = None
         self._cur_temp = None
         self._min_temp  = float(self.sinope_data.data[self.device_id]["info"]["tempMin"])
@@ -134,6 +135,11 @@ class SinopeThermostat(ClimateDevice):
     def name(self):
         """Return the name of the sinope, if any."""
         return self.client_name
+
+    @property
+    def unique_id(self):
+        """Return unique ID based on Sinope ID."""
+        return self._id
 
     @property
     def temperature_unit(self):
