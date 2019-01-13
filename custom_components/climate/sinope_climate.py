@@ -81,6 +81,7 @@ class SinopeThermostat(ClimateDevice):
         self._min_temp  = float(self.sinope_data.data[self.device_id]["info"]["tempMin"])
         self._max_temp  = float(self.sinope_data.data[self.device_id]["info"]["tempMax"])
         self._wattage = int(self.sinope_data.data[self.device_id]["info"]["wattage"])
+        self._rssi = int(self.sinope_data.data[self.device_id]["data"]["rssi"])
         self._mode = None
         self._alarm = None
         self._operation_mode = None
@@ -181,7 +182,9 @@ class SinopeThermostat(ClimateDevice):
         return {ATTR_MIN_TEMP: self._min_temp,
                 ATTR_MAX_TEMP: self._max_temp,
                 'wattage': self._wattage,
-                'alarm': self._alarm}
+                'alarm': self._alarm,
+                'rssi': self._rssi,
+                'heatLevel': self._state}
   
     @property
     def min_temp(self):
@@ -216,6 +219,9 @@ class SinopeThermostat(ClimateDevice):
 
     def alarm(self):
         return self._alarm
+
+    def rssi(self):
+        return self._rssi
 
 class SinopeData(object):
 
