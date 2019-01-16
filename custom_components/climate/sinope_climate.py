@@ -165,7 +165,7 @@ class SinopeThermostat(ClimateDevice):
         self.client.set_temperature_device(self.device_id, temperature)
         self._target_temp = temperature
         
-     def set_operation_mode(self, operation_mode):
+    def set_operation_mode(self, operation_mode):
         """Set new operation mode."""
         mode = self.hass_operation_to_sinope(operation_mode)
         self.client.set_operation_mode(self.device_id, mode)
