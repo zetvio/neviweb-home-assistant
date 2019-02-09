@@ -88,6 +88,30 @@ Add thoses lines to your `configuration.yaml` file
    ```
 This will set default log level to warning for all your components, except for Neviweb which will display more detailed messages.
 
+## Customization
+Install Custom UI and add the following in your code:
+
+Icons for heat level: create folder www in the root folder .homeassistant/www
+copy the six icons there. You can find them under local/www
+feel free to improve my icons and let me know.
+
+For each thermostat add this code in `customize.yaml`
+```yaml
+climate.neviweb_climate_thermostat_name:
+  templates:
+    entity_picture: >
+      if (attributes.heatLevel < 1) return '/local/heat-0.png';
+      if (attributes.heatLevel < 21) return '/local/heat-1.png';
+      if (attributes.heatLevel < 41) return '/local/heat-2.png';
+      if (attributes.heatLevel < 61) return '/local/heat-3.png';
+      if (attributes.heatLevel < 81) return '/local/heat-4.png';
+      return '/local/heat-5.png';
+ ```  
+ In `configuration.yaml` add this
+```yaml
+customize: !include customize.yaml
+``` 
+
 ## Current Limitations
 - Home Assistant doesn't support operation mode selection for light and switch entities. So you won't see any dropdown list in the UI where you can switch between Auto and Manual mode. You can only see the current mode in the attributes. TODO: register a new service to change operation_mode and another one to set away mode.
 
