@@ -14,7 +14,7 @@ import time
 import custom_components.neviweb as neviweb
 from homeassistant.components.climate import (ClimateDevice, STATE_HEAT, 
     STATE_IDLE, STATE_AUTO, STATE_MANUAL, SUPPORT_TARGET_TEMPERATURE,
-    SUPPORT_OPERATION_MODE, SUPPORT_AWAY_MODE, ATTR_TEMPERATURE,
+    SUPPORT_OPERATION_MODE, SUPPORT_AWAY_MODE, SUPPORT_ON_OFF, ATTR_TEMPERATURE,
     ATTR_AWAY_MODE, ATTR_OPERATION_MODE, ATTR_OPERATION_LIST)
 from homeassistant.const import (TEMP_CELSIUS, TEMP_FAHRENHEIT, STATE_OFF)
 from datetime import timedelta
@@ -23,7 +23,7 @@ from homeassistant.helpers.event import track_time_interval
 _LOGGER = logging.getLogger(__name__)
 
 SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE | SUPPORT_OPERATION_MODE |
-    SUPPORT_AWAY_MODE)
+    SUPPORT_AWAY_MODE | SUPPORT_ON_OFF)
 
 DEFAULT_NAME = "neviweb climate"
 
