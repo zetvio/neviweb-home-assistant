@@ -40,6 +40,13 @@ light:
     gateway: '<your gateway name>'
     scan_interval: 900 #to limit access to neviwed every 15 minutes  
 ```
+
+Configuration variables:
+
+- **username** (*Required*): The email address that you use for Sinopé Neviweb.
+- **password** (*Required*): The password that you use for Sinopé Neviweb.
+- **gateway** (*Required*): The name of the network you wan't to control.
+
 To enable your Sinopé power switch in your installation, add the following to your `configuration.yaml` file:
 
 ```yaml
@@ -51,9 +58,23 @@ switch:
     gateway: '<your gateway name>'
     scan_interval: 900 #to limit access to neviwed every 15 minutes  
 ```
+Customization:
 
-Configuration variables:
+Install Custom UI and add the following in your code:
+icons for heat level: create folder www in the root folder .homeassistant/www
+copy the six icons there. You can find them under local/www
+feel free to improve my icons and let me know.
 
-- **username** (*Required*): The email address that you use for Sinopé Neviweb.
-- **password** (*Required*): The password that you use for Sinopé Neviweb.
-- **gateway** (*Required*): The name of the network you wan't to control.
+For each thermostat add this code in customize.yaml
+climate.sinope_climate_thermostat_name:
+  templates:
+    entity_picture: >
+      if (attributes.heatLevel < 1) return '/local/heat-0.png';
+      if (attributes.heatLevel < 21) return '/local/heat-1.png';
+      if (attributes.heatLevel < 41) return '/local/heat-2.png';
+      if (attributes.heatLevel < 61) return '/local/heat-3.png';
+      if (attributes.heatLevel < 81) return '/local/heat-4.png';
+      return '/local/heat-5.png';
+      
+ In configuration.yaml add this
+ customize: !include customize.yaml
