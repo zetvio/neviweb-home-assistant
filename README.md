@@ -99,6 +99,3 @@ This will set default log level to warning for all your components, except for N
 
 ## Contributing
 You see something wrong or something that could be improved? Don't hesitate to fork me and send me pull requests.
-
-## Bottom Note
-I don't have access to Neviweb API documentation. I've made the best I can to implement their protocol, but I sometimes have to make assumptions that could lead to unexpected behavior or crashes. Especially for error handling, it's quite tough to guess what could be all the possible return codes. @ Sinopé: if you think that being supported in one of the fastest growing open source home automation platform is a plus, then I'll gladly accept a copy of your API doc to continue improvement the right way. This is not too high a price to pay for having this ~~cheap~~ free labor!!

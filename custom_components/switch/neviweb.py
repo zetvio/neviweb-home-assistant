@@ -12,7 +12,6 @@ import time
 import custom_components.neviweb as neviweb
 from homeassistant.components.switch import (SwitchDevice, 
     ATTR_TODAY_ENERGY_KWH, ATTR_CURRENT_POWER_W)
-from homeassistant.const import (ATTR_VOLTAGE)
 from datetime import timedelta
 from homeassistant.helpers.event import track_time_interval
 
