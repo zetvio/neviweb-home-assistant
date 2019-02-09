@@ -13,15 +13,17 @@ import json
 import re
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.climate import (ClimateDevice, PLATFORM_SCHEMA, STATE_HEAT, STATE_IDLE, ATTR_TEMPERATURE, ATTR_AWAY_MODE, ATTR_OPERATION_MODE, ATTR_HOLD_MODE, SUPPORT_TARGET_TEMPERATURE, SUPPORT_OPERATION_MODE, STATE_AUTO, STATE_MANUAL, ATTR_MIN_TEMP, ATTR_MAX_TEMP)
-from homeassistant.const import (ATTR_ENTITY_ID, CONF_ID, CONF_USERNAME, CONF_PASSWORD, CONF_NAME, TEMP_CELSIUS, STATE_OFF, STATE_NOT_HOME)
+from homeassistant.components.climate import (ClimateDevice, PLATFORM_SCHEMA, STATE_HEAT, STATE_IDLE, ATTR_TEMPERATURE, ATTR_AWAY_MODE, ATTR_OPERATION_MODE, ATTR_HOLD_MODE, SUPPORT_TARGET_TEMPERATURE, SUPPORT_OPERATION_MODE, SUPPORT_AWAY_MODE, SUPPORT_HOLD_MODE, SUPPORT_ON_OFF, STATE_AUTO, STATE_MANUAL, ATTR_MIN_TEMP, ATTR_MAX_TEMP)
+from homeassistant.const import (ATTR_ENTITY_ID, CONF_ID, CONF_USERNAME, CONF_PASSWORD, CONF_NAME, TEMP_CELSIUS, STATE_OFF,  STATE_ON, STATE_UNKNOWN, STATE_NOT_HOME, STATE_STANDBY)
 from datetime import timedelta
 from homeassistant.helpers.event import track_time_interval
 
 _LOGGER = logging.getLogger(__name__)
 
 SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE |
-                 SUPPORT_OPERATION_MODE)
+                 SUPPORT_OPERATION_MODE |
+                 SUPPORT_AWAY_MODE |
+                 SUPPORT_ON_OFF)
 
 DEFAULT_NAME = 'Sinope climate'
 
@@ -88,14 +90,16 @@ class SinopeThermostat(ClimateDevice):
         self._operation_list = [STATE_OFF, STATE_MANUAL, STATE_AUTO, STATE_NOT_HOME, STATE_STANDBY]
         self._state = None
         self._away = False
+        self._prev_operation_mode = None
 
     def update(self):
         """Get the latest data from Sinope and update the state."""
         self.sinope_data.update()
-        self._target_temp  = float(self.sinope_data.data[self.device_id]["data"]["setpoint"])
-        self._cur_temp =  float(self.sinope_data.data[self.device_id]["data"]["temperature"])
         self._operation_mode = int(self.sinope_data.data[self.device_id]["data"]["mode"])
+        if self._operation_mode != 0:
+            self._target_temp  = float(self.sinope_data.data[self.device_id]["data"]["setpoint"])
         self._state = int(self.sinope_data.data[self.device_id]["data"]["heatLevel"])
+        self._cur_temp =  float(self.sinope_data.data[self.device_id]["data"]["temperature"])
         self._alarm = int(self.sinope_data.data[self.device_id]["data"]["alarm"])
         
     def hass_operation_to_sinope(self, mode):
@@ -164,12 +168,42 @@ class SinopeThermostat(ClimateDevice):
             return
         self.client.set_temperature_device(self.device_id, temperature)
         self._target_temp = temperature
+        self.schedule_update_ha_state()
         
     def set_operation_mode(self, operation_mode):
         """Set new operation mode."""
         mode = self.hass_operation_to_sinope(operation_mode)
         self.client.set_operation_mode(self.device_id, mode)
-        self._operation_mode = mode    
+        self._operation_mode = mode
+        self.schedule_update_ha_state()
+        
+    def turn_away_mode_on(self):
+        """Set away mode"""
+        self.client.set_operation_mode(self.device_id, 5)
+        self._away_mode = True
+        self._prev_operation_mode = self.sinope_operation_to_hass(self._operation_mode)
+        self._operation_mode = STATE_NOT_HOME
+        self.schedule_update_ha_state()
+        
+    def turn_away_mode_off(self):    
+        """Set away mode"""
+        self._prev_operation_mode = self.sinope_operation_to_hass(self._operation_mode)
+        self.client.set_operation_mode(self.device_id, 3)
+        self._away_mode = False
+        self._operation_mode = STATE_AUTO
+        self.schedule_update_ha_state()
+        
+    def turn_on(self, prev_operation_mode):
+        """turn on thermostat and set it to previous state"""
+        mode = self.hass_operation_to_sinope(prev_operation_mode)
+        self.client.set_operation_mode(self.device_id, mode)
+        self.schedule_update_ha_state()
+        
+    def turn_off(self):
+        """turn off thermostat and remember current operation mode"""
+        self._prev_operation_mode = self.sinope_operation_to_hass(self._operation_mode)
+        self.client.set_operation_mode(self.device_id, 0)
+        self.schedule_update_ha_state()
 
     @property
     def current_temperature(self):
@@ -209,6 +243,18 @@ class SinopeThermostat(ClimateDevice):
         if self._operation_mode is not None:
             op_mode = self.sinope_operation_to_hass(self._operation_mode)
             return op_mode
+          
+    @property
+    def is_away_mode_on(self):
+        """Return true if away mode is on."""
+        return self._away
+
+    @property
+    def is_on(self):
+        """Return true if thermostat is on."""
+        if self._target_temp is not None:
+            return True
+        return None
 
     def mode(self):
         return self._mode
@@ -331,7 +377,7 @@ class SinopeClient(object):
             raise PySinopeError("Cannot set device temperature")
             
     def set_operation_mode(self, device, mode):
-        """Set device operation mode."""
+        """Set device operation mode.(off, manual, auto, away, hold)"""
         data = {"mode": mode}
         try:
             raw_res = requests.put(DEVICE_DATA_URL + str(device) + "/mode", data=data, headers=self._headers, cookies=self._cookies, timeout=self._timeout)
