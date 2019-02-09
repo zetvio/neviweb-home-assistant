@@ -66,6 +66,7 @@ copy the six icons there. You can find them under local/www
 feel free to improve my icons and let me know.
 
 For each thermostat add this code in customize.yaml
+```yaml
 climate.sinope_climate_thermostat_name:
   templates:
     entity_picture: >
@@ -75,6 +76,8 @@ climate.sinope_climate_thermostat_name:
       if (attributes.heatLevel < 61) return '/local/heat-3.png';
       if (attributes.heatLevel < 81) return '/local/heat-4.png';
       return '/local/heat-5.png';
-      
+ ```  
  In configuration.yaml add this
- customize: !include customize.yaml
+```yaml
+customize: !include customize.yaml
+``` 
