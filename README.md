@@ -100,11 +100,11 @@ For each thermostat add this code in `customize.yaml`
 climate.neviweb_climate_thermostat_name:
   templates:
     entity_picture: >
-      if (attributes.heatLevel < 1) return '/local/heat-0.png';
-      if (attributes.heatLevel < 21) return '/local/heat-1.png';
-      if (attributes.heatLevel < 41) return '/local/heat-2.png';
-      if (attributes.heatLevel < 61) return '/local/heat-3.png';
-      if (attributes.heatLevel < 81) return '/local/heat-4.png';
+      if (attributes.heat_level < 1) return '/local/heat-0.png';
+      if (attributes.heat_level < 21) return '/local/heat-1.png';
+      if (attributes.heat_level < 41) return '/local/heat-2.png';
+      if (attributes.heat_level < 61) return '/local/heat-3.png';
+      if (attributes.heat_level < 81) return '/local/heat-4.png';
       return '/local/heat-5.png';
  ```  
  In `configuration.yaml` add this
