@@ -67,7 +67,7 @@ class NeviwebData:
         self.neviweb_client = NeviwebClient(username, password, network)
 
     # Need some refactoring here concerning the class used to transport data
-    # @Throttle(MIN_TIME_BETWEEN_UPDATES)
+    # @Throttle(SCAN_INTERVAL)
     # def update(self):
     #     """Get the latest data from pyneviweb."""
     #     self.neviweb_client.update()
