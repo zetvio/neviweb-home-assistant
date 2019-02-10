@@ -10,7 +10,8 @@ import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers import discovery
-from homeassistant.const import (CONF_USERNAME, CONF_PASSWORD)
+from homeassistant.const import (CONF_USERNAME, CONF_PASSWORD,
+    CONF_SCAN_INTERVAL)
 from homeassistant.util import Throttle
 
 # REQUIREMENTS = ['python-neviweb-api']
@@ -20,7 +21,7 @@ DATA_DOMAIN = 'data_' + DOMAIN
 CONF_NETWORK = 'network'
 _LOGGER = logging.getLogger(__name__)
 
-MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=900)
+SCAN_INTERVAL = timedelta(seconds=900)
 
 REQUESTS_TIMEOUT = 30
 HOST = "https://neviweb.com"
@@ -34,6 +35,8 @@ CONFIG_SCHEMA = vol.Schema({
         vol.Required(CONF_USERNAME): cv.string,
         vol.Required(CONF_PASSWORD): cv.string,
         vol.Optional(CONF_NETWORK): cv.string,
+        vol.Optional(CONF_SCAN_INTERVAL, default=SCAN_INTERVAL):
+            cv.time_period
     })
 }, extra=vol.ALLOW_EXTRA)
 
@@ -41,6 +44,10 @@ def setup(hass, hass_config):
     """Set up neviweb."""
     data = NeviwebData(hass_config[DOMAIN])
     hass.data[DATA_DOMAIN] = data
+
+    global SCAN_INTERVAL 
+    SCAN_INTERVAL = hass_config[DOMAIN].get(CONF_SCAN_INTERVAL)
+    _LOGGER.debug("Setting scan interval to: %s", SCAN_INTERVAL)
 
     discovery.load_platform(hass, 'climate', DOMAIN, {}, hass_config)
     discovery.load_platform(hass, 'light', DOMAIN, {}, hass_config)

@@ -12,6 +12,7 @@ import voluptuous as vol
 import time
 
 import custom_components.neviweb as neviweb
+from custom_components.neviweb import (SCAN_INTERVAL)
 from homeassistant.components.climate import (ClimateDevice, STATE_HEAT, 
     STATE_IDLE, STATE_AUTO, STATE_MANUAL, SUPPORT_TARGET_TEMPERATURE,
     SUPPORT_OPERATION_MODE, SUPPORT_AWAY_MODE, SUPPORT_ON_OFF, ATTR_TEMPERATURE,
@@ -26,8 +27,6 @@ SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE | SUPPORT_OPERATION_MODE |
     SUPPORT_AWAY_MODE | SUPPORT_ON_OFF)
 
 DEFAULT_NAME = "neviweb climate"
-
-SCAN_INTERVAL = timedelta(seconds=900)
 
 STATE_STANDBY = 'bypass'
 NEVIWEB_STATE_AWAY = 5

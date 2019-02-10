@@ -10,6 +10,7 @@ import voluptuous as vol
 import time
 
 import custom_components.neviweb as neviweb
+from custom_components.neviweb import (SCAN_INTERVAL)
 from homeassistant.components.switch import (SwitchDevice, 
     ATTR_TODAY_ENERGY_KWH, ATTR_CURRENT_POWER_W)
 from datetime import timedelta
@@ -18,8 +19,6 @@ from homeassistant.helpers.event import track_time_interval
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME = 'neviweb switch'
-
-SCAN_INTERVAL = timedelta(seconds=900)
 
 STATE_AUTO = 'auto'
 STATE_MANUAL = 'manual'

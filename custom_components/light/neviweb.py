@@ -11,6 +11,7 @@ import voluptuous as vol
 import time
 
 import custom_components.neviweb as neviweb
+from custom_components.neviweb import (SCAN_INTERVAL)
 from homeassistant.components.light import (Light, ATTR_BRIGHTNESS,
     ATTR_BRIGHTNESS_PCT, SUPPORT_BRIGHTNESS)
 from datetime import timedelta
@@ -18,8 +19,6 @@ from datetime import timedelta
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME = 'neviweb'
-
-SCAN_INTERVAL = timedelta(seconds=900)
 
 STATE_AUTO = 'auto'
 STATE_MANUAL = 'manual'
