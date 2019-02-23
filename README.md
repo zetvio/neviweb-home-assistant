@@ -1,4 +1,5 @@
 # Home Assistant Neviweb Custom Component
+# moving to a new file structure to follow HA 0.88 update
 
 Here is a custom component to suport [Neviweb](https://neviweb.com/) in [Home Assistant](http://www.home-assistant.io). Neviweb is a platform created by Sinopé Technologies to interact with their smart devices like thermostats, light switches/dimmers and load controllers. It also supports some devices made by [Ouellet](http://www.ouellet.com/en-ca/products/thermostats-and-controls/neviweb%C2%AE-wireless-communication-controls.aspx).
 
@@ -35,13 +36,11 @@ You need to connect your devices to a GT125 web gateway and add them in your Nev
     config/
       configuration.yaml
       custom_components/
-        climate/
-          neviweb.py
-        light/
-          neviweb.py
-        switch/
-          neviweb.py
-        neviweb.py
+        neviweb/
+          __init__.py
+          light.py
+          switch.py
+          climate.py
       ...
     ```
 
