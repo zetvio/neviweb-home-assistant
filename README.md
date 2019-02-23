@@ -28,7 +28,7 @@ You need to connect your devices to a GT125 web gateway and add them in your Nev
 
 ## Installation
 1. Download the zip file of this repository using the top right, green download button.
-1. Extract the zip file on your compouter, then copy the entire `custom_components` folder inside your Home Assistant `config` directory (where you can find your `configuration.yaml` file).
+1. Extract the zip file on your computer, then copy the entire `custom_components` folder inside your Home Assistant `config` directory (where you can find your `configuration.yaml` file).
 1. Your config directory should look like this:
 
     ```
