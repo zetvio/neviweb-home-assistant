@@ -35,7 +35,8 @@ NEVIWEB_TO_HA_STATE = {
     0: STATE_OFF,
     2: STATE_MANUAL,
     3: STATE_AUTO,
-    131: STATE_STANDBY
+    131: STATE_STANDBY,
+    133: STATE_STANDBY
 }
 HA_TO_NEVIWEB_STATE = {
     value: key for key, value in NEVIWEB_TO_HA_STATE.items()
@@ -91,7 +92,8 @@ class NeviwebThermostat(ClimateDevice):
                 self._cur_temp = float(device_data["temperature"])
                 self._target_temp = float(device_data["setpoint"]) if \
                     device_data["setpoint"] is not None else 0.0
-                self._heat_level = device_data["heatLevel"]
+                self._heat_level = device_data["heatLevel"] if \
+                    device_data["heatLevel"] is not None else 0
                 self._alarm = device_data["alarm"]
                 self._rssi = device_data["rssi"]
                 if device_data["mode"] != NEVIWEB_STATE_AWAY:
@@ -216,7 +218,7 @@ class NeviwebThermostat(ClimateDevice):
 
     def turn_away_mode_off(self):
         """Turn away mode off."""
-        if self._operation_mode == 131:
+        if self._operation_mode >= 131:
             self._operation_mode = 3 
         self._client.set_mode(self._id, self._operation_mode)
         self._is_away = False
