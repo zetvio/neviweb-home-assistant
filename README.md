@@ -62,7 +62,7 @@ neviweb:
 | **username** | yes |  | Your email address used to log in Neviweb.
 | **password** | yes |  | Your Neviweb password.
 | **network** | no | 1st network found | The name of the network you want to control.
-| **scan_interval** | no | 900 | The number of seconds between access to Neviweb to update device state. Sinopé asked for a minimum of 5 minutes between polling now so you can reduce scan_intervall to 300.
+| **scan_interval** | no | 900 | The number of seconds between access to Neviweb to update device state. Sinopé asked for a minimum of 5 minutes between polling now so you can reduce scan_interval to 300.
 
 ## Troubleshooting
 If you get a stack trace related to a Neviweb component in your `home-assistant.log` file, you can file an issue in this repository.
@@ -81,9 +81,6 @@ Add thoses lines to your `configuration.yaml` file
      default: warning
      logs:
        custom_components.neviweb: debug
-       custom_components.switch.neviweb: debug
-       custom_components.climate.neviweb: debug
-       custom_components.light.neviweb: debug
    ```
 This will set default log level to warning for all your components, except for Neviweb which will display more detailed messages.
 
