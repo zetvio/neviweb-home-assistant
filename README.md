@@ -1,4 +1,5 @@
 # Home Assistant Neviweb Custom Component
+# moving to a new file structure to follow HA 0.88 update
 
 Here is a custom component to suport [Neviweb](https://neviweb.com/) in [Home Assistant](http://www.home-assistant.io). Neviweb is a platform created by Sinopé Technologies to interact with their smart devices like thermostats, light switches/dimmers and load controllers. It also supports some devices made by [Ouellet](http://www.ouellet.com/en-ca/products/thermostats-and-controls/neviweb%C2%AE-wireless-communication-controls.aspx).
 
@@ -35,13 +36,11 @@ You need to connect your devices to a GT125 web gateway and add them in your Nev
     config/
       configuration.yaml
       custom_components/
-        climate/
-          neviweb.py
-        light/
-          neviweb.py
-        switch/
-          neviweb.py
-        neviweb.py
+        neviweb/
+          __init__.py
+          light.py
+          switch.py
+          climate.py
       ...
     ```
 
@@ -93,7 +92,7 @@ Install Custom UI and add the following in your code:
 
 Icons for heat level: create folder www in the root folder .homeassistant/www
 copy the six icons there. You can find them under local/www
-feel free to improve my icons and let me know.
+feel free to improve my icons and let me know. (See icon_view2.png)
 
 For each thermostat add this code in `customize.yaml`
 ```yaml
