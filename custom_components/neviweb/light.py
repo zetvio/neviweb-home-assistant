@@ -11,7 +11,7 @@ import voluptuous as vol
 import time
 
 import custom_components.neviweb as neviweb
-from custom_components.neviweb import (SCAN_INTERVAL)
+from . import (SCAN_INTERVAL)
 from homeassistant.components.light import (Light, ATTR_BRIGHTNESS,
     ATTR_BRIGHTNESS_PCT, SUPPORT_BRIGHTNESS)
 from datetime import timedelta
