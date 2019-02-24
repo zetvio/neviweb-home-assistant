@@ -12,7 +12,7 @@ import voluptuous as vol
 import time
 
 import custom_components.neviweb as neviweb
-from custom_components.neviweb import (SCAN_INTERVAL)
+from . import (SCAN_INTERVAL)
 from homeassistant.components.climate import (ClimateDevice, STATE_HEAT, 
     STATE_IDLE, STATE_AUTO, STATE_MANUAL, SUPPORT_TARGET_TEMPERATURE,
     SUPPORT_OPERATION_MODE, SUPPORT_AWAY_MODE, SUPPORT_ON_OFF, ATTR_TEMPERATURE,
