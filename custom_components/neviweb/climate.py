@@ -35,6 +35,7 @@ NEVIWEB_TO_HA_STATE = {
     0: STATE_OFF,
     2: STATE_MANUAL,
     3: STATE_AUTO,
+    129: STATE_STANDBY,
     131: STATE_STANDBY,
     133: STATE_STANDBY
 }
@@ -218,7 +219,7 @@ class NeviwebThermostat(ClimateDevice):
 
     def turn_away_mode_off(self):
         """Turn away mode off."""
-        if self._operation_mode >= 131:
+        if self._operation_mode >= 129:
             self._operation_mode = 3 
         self._client.set_mode(self._id, self._operation_mode)
         self._is_away = False
