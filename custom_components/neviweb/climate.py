@@ -135,7 +135,8 @@ class NeviwebThermostat(ClimateDevice):
                 'heat_level': self._heat_level,
                 'rssi': self._rssi,
                 'wattage': self._wattage,
-                'wattage_override': self._wattage_override}
+                'wattage_override': self._wattage_override,
+                'id': self._id}
 
     @property
     def supported_features(self):
