@@ -110,7 +110,8 @@ class NeviwebSwitch(SwitchDevice):
         return {'alarm': self._alarm,
                 'operation_mode': self.operation_mode,
                 'rssi': self._rssi,
-                'wattage': self._wattage}
+                'wattage': self._wattage,
+                'id': self._id}
        
     @property
     def operation_mode(self):

@@ -149,7 +149,8 @@ class NeviwebLight(Light):
         data.update({'alarm': self._alarm,
                      'operation_mode': self.operation_mode,
                      'rssi': self._rssi,
-                     'wattage_override': self._wattage_override})
+                     'wattage_override': self._wattage_override,
+                     'id': self._id})
         return data
  
     @property
