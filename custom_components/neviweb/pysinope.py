@@ -116,7 +116,7 @@ def get_device_id():
       if binascii.hexlify(sock.recv(1024)) == b'55000c001101000000030000032000009c': #login ok
         print('Please push the two button on the device you want to identify')
         datarec = sock.recv(1024)
-        id = binascii.hexlify(datarec)[14:22]
+        id = bytearray(datarec).hex()[14:22]
       return id
     finally:
       sock.close()
