@@ -79,7 +79,19 @@ def set_temperature(): #TODO temperature is a 16bit sign integer where 1 = 0.01 
     return temperature  
   
 def get_temperature(data):
-    return temperature  
+    sequence = data[12:]
+    laseq = sequence[:8]
+    print('sequence = '+laseq)
+    dev = data[26:]
+    deviceID = dev[:8]
+    print('device ID = '+deviceID)
+    tc = data[46:]
+    tc2 = tc[:2]
+    tc3 = data[48:]
+    tc4 = tc3[:2]
+    latemp = tc4+tc2
+    print(float.fromhex(latemp)*0.01)
+    return float.fromhex(latemp)*0.01  
   
 def send_request(data):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -223,7 +235,7 @@ print('Sending app data request')
 #print(binascii.hexlify(send_request(data_read_request(data_read_command,device_id,data_heat_level))))
 
 # read room temperature
-#print(binascii.hexlify(send_request(data_read_request(data_read_command,device_id,data_temperature))))
+#get_temperature(bytearray(send_request(data_read_request(data_read_command,device_id,data_temperature))).hex())
 
 ### example data report request sent to all devices
 # broadcast local time
