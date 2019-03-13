@@ -33,7 +33,7 @@ sinope:
 ## First run
 
 To setup this custom_component, login to your Rpi and cd to the directory where you have copied the file.
-Execute the command: python3 setup.py. This is required to ket the Api_Key and the deviceID for each Sinopé devices connected to your GT125. On first run, setup.py send a ping request to the GT125 and it will ask you to push de WEB button on the GT125. 
+Execute the command: python3 setup.py. This is required to get the Api_Key and the deviceID for each Sinopé devices connected to your GT125. On first run, setup.py send a ping request to the GT125 and it will ask you to push de WEB button on the GT125. 
 This will give you the Api Key that you need to write on line 13, 
 ```yaml
 Api_Key = "xxxxxxxxxxxxxxxx" 
@@ -48,7 +48,7 @@ Because all command are sent in binary with following spec:
 - CRC 8
 
 Enter the GT125 ID, written on the back, in a specific maner: 
-ex: if ID = 0123 4567 89AB CDEF then write EFCDAB8967452301 at line 20 for Api_ID = xxxx (will be changed later)
+ex: if ID = 0123 4567 89AB CDEF then write EFCDAB8967452301 at line 16 for Api_ID = xxxx (will be changed later)
 
 - You must add your GT125 IP address on line 11
 ```yaml
