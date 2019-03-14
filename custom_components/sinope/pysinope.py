@@ -70,6 +70,17 @@ def set_time():
     h = '10' #hours converted to bytes
     time = '03'+s+m+h #xxssmmhh  24hr, 16:09:00 pm, xx = lenght of data time = 03
     return time
+
+def get_heat_level(data):
+    sequence = data[12:]
+    laseq = sequence[:8]
+    print('sequence = '+laseq)
+    dev = data[26:]
+    deviceID = dev[:8]
+    print('device ID = '+deviceID)
+    tc1 = data[46:]
+    tc2 = tc1[:2]
+    return int(float.fromhex(tc2))
   
 def set_temperature(temp_celcius): #temperature is always in celcius sent as 0.01oC unit. 21.5oC sent as 2150
     temp = int(temp_celcius*100)
@@ -229,7 +240,7 @@ print('Sending app data request')
 ### example data read request uncoment the one you want to test
 
 # read thermostat heat level
-#print(binascii.hexlify(send_request(data_read_request(data_read_command,device_id,data_heat_level))))
+#print(get_heat_level(bytearray(send_request(data_read_request(data_read_command,device_id,data_heat_level))).hex()))
 
 # read room temperature
 #print(get_temperature(bytearray(send_request(data_read_request(data_read_command,device_id,data_temperature))).hex()))
