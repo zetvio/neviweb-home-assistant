@@ -172,8 +172,8 @@ def get_seq(seq):
     return str(seq)  
   
 def count_data(data):
-    print(bytes.fromhex(data))
-    return bytes.fromhex(data)
+    size = int(len(data)/2)
+    return bytearray(struct.pack('<i', size)[:2]).hex() 
   
 def data_read_request(command,unit_id,data_app): # 21310500 ou FFFFFFFF
     head = "5500"
@@ -183,7 +183,7 @@ def data_read_request(command,unit_id,data_app): # 21310500 ou FFFFFFFF
     data_res = "000000000000"
     data_dest_id = unit_id
     app_data_size = "04"
-    size = "1600"
+    size = count_data(command+data_seq+data_type+data_res+unit_id+app_data_size+data_app)
     data_frame = head+size+command+data_seq+data_type+data_res+unit_id+app_data_size+data_app
     print('data frame = "%s"' % data_frame)
     read_crc = bytes.fromhex(crc_count(bytes.fromhex(data_frame)))
@@ -196,8 +196,8 @@ def data_report_request(command,unit_id,data_app,data): # data = size+time or si
     data_type = "00"
     data_res = "000000000000"
     data_dest_id = unit_id
-    app_data_size = "08"
-    size = "1A00"
+    app_data_size = count_data(data_app+data)
+    size = count_data(command+data_seq+data_type+data_res+unit_id+app_data_size+data_app+data)
     data_frame = head+size+command+data_seq+data_type+data_res+unit_id+app_data_size+data_app+data
     print('data frame = "%s"' % data_frame)
     read_crc = bytes.fromhex(crc_count(bytes.fromhex(data_frame)))
@@ -210,8 +210,8 @@ def data_write_request(command,unit_id,data_app,data): # data = size+data to sen
     data_type = "00"
     data_res = "000000000000"
     data_dest_id = unit_id
-    app_data_size = "07"
-    size = "1900"
+    app_data_size = count_data(data_app+data)
+    size = count_data(command+data_seq+data_type+data_res+unit_id+app_data_size+data_app+data)
     data_frame = head+size+command+data_seq+data_type+data_res+unit_id+app_data_size+data_app+data
     print('data frame = "%s"' % data_frame)
     read_crc = bytes.fromhex(crc_count(bytes.fromhex(data_frame)))
