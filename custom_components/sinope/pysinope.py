@@ -1,5 +1,4 @@
-# you need to install crc8 module -> pip3 install crc8
-
+import struct
 import binascii
 import socket
 import sys
@@ -72,11 +71,9 @@ def set_time():
     time = '03'+s+m+h #xxssmmhh  24hr, 16:09:00 pm, xx = lenght of data time = 03
     return time
   
-def get_time(data):
-    return time
-  
-def set_temperature(): #TODO temperature is a 16bit sign integer where 1 = 0.01 oC. ex. 21.5oC = 2150 converted to bytes
-    return temperature  
+def set_temperature(temp_celcius): #temperature is always in celcius sent as 0.01oC unit. 21.5oC sent as 2150
+    temp = int(temp_celcius*100)
+    return "02"+bytearray(struct.pack('<i', temp)[:2]).hex()
   
 def get_temperature(data):
     sequence = data[12:]
@@ -85,12 +82,11 @@ def get_temperature(data):
     dev = data[26:]
     deviceID = dev[:8]
     print('device ID = '+deviceID)
-    tc = data[46:]
-    tc2 = tc[:2]
+    tc1 = data[46:]
+    tc2 = tc1[:2]
     tc3 = data[48:]
     tc4 = tc3[:2]
     latemp = tc4+tc2
-    print(float.fromhex(latemp)*0.01)
     return float.fromhex(latemp)*0.01  
   
 def send_request(data):
@@ -105,6 +101,7 @@ def send_request(data):
          reply = sock.recv(1024)
          print('answer = "%s"' % binascii.hexlify(reply))
          if crc_check(reply):  # receive acknoledge, check status and if we will receive more data
+             seq_num = binascii.hexlify(reply)[12:20] #sequence id to link response to the correct request
              status = binascii.hexlify(reply)[20:22]
              more = binascii.hexlify(reply)[24:26] #check if we will receive other data
              if status == b'00': # request status = ok for read and write, we go on (read=00, report=01, write=00)
@@ -126,7 +123,7 @@ def get_device_id():
     try:
       sock.sendall(login_request())
       if binascii.hexlify(sock.recv(1024)) == b'55000c001101000000030000032000009c': #login ok
-        print('Please push the two button on the device you want to identify')
+        print('Please push the two buttons on the device you want to identify')
         datarec = sock.recv(1024)
         id = bytearray(datarec).hex()[14:22]
       return id
@@ -213,8 +210,8 @@ def data_write_request(command,unit_id,data_app,data): # data = size+data to sen
     data_type = "00"
     data_res = "000000000000"
     data_dest_id = unit_id
-    app_data_size = "06"
-    size = "1800"
+    app_data_size = "07"
+    size = "1900"
     data_frame = head+size+command+data_seq+data_type+data_res+unit_id+app_data_size+data_app+data
     print('data frame = "%s"' % data_frame)
     read_crc = bytes.fromhex(crc_count(bytes.fromhex(data_frame)))
@@ -235,7 +232,7 @@ print('Sending app data request')
 #print(binascii.hexlify(send_request(data_read_request(data_read_command,device_id,data_heat_level))))
 
 # read room temperature
-#get_temperature(bytearray(send_request(data_read_request(data_read_command,device_id,data_temperature))).hex())
+#print(get_temperature(bytearray(send_request(data_read_request(data_read_command,device_id,data_temperature))).hex()))
 
 ### example data report request sent to all devices
 # broadcast local time
@@ -244,6 +241,8 @@ print('Sending app data request')
 ### example data write request
 # set thermostat to manual mode
 #print(binascii.hexlify(send_request(data_write_request(data_write_command,device_id,data_mode,manual_mode))))
+### send setpoint temperature at 21.5oC
+#print(binascii.hexlify(send_request(data_write_request(data_write_command,device_id,data_setpoint,set_temperature(21.50)))))
 
 # finding device ID, one by one
 #print(get_device_id())
