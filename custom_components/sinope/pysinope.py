@@ -52,6 +52,12 @@ data_date = "01060000"
 # thermostat data write
 data_early_start = "60080000"  #0=disabled, 1=enabled
 
+# light and dimmer
+data_light_intensity = "00100000"  # 0 to 100, off to on, 101 = last level
+data_light_mode = "09100000"  # 1=manual, 2=auto, 3=random or away, 130= bypass auto
+data_light_timer = "000F0000"   # time in minutes the light will stay on 0--255
+data_light_event = "010F0000"  #0= no event sent, 1=timer active, 2= event sent for turn_on or turn_off
+
 def crc_count(bufer):
         hash = crc8.crc8()
         hash.update(bufer)
@@ -147,10 +153,87 @@ def get_is_away(data):
     tc2 = tc1[:2]
     return int(float.fromhex(tc2))  
 
-def set_mode(mode): #0=off,1=freeze,2=manual,3=auto,5=away,129=bypass freeze, 131=bypass auto, 133=bypass away
+def set_mode(mode): #0=off,1=freeze,2=manual,3=auto,5=away
     return "01"+bytearray(struct.pack('<i', mode)[:1]).hex()
 
 def get_mode(data):
+    sequence = data[12:]
+    laseq = sequence[:8]
+    print('sequence = '+laseq)
+    dev = data[26:]
+    deviceID = dev[:8]
+    print('device ID = '+deviceID)
+    tc1 = data[46:]
+    tc2 = tc1[:2]
+    return int(float.fromhex(tc2))
+
+def set_intensity(num):
+    return "01"+bytearray(struct.pack('<i', num)[:1]).hex()
+
+def get_intensity(data):
+    sequence = data[12:]
+    laseq = sequence[:8]
+    print('sequence = '+laseq)
+    dev = data[26:]
+    deviceID = dev[:8]
+    print('device ID = '+deviceID)
+    tc1 = data[46:]
+    tc2 = tc1[:2]
+    return int(float.fromhex(tc2))
+
+def set_event_on(num):
+    b0 = "10"
+    b1 = "00000000"
+    b3 = "000000000000000000"
+    if num == 1:
+        b2 = "020000" #event on = on
+    elif num == 2:  
+        b2 = "000200" # event off = on
+    else:
+        b2 = "000002" # event dimmer = on       
+    return b0+b1+b2+b3
+
+def set_timer_on(num):
+    b0 = "10"
+    b1 = "00000000"
+    b3 = "000000000000000000"
+    if num == 1:
+        b2 = "010000" #event on = timer start
+    elif num == 2:
+        b2 = "000100" # event off = timer start
+    else:
+        b2 = "000001" # event dimmer = timer start  
+    return b0+b1+b2+b3
+
+def set_event_off(num):
+    b0 = "10"
+    b1 = "00000000"
+    b3 = "000000000000000000"
+    if num == 1:
+        b2 = "000000" #event = off
+    elif num == 2:
+        b2 = "000000" # timer on
+    else:
+        b2 = "000000" # event = on
+    return b0+b1+b2+b3
+
+def get_event(data):
+    print(data)
+    sequence = data[12:]
+    laseq = sequence[:8]
+    print('sequence = '+laseq)
+    dev = data[26:]
+    deviceID = dev[:8]
+    print('device ID = '+deviceID)
+    tc1 = data[54:]
+    tc2 = tc1[:6]
+    return  tc2 #int(float.fromhex(tc2))
+
+def set_timer_lenght(num): # 0=desabled, 1 to 255 lenght on
+    return "01"+bytearray(struct.pack('<i', num)[:1]).hex()
+  
+def get_timer_lenght(data): # 0=desabled, 1 to 255 lenght on
+    print(data)
     sequence = data[12:]
     laseq = sequence[:8]
     print('sequence = '+laseq)
