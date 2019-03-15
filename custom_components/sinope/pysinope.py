@@ -20,6 +20,8 @@ Api_ID = "xxxxxxxxxxxxxxxx"
 ###
 
 PORT = 4550
+city_name = 'Montreal'
+tz_NY = pytz.timezone('America/New_York')
 #sequential number to identify the current request. Could be any unique number that is different at each request
 # could we use timestamp value ?
 seq_num = 12345678 
@@ -65,8 +67,21 @@ def crc_check(bufer):
         return None
 
 def set_time():
-    tz_NY = pytz.timezone('America/New_York')
     now = datetime.now(tz_NY)
+    s = bytearray(struct.pack('<i', int(now.strftime("%S")))[:1]).hex() #second converted to bytes
+    m = bytearray(struct.pack('<i', int(now.strftime("%M")))[:1]).hex() #minutes converted to bytes
+    h = bytearray(struct.pack('<i', int(now.strftime("%H")))[:1]).hex() #hours converted to bytes
+    time = '03'+s+m+h #xxssmmhh  24hr, 16:09:00 pm, xx = lenght of data time = 03
+    return time
+
+def set_sun_time(period): # period = sunrise or sunset
+    a = Astral()
+    city = a[city_name]
+    sun = city.sun(date=datetime.now(tz_NY), local=True)
+    if period == "sunrise":
+       now = sun['sunrise']
+    else:
+       now = sun['sunset']
     s = bytearray(struct.pack('<i', int(now.strftime("%S")))[:1]).hex() #second converted to bytes
     m = bytearray(struct.pack('<i', int(now.strftime("%M")))[:1]).hex() #minutes converted to bytes
     h = bytearray(struct.pack('<i', int(now.strftime("%H")))[:1]).hex() #hours converted to bytes
