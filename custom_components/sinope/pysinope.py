@@ -75,7 +75,7 @@ def set_date():
     d = bytearray(struct.pack('<i', int(now.strftime("%d")))[:1]).hex() #day of month converted to bytes
     m = bytearray(struct.pack('<i', int(now.strftime("%m")))[:1]).hex() #month converted to bytes
     y = bytearray(struct.pack('<i', int(now.strftime("%y")))[:1]).hex() #year converted to bytes
-    date = '04'+w+d+m+y #xxssmmhh  24hr, 16:09:00 pm, xx = lenght of data time = 03
+    date = '04'+w+d+m+y #xxwwddmmyy,  xx = lenght of data date = 04
     return date
 
 def set_time():
