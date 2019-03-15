@@ -58,6 +58,14 @@ data_light_mode = "09100000"  # 1=manual, 2=auto, 3=random or away, 130= bypass 
 data_light_timer = "000F0000"   # time in minutes the light will stay on 0--255
 data_light_event = "010F0000"  #0= no event sent, 1=timer active, 2= event sent for turn_on or turn_off
 
+# Power control
+data_power_intensity = "00100000"  # 0 to 100, off to on
+data_power_mode = "09100000"  # 1=manual, 2=auto, 3=random or away, 130= bypass auto
+data_power_connected = "000D0000" # actual load connected to the device
+data_power_load = "020D0000" # load used by the device
+data_power_event = "010F0000"  #0 = no event sent, 1 = timer active, 2 = event sent for turn_on or turn_off
+data_power_timer = "000F0000" # time in minutes the power will stay on 0--255
+
 def crc_count(bufer):
         hash = crc8.crc8()
         hash.update(bufer)
@@ -180,6 +188,34 @@ def get_intensity(data):
     tc1 = data[46:]
     tc2 = tc1[:2]
     return int(float.fromhex(tc2))
+
+def get_power_connected(data): #get power in watt connected to the device
+    sequence = data[12:]
+    laseq = sequence[:8]
+    print('sequence = '+laseq)
+    dev = data[26:]
+    deviceID = dev[:8]
+    print('device ID = '+deviceID)
+    tc1 = data[46:]
+    tc2 = tc1[:2]
+    tc3 = data[48:]
+    tc4 = tc3[:2]
+    lepower = tc4+tc2
+    return int(float.fromhex(lepower))
+  
+def get_power_load(data): # get power in watt use by the device
+    sequence = data[12:]
+    laseq = sequence[:8]
+    print('sequence = '+laseq)
+    dev = data[26:]
+    deviceID = dev[:8]
+    print('device ID = '+deviceID)
+    tc1 = data[46:]
+    tc2 = tc1[:2]
+    tc3 = data[48:]
+    tc4 = tc3[:2]
+    lepower = tc4+tc2
+    return int(float.fromhex(lepower))
 
 def set_event_on(num): #1 = light on, 2 = light off, 3 = intensity changed 
     b0 = "10"
