@@ -3,8 +3,8 @@ import binascii
 import socket
 import sys
 import crc8
-import time
-import datetime
+from datetime import datetime
+import pytz
 
 class SinopeError(Exception):
     """Generic error of Sinope unit."""
@@ -65,9 +65,11 @@ def crc_check(bufer):
         return None
 
 def set_time():
-    s = '00' #second converted to bytes
-    m = '09' #minutes converted to bytes
-    h = '10' #hours converted to bytes
+    tz_NY = pytz.timezone('America/New_York')
+    now = datetime.now(tz_NY)
+    s = bytearray(struct.pack('<i', int(now.strftime("%S")))[:1]).hex() #second converted to bytes
+    m = bytearray(struct.pack('<i', int(now.strftime("%M")))[:1]).hex() #minutes converted to bytes
+    h = bytearray(struct.pack('<i', int(now.strftime("%H")))[:1]).hex() #hours converted to bytes
     time = '03'+s+m+h #xxssmmhh  24hr, 16:09:00 pm, xx = lenght of data time = 03
     return time
 
