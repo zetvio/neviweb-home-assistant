@@ -35,6 +35,7 @@ sinope:
 To setup this custom_component, login to your Rpi and cd to the directory where you have copied the file.
 - Edit the file setup.py to add your GT125 IP address at the line 8.
 - Add your device Api_ID, written on the back of your GT125, on line 13. (see how below) 
+
 Execute the command: python3 setup.py. This is required to get the Api_Key and the deviceID for each Sinopé devices connected to your GT125. On first run, setup.py send a ping request to the GT125 and it will ask you to push de WEB button on the GT125. 
 This will give you the Api Key that you need to write on line 10, 
 ```yaml
