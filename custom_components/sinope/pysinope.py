@@ -181,7 +181,7 @@ def get_intensity(data):
     tc2 = tc1[:2]
     return int(float.fromhex(tc2))
 
-def set_event_on(num):
+def set_event_on(num): #1 = light on, 2 = light off, 3 = intensity changed 
     b0 = "10"
     b1 = "00000000"
     b3 = "000000000000000000"
@@ -193,7 +193,7 @@ def set_event_on(num):
         b2 = "000002" # event dimmer = on       
     return b0+b1+b2+b3
 
-def set_timer_on(num):
+def set_timer_on(num): #1 = light on, 2 = light off, 3 = intensity changed 
     b0 = "10"
     b1 = "00000000"
     b3 = "000000000000000000"
@@ -205,7 +205,7 @@ def set_timer_on(num):
         b2 = "000001" # event dimmer = timer start  
     return b0+b1+b2+b3
 
-def set_event_off(num):
+def set_event_off(num): #1 = light on, 2 = light off, 3 = intensity changed 
     b0 = "10"
     b1 = "00000000"
     b3 = "000000000000000000"
