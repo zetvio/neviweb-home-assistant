@@ -64,6 +64,12 @@ def crc_check(bufer):
           return "00"
         return None
     
+def get_dst(): # daylight saving time is on or not
+    localtime = datetime.now(tz)
+    if localtime.dst():
+      return 128
+    return 0
+
 def set_date():
     now = datetime.now(tz)
     day = int(now.strftime("%w"))-1
@@ -80,7 +86,7 @@ def set_time():
     now = datetime.now(tz)
     s = bytearray(struct.pack('<i', int(now.strftime("%S")))[:1]).hex() #second converted to bytes
     m = bytearray(struct.pack('<i', int(now.strftime("%M")))[:1]).hex() #minutes converted to bytes
-    h = bytearray(struct.pack('<i', int(now.strftime("%H")))[:1]).hex() #hours converted to bytes
+    h = bytearray(struct.pack('<i', int(now.strftime("%H"))+get_dst())[:1]).hex() #hours converted to bytes
     time = '03'+s+m+h #xxssmmhh  24hr, 16:09:00 pm, xx = lenght of data time = 03
     return time
 
@@ -94,7 +100,7 @@ def set_sun_time(period): # period = sunrise or sunset
        now = sun['sunset']
     s = bytearray(struct.pack('<i', int(now.strftime("%S")))[:1]).hex() #second converted to bytes
     m = bytearray(struct.pack('<i', int(now.strftime("%M")))[:1]).hex() #minutes converted to bytes
-    h = bytearray(struct.pack('<i', int(now.strftime("%H")))[:1]).hex() #hours converted to bytes
+    h = bytearray(struct.pack('<i', int(now.strftime("%H"))+get_dst())[:1]).hex() #hours converted to bytes
     time = '03'+s+m+h #xxssmmhh  24hr, 16:09:00 pm, xx = lenght of data time = 03
     return time
 
