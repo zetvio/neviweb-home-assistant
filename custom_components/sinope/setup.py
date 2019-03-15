@@ -1,11 +1,8 @@
 # you need to install crc8 module -> pip3 install crc8
-
 import binascii
 import socket
 import sys
 import crc8
-import time
-import datetime
 
 ### data that will come from HA
 SERVER = 'XXX.XXX.XXX.XXX' #ip address of the GT125
@@ -107,6 +104,7 @@ if binascii.hexlify(send_ping_request(ping_request())) == b'55000200130021':
       print("push the GT125 <web> button")
       print('Api key : ',retreive_key(binascii.hexlify(send_request(key_request(Api_ID)))))
       print('Copy this value in the Api_Key, line 13, replacing the <None> value')
+      print('and copy it to your sinope section in your configuration.yaml file, Api_Key: ')
     else:
       # finding device ID, one by one
       print('Device ID = ', get_device_id())
