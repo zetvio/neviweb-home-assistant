@@ -38,10 +38,10 @@ device_id = "2e320100" # receive from GT125 device link report. Only for test pu
 
 #thermostat data read
 data_heat_level = "20020000" #0 to 100%
-data_mode = "11020000" 
+data_mode = "11020000" # off, manual, auto, bypass, away...
 data_temperature = "03020000" #room temperature
-data_setpoint = "08020000"
-data_away = "00070000"
+data_setpoint = "08020000" #thermostat set point
+data_away = "00070000" #set device mode to away, 0=none, 2=away
 
 # thermostat data report
 data_outdoor_temperature = "04020000" #to show on thermostat, must be sent at least every hour
@@ -128,7 +128,18 @@ def get_temperature(data):
     tc4 = tc3[:2]
     latemp = tc4+tc2
     return float.fromhex(latemp)*0.01  
-  
+
+def get_mode(data):
+    sequence = data[12:]
+    laseq = sequence[:8]
+    print('sequence = '+laseq)
+    dev = data[26:]
+    deviceID = dev[:8]
+    print('device ID = '+deviceID)
+    tc1 = data[46:]
+    tc2 = tc1[:2]
+    return int(float.fromhex(tc2))
+
 def send_request(data):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_address = (SERVER, PORT)
