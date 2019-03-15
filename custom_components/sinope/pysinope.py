@@ -126,6 +126,20 @@ def get_temperature(data):
     latemp = tc4+tc2
     return float.fromhex(latemp)*0.01  
 
+def set_is_away(away): #0=home,2=away
+    return "01"+bytearray(struct.pack('<i', away)[:1]).hex()
+  
+def get_is_away(data):
+    sequence = data[12:]
+    laseq = sequence[:8]
+    print('sequence = '+laseq)
+    dev = data[26:]
+    deviceID = dev[:8]
+    print('device ID = '+deviceID)
+    tc1 = data[46:]
+    tc2 = tc1[:2]
+    return int(float.fromhex(tc2))  
+
 def set_mode(mode): #0=off,1=freeze,2=manual,3=auto,5=away,129=bypass freeze, 131=bypass auto, 133=bypass away
     return "01"+bytearray(struct.pack('<i', mode)[:1]).hex()
 
@@ -224,7 +238,11 @@ def get_seq(seq):
   
 def count_data(data):
     size = int(len(data)/2)
-    return bytearray(struct.pack('<i', size)[:2]).hex() 
+    return bytearray(struct.pack('<i', size)[:1]).hex() 
+
+def count_data_frame(data):
+    size = int(len(data)/2)
+    return bytearray(struct.pack('<i', size)[:2]).hex()
   
 def data_read_request(command,unit_id,data_app): # 21310500 ou FFFFFFFF
     head = "5500"
@@ -234,7 +252,7 @@ def data_read_request(command,unit_id,data_app): # 21310500 ou FFFFFFFF
     data_res = "000000000000"
     data_dest_id = unit_id
     app_data_size = "04"
-    size = count_data(command+data_seq+data_type+data_res+unit_id+app_data_size+data_app)
+    size = count_data_frame(command+data_seq+data_type+data_res+unit_id+app_data_size+data_app)
     data_frame = head+size+command+data_seq+data_type+data_res+unit_id+app_data_size+data_app
     print('data frame = "%s"' % data_frame)
     read_crc = bytes.fromhex(crc_count(bytes.fromhex(data_frame)))
@@ -248,7 +266,7 @@ def data_report_request(command,unit_id,data_app,data): # data = size+time or si
     data_res = "000000000000"
     data_dest_id = unit_id
     app_data_size = count_data(data_app+data)
-    size = count_data(command+data_seq+data_type+data_res+unit_id+app_data_size+data_app+data)
+    size = count_data_frame(command+data_seq+data_type+data_res+unit_id+app_data_size+data_app+data)
     data_frame = head+size+command+data_seq+data_type+data_res+unit_id+app_data_size+data_app+data
     print('data frame = "%s"' % data_frame)
     read_crc = bytes.fromhex(crc_count(bytes.fromhex(data_frame)))
@@ -262,7 +280,7 @@ def data_write_request(command,unit_id,data_app,data): # data = size+data to sen
     data_res = "000000000000"
     data_dest_id = unit_id
     app_data_size = count_data(data_app+data)
-    size = count_data(command+data_seq+data_type+data_res+unit_id+app_data_size+data_app+data)
+    size = count_data_frame(command+data_seq+data_type+data_res+unit_id+app_data_size+data_app+data)
     data_frame = head+size+command+data_seq+data_type+data_res+unit_id+app_data_size+data_app+data
     print('data frame = "%s"' % data_frame)
     read_crc = bytes.fromhex(crc_count(bytes.fromhex(data_frame)))
@@ -291,10 +309,6 @@ print('Sending app data request')
 
 ### example data write request
 # set thermostat to manual mode
-#print(binascii.hexlify(send_request(data_write_request(data_write_command,device_id,data_mode,manual_mode))))
+#print(binascii.hexlify(send_request(data_write_request(data_write_command,device_id,data_mode,set_mode(2)))))
 ### send setpoint temperature at 21.5oC
 #print(binascii.hexlify(send_request(data_write_request(data_write_command,device_id,data_setpoint,set_temperature(21.50)))))
-
-# finding device ID, one by one
-#print(get_device_id())
-#print('repeat program for each device')
