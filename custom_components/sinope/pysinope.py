@@ -50,9 +50,6 @@ data_date = "01060000"
 
 # thermostat data write
 data_early_start = "60080000"  #0=disabled, 1=enabled
-manual_mode = "0102" #include the size bytes
-auto_mode = "0103" #include the size bytes
-off_mode = "0100" #include the size bytes
 
 def crc_count(bufer):
         hash = crc8.crc8()
@@ -128,6 +125,9 @@ def get_temperature(data):
     tc4 = tc3[:2]
     latemp = tc4+tc2
     return float.fromhex(latemp)*0.01  
+
+def set_mode(mode): #0=off,1=freeze,2=manual,3=auto,5=away,129=bypass freeze, 131=bypass auto, 133=bypass away
+    return "01"+bytearray(struct.pack('<i', mode)[:1]).hex()
 
 def get_mode(data):
     sequence = data[12:]
