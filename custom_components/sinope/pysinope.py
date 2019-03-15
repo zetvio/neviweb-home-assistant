@@ -5,6 +5,7 @@ import sys
 import crc8
 from datetime import datetime
 import pytz
+from astral import Astral
 
 class SinopeError(Exception):
     """Generic error of Sinope unit."""
@@ -33,7 +34,7 @@ data_report_command = "4202"
 data_write_command = "4402"
 
 # device identification
-all_unit = "FFFFFFFF" #for data_report_command only
+all_unit = "FFFFFFFF" #for data_report_command only, broadcasted to all devices
 device_id = "2e320100" # receive from GT125 device link report. Only for test purpose. Will be sent by HA
 
 #thermostat data read
