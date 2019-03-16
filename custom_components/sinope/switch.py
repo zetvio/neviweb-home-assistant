@@ -1,5 +1,5 @@
 """
-Support for Neviweb switch.
+Support for Sinope switch.
 type 120 = load controller device, RM3250RF and RM3200RF
 For more details about this platform, please refer to the documentation at  
 https://www.sinopetech.com/en/support/#api
@@ -9,7 +9,7 @@ import logging
 import voluptuous as vol
 import time
 
-import custom_components.neviweb as neviweb
+import custom_components.sinope as sinope
 from . import (SCAN_INTERVAL)
 from homeassistant.components.switch import (SwitchDevice, 
     ATTR_TODAY_ENERGY_KWH, ATTR_CURRENT_POWER_W)
@@ -18,13 +18,13 @@ from homeassistant.helpers.event import track_time_interval
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_NAME = 'neviweb switch'
+DEFAULT_NAME = 'sinope switch'
 
 STATE_AUTO = 'auto'
 STATE_MANUAL = 'manual'
 STATE_AWAY = 'away'
 STATE_STANDBY = 'bypass'
-NEVIWEB_TO_HA_STATE = {
+SINOPE_TO_HA_STATE = {
     1: STATE_MANUAL,
     2: STATE_AUTO,
     3: STATE_AWAY,
@@ -34,24 +34,24 @@ NEVIWEB_TO_HA_STATE = {
 IMPLEMENTED_DEVICE_TYPES = [120] #power control device
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
-    """Set up the Neviweb switch."""
-    data = hass.data[neviweb.DATA_DOMAIN]
+    """Set up the Sinope switch."""
+    data = hass.data[sinope.DATA_DOMAIN]
     
     devices = []
-    for device_info in data.neviweb_client.gateway_data:
+    for device_info in data.sinope_client.gateway_data:
         if device_info["type"] in IMPLEMENTED_DEVICE_TYPES:
             device_name = '{} {}'.format(DEFAULT_NAME, device_info["name"])
-            devices.append(NeviwebSwitch(data, device_info, device_name))
+            devices.append(SinopeSwitch(data, device_info, device_name))
 
     add_devices(devices, True)
 
-class NeviwebSwitch(SwitchDevice):
-    """Implementation of a Neviweb switch."""
+class SinopeSwitch(SwitchDevice):
+    """Implementation of a Sinope switch."""
 
     def __init__(self, data, device_info, name):
         """Initialize."""
         self._name = name
-        self._client = data.neviweb_client
+        self._client = data.sinope_client
         self._id = device_info["id"]
         self._wattage = device_info["wattage"]
         self._brightness = None
@@ -63,7 +63,7 @@ class NeviwebSwitch(SwitchDevice):
         _LOGGER.debug("Setting up %s: %s", self._name, device_info)
 
     def update(self):
-        """Get the latest data from Neviweb and update the state."""
+        """Get the latest data from Sinope and update the state."""
         start = time.time()
         device_data = self._client.get_device_data(self._id)
         device_daily_stats = self._client.get_device_daily_stats(self._id)
@@ -83,7 +83,7 @@ class NeviwebSwitch(SwitchDevice):
 
     @property
     def unique_id(self):
-        """Return unique ID based on Neviweb device ID."""
+        """Return unique ID based on Sinope device ID."""
         return self._id
 
     @property
@@ -133,8 +133,8 @@ class NeviwebSwitch(SwitchDevice):
         return self._current_power_w == 0
 
     def to_hass_operation_mode(self, mode):
-        """Translate neviweb operation modes to hass operation modes."""
-        if mode in NEVIWEB_TO_HA_STATE:
-            return NEVIWEB_TO_HA_STATE[mode]
+        """Translate Sinope operation modes to hass operation modes."""
+        if mode in SINOPE_TO_HA_STATE:
+            return SINOPE_TO_HA_STATE[mode]
         _LOGGER.error("Operation mode %s could not be mapped to hass", mode)
         return None
