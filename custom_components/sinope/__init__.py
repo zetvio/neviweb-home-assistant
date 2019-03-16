@@ -57,7 +57,7 @@ class SinopeData:
     """Get the latest data and update the states."""
 
     def __init__(self, config):
-        """Init the neviweb data object."""
+        """Init the sinope data object."""
         # from pysinope import SinopeClient
         api_key = config.get(CONF_API_KEY)
         api_id = config.get(CONF_API_ID)
