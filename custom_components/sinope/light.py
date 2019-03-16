@@ -1,5 +1,5 @@
 """
-Support for Neviweb light switch/dimmer.
+Support for Sinope light switch/dimmer.
 type 102 = light switch SW2500RF
 type 112 = light dimmer DM2500RF
 For more details about this platform, please refer to the documentation at  
@@ -10,7 +10,7 @@ import logging
 import voluptuous as vol
 import time
 
-import custom_components.neviweb as neviweb
+import custom_components.sinope as sinope
 from . import (SCAN_INTERVAL)
 from homeassistant.components.light import (Light, ATTR_BRIGHTNESS,
     ATTR_BRIGHTNESS_PCT, SUPPORT_BRIGHTNESS)
@@ -18,13 +18,13 @@ from datetime import timedelta
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_NAME = 'neviweb'
+DEFAULT_NAME = 'sinope'
 
 STATE_AUTO = 'auto'
 STATE_MANUAL = 'manual'
 STATE_AWAY = 'away'
 STATE_STANDBY = 'bypass'
-NEVIWEB_TO_HA_STATE = {
+SINOPE_TO_HA_STATE = {
     1: STATE_MANUAL,
     2: STATE_AUTO,
     3: STATE_AWAY,
@@ -36,16 +36,16 @@ DEVICE_TYPE_LIGHT = [102]
 IMPLEMENTED_DEVICE_TYPES = DEVICE_TYPE_LIGHT + DEVICE_TYPE_DIMMER
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
-    """Set up the neviweb light."""
-    data = hass.data[neviweb.DATA_DOMAIN]
+    """Set up the sinope light."""
+    data = hass.data[sinope.DATA_DOMAIN]
     
     devices = []
-    for device_info in data.neviweb_client.gateway_data:
+    for device_info in data.sinope_client.gateway_data:
         if device_info["type"] in IMPLEMENTED_DEVICE_TYPES:
             device_name = '{} {} {}'.format(DEFAULT_NAME, 
                 "dimmer" if device_info["type"] in DEVICE_TYPE_DIMMER 
                 else "light", device_info["name"])
-            devices.append(NeviwebLight(data, device_info, device_name))
+            devices.append(SinopeLight(data, device_info, device_name))
 
     add_devices(devices, True)
 
@@ -57,13 +57,13 @@ def brightness_from_percentage(percent):
     """Convert percentage to absolute value 0..255."""
     return int((percent * 255.0) / 100.0)
 
-class NeviwebLight(Light):
-    """Implementation of a neviweb light."""
+class SinopeLight(Light):
+    """Implementation of a Sinope light."""
 
     def __init__(self, data, device_info, name):
         """Initialize."""
         self._name = name
-        self._client = data.neviweb_client
+        self._client = data.sinope_client
         self._id = device_info["id"]
         self._wattage_override = device_info["wattageOverride"]
         self._brightness_pct = None
@@ -74,7 +74,7 @@ class NeviwebLight(Light):
         _LOGGER.debug("Setting up %s: %s", self._name, device_info)
         
     def update(self):
-        """Get the latest data from neviweb and update the state."""
+        """Get the latest data from Sinope and update the state."""
         start = time.time()
         device_data = self._client.get_device_data(self._id)
         end = time.time()
@@ -103,7 +103,7 @@ class NeviwebLight(Light):
     
     @property
     def unique_id(self):
-        """Return unique ID based on Neviweb device ID."""
+        """Return unique ID based on Sinope device ID."""
         return self._id
 
     @property
@@ -158,8 +158,8 @@ class NeviwebLight(Light):
         return self.to_hass_operation_mode(self._operation_mode)
 
     def to_hass_operation_mode(self, mode):
-        """Translate neviweb operation modes to hass operation modes."""
-        if mode in NEVIWEB_TO_HA_STATE:
-            return NEVIWEB_TO_HA_STATE[mode]
+        """Translate sinope operation modes to hass operation modes."""
+        if mode in SINOPE_TO_HA_STATE:
+            return SINOPE_TO_HA_STATE[mode]
         _LOGGER.error("Operation mode %s could not be mapped to hass", mode)
         return None
