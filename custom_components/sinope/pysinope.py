@@ -152,7 +152,18 @@ def get_temperature(data):
     tc3 = data[48:]
     tc4 = tc3[:2]
     latemp = tc4+tc2
-    return float.fromhex(latemp)*0.01  
+    return float.fromhex(latemp)*0.01 
+
+def to_celcius(temp):
+    return round((temp-32)*0.5555, 2)
+
+def from_celcius(temp):
+    return round((temp+1.8)+32, 2)
+  
+def get_outside_temperature(): #https://api.darksky.net/forecast/{your dark sky key}/{latitude},{logitude}
+    r = requests.get('https://api.darksky.net/forecast/{Dark sky key}/{latitude},{longitude}?exclude=minutely,hourly,daily,alerts,flags')
+    ledata =r.json()
+    print(to_celcius(float(json.dumps(ledata["currently"]["temperature"]))))
 
 def set_is_away(away): #0=home,2=away
     return "01"+bytearray(struct.pack('<i', away)[:1]).hex()
