@@ -3,6 +3,8 @@ import binascii
 import socket
 import sys
 import crc8
+import json
+import io
 
 ### data that will come from HA
 SERVER = 'XXX.XXX.XXX.XXX' #ip address of the GT125
@@ -107,5 +109,16 @@ if binascii.hexlify(send_ping_request(ping_request())) == b'55000200130021':
       print('and copy it to your sinope section in your configuration.yaml file, Api_Key: ')
     else:
       # finding device ID, one by one
-      print('Device ID = ', get_device_id())
+      dev = get_device_id()
+      # define data
+      data = {'device_id': dev, 'device_type': ' ' ,'name': ' ', 'family': ' '}
+      # write data to file
+      with io.open('devices.json', 'a', encoding='utf8') as outfile:
+          str = json.dumps(data,
+                      indent=4, sort_keys=True,
+                      separators=(',', ': '), ensure_ascii=False)
+          outfile.write(str)
+          outfile.write('\n')
+      outfile.close()
       print('repeat program for each device')
+      print('when finished, edit file devices.json to add more information about your devices')  
