@@ -7,18 +7,13 @@ from datetime import datetime
 import pytz
 from astral import Astral
 
-class PySinopeError(Exception):
-    """Generic error of Sinope unit."""
-    pass
-
 ### data that will come from HA
-SERVER = '192.168.2.163' #ip address of the GT125
+SERVER = '192.168.xxx.xxx' #ip address of the GT125
 #write key here once you get it with the ping request
 Api_Key = None
 # this is the ID printed on your GT125 but you need to write it reversly.
 # ex. ID: 0123 4567 89AB CDEF => EFCDAB8967452301
 Api_ID = "xxxxxxxxxxxxxxxx" 
-###
 
 PORT = 4550
 city_name = 'Montreal'
@@ -44,10 +39,22 @@ data_temperature = "03020000" #room temperature
 data_setpoint = "08020000" #thermostat set point
 data_away = "00070000" #set device mode to away, 0=none, 2=away
 
+#thermostat info read
+data_display_format = "00090000" # 0 = celcius, 1 = fahrenheit
+data_time_format = "01090000" # 0 = 24h, 1 = 12h
+data_lock = "02090000" # 0 = unlock, 1 = lock
+data_load = "000D0000" # 0-65519 watt, 1=1 watt, (2 bytes)
+data_display2 = "30090000" # 0 = default setpoint, 1 = outdoor temp.
+data_min_temp = "0A020000" # Minimum room setpoint, 5-30oC (2 bytes)
+data_max_temp = "0B020000" # Maximum room setpoint, 5-30oC (2 bytes)
+data_away_temp = "0C020000" # away room setpoint, 5-30oC (2 bytes)
+
 # thermostat data report
 data_outdoor_temperature = "04020000" #to show on thermostat, must be sent at least every hour
-data_time = "00060000"
+data_time = "00060000" #must be sent at least once a day or before write request for auto mode
 data_date = "01060000"
+data_sunrise = "20060000" #must be sent onece a day
+data_sunset = "21060000" #must be sent onece a day
 
 # thermostat data write
 data_early_start = "60080000"  #0=disabled, 1=enabled
@@ -280,6 +287,22 @@ def get_timer_lenght(data): # 0=desabled, 1 to 255 lenght on
     tc2 = tc1[:2]
     return int(float.fromhex(tc2))
 
+def get_result(data): # check if data write was successfull, return True or False
+    print(data)
+    sequence = data[12:]
+    laseq = sequence[:8]
+    print('sequence = '+laseq)
+    dev = data[26:]
+    deviceID = dev[:8]
+    print('device ID = '+deviceID)
+    tc1 = data[20:]
+    tc2 = tc1[:2]
+    if str(tc2) == "0a": #data read or write
+        return True
+    elif str(tc2) =="01": #data report
+        return True
+    return False
+
 def error_info(bug,device):
     if bug == b'FF':
        _LOGGER.debug("in request for %s : Request failed.", device)
@@ -438,19 +461,32 @@ if binascii.hexlify(send_ping_request(ping_request())) == b'55000200130021':
 
 print('Sending app data request')
 ### example data read request uncoment the one you want to test
-
 # read thermostat heat level
 #print(get_heat_level(bytearray(send_request(data_read_request(data_read_command,device_id,data_heat_level))).hex()))
-
-# read room temperature
+# read room temperature or setpoint
 #print(get_temperature(bytearray(send_request(data_read_request(data_read_command,device_id,data_temperature))).hex()))
+#print(get_temperature(bytearray(send_request(data_read_request(data_read_command,device_id,data_setpoint))).hex()))
+# get mode
+#print(get_mode(bytearray(send_request(data_read_request(data_read_command,device_id,data_mode))).hex()))
+# get light intensity
+#print(get_intensity(bytearray(send_request(data_read_request(data_read_command,device_id,data_light_intensity))).hex()))
+# get away mode (home or away)
+#print(get_is_away(bytearray(send_request(data_read_request(data_read_command,device_id,data_away))).hex()))
+# get timer event status from light
+#print(get_timer_lenght(bytearray(send_request(data_read_request(data_read_command,device_id,data_light_timer))).hex()))
 
-### example data report request sent to all devices
+### data report request
 # broadcast local time
-#print(binascii.hexlify(send_request(data_report_request(data_report_command,all_unit,data_time,set_time()))))
+#print(get_result(bytearray(send_request(data_report_request(data_report_command,device_id,data_time,set_time()))).hex()))
 
+### data write request
+### send outside temperature
+#print(get_result(bytearray(send_request(data_write_request(data_write_command,device_id,data_setpoint,set_temperature(21.50)))).hex()))
+### turn off light
+#print(get_result(bytearray(send_request(data_write_request(data_write_command,device_id,data_light_intensity,set_intensity(100)))).hex()))
 ### example data write request
+#print(binascii.hexlify(send_request(data_write_request(data_write_command,device_id,data_light_timer,set_timer_lenght(20)))))
 # set thermostat to manual mode
-#print(binascii.hexlify(send_request(data_write_request(data_write_command,device_id,data_mode,set_mode(2)))))
-### send setpoint temperature at 21.5oC
-#print(binascii.hexlify(send_request(data_write_request(data_write_command,device_id,data_setpoint,set_temperature(21.50)))))
+#print(get_result(bytearray(send_request(data_write_request(data_write_command,device_id,data_mode,set_mode(2)))).hex()))
+#set thermostat to home
+#print(get_result(bytearray(send_request(data_write_request(data_write_command,device_id,data_away,set_is_away(0)))).hex()))
