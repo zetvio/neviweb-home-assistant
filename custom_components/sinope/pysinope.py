@@ -7,7 +7,7 @@ from datetime import datetime
 import pytz
 from astral import Astral
 
-class SinopeError(Exception):
+class PySinopeError(Exception):
     """Generic error of Sinope unit."""
     pass
 
@@ -280,6 +280,20 @@ def get_timer_lenght(data): # 0=desabled, 1 to 255 lenght on
     tc2 = tc1[:2]
     return int(float.fromhex(tc2))
 
+def error_info(bug,device):
+    if bug == b'FF':
+       _LOGGER.debug("in request for %s : Request failed.", device)
+    elif bug == b'FE':
+        LOGGER.debug("in request for %s : Buffer full, retry later.", device)
+    elif bug == b'FC':
+        LOGGER.debug("in request for %s : Device not responding.", device)
+    elif bug == b'FB':
+        LOGGER.debug("in request for %s : Abort failed, request not found in queue.", device)
+    elif bug == b'FA':
+        LOGGER.debug("in request for %s : Unknown device or destination deviceID is invalid or not a member of this network.", device)
+    else:
+        LOGGER.debug("in request for %s : Unknown error.", device)
+
 def send_request(data):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_address = (SERVER, PORT)
@@ -293,6 +307,7 @@ def send_request(data):
          print('answer = "%s"' % binascii.hexlify(reply))
          if crc_check(reply):  # receive acknoledge, check status and if we will receive more data
              seq_num = binascii.hexlify(reply)[12:20] #sequence id to link response to the correct request
+             deviceid = binascii.hexlify(reply)[26:33]
              status = binascii.hexlify(reply)[20:22]
              more = binascii.hexlify(reply)[24:26] #check if we will receive other data
              if status == b'00': # request status = ok for read and write, we go on (read=00, report=01, write=00)
@@ -302,7 +317,8 @@ def send_request(data):
              elif status == b'01': #status ok for data report
                  return reply
              else:       
-                 print('Error data sent')
+                 error_info(status,deviceid)
+                 return False
          return reply   
     finally:
       sock.close()
