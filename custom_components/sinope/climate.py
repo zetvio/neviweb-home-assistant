@@ -1,5 +1,5 @@
 """
-Support for Neviweb thermostat.
+Support for Sinope thermostat.
 type 10 = thermostat TH1120RF 3000W and 4000W
 type 20 = thermostat TH1300RF 3600W floor, TH1500RF double pole thermostat
 type 21 = thermostat TH1400RF low voltage
@@ -11,7 +11,7 @@ import logging
 import voluptuous as vol
 import time
 
-import custom_components.neviweb as neviweb
+import custom_components.sinope as sinope
 from . import (SCAN_INTERVAL)
 from homeassistant.components.climate import (ClimateDevice, ATTR_TEMPERATURE,
     ATTR_AWAY_MODE, ATTR_OPERATION_MODE, ATTR_OPERATION_LIST, ATTR_CURRENT_TEMPERATURE)
@@ -27,12 +27,12 @@ _LOGGER = logging.getLogger(__name__)
 SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE | SUPPORT_OPERATION_MODE |
     SUPPORT_AWAY_MODE | SUPPORT_ON_OFF)
 
-DEFAULT_NAME = "neviweb climate"
+DEFAULT_NAME = "sinope climate"
 
 STATE_STANDBY = 'bypass'
-NEVIWEB_STATE_AWAY = 5
-NEVIWEB_STATE_OFF = 0
-NEVIWEB_TO_HA_STATE = {
+SINOPE_STATE_AWAY = 5
+SINOPE_STATE_OFF = 0
+SINOPE_TO_HA_STATE = {
     0: STATE_OFF,
     2: STATE_MANUAL,
     3: STATE_AUTO,
@@ -40,32 +40,32 @@ NEVIWEB_TO_HA_STATE = {
     131: STATE_STANDBY,
     133: STATE_STANDBY
 }
-HA_TO_NEVIWEB_STATE = {
-    value: key for key, value in NEVIWEB_TO_HA_STATE.items()
+HA_TO_SINOPE_STATE = {
+    value: key for key, value in SINOPE_TO_HA_STATE.items()
 }
 OPERATION_LIST = [STATE_OFF, STATE_MANUAL, STATE_AUTO, STATE_STANDBY]
 
 IMPLEMENTED_DEVICE_TYPES = [10, 20, 21]
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
-    """Set up the neviweb thermostats."""
-    data = hass.data[neviweb.DATA_DOMAIN]
+    """Set up the sinope thermostats."""
+    data = hass.data[sinope.DATA_DOMAIN]
     
     devices = []
-    for device_info in data.neviweb_client.gateway_data:
+    for device_info in data.sinope_client.gateway_data:
         if device_info["type"] in IMPLEMENTED_DEVICE_TYPES:
             device_name = "{} {}".format(DEFAULT_NAME, device_info["name"])
-            devices.append(NeviwebThermostat(data, device_info, device_name))
+            devices.append(SinopeThermostat(data, device_info, device_name))
 
     add_devices(devices, True)
 
-class NeviwebThermostat(ClimateDevice):
-    """Implementation of a Neviweb thermostat."""
+class SinopeThermostat(ClimateDevice):
+    """Implementation of a Sinope thermostat."""
 
     def __init__(self, data, device_info, name):
         """Initialize."""
         self._name = name
-        self._client = data.neviweb_client
+        self._client = data.sinope_client
         self._id = device_info["id"]
         self._wattage = device_info["wattage"]
         self._wattage_override = device_info["wattageOverride"]
@@ -81,7 +81,7 @@ class NeviwebThermostat(ClimateDevice):
         _LOGGER.debug("Setting up %s: %s", self._name, device_info)
 
     def update(self):
-        """Get the latest data from Neviweb and update the state."""
+        """Get the latest data from Sinope and update the state."""
         start = time.time()
         device_data = self._client.get_device_data(self._id)
         end = time.time()
@@ -98,7 +98,7 @@ class NeviwebThermostat(ClimateDevice):
                     device_data["heatLevel"] is not None else 0
                 self._alarm = device_data["alarm"]
                 self._rssi = device_data["rssi"]
-                if device_data["mode"] != NEVIWEB_STATE_AWAY:
+                if device_data["mode"] != SINOPE_STATE_AWAY:
                     self._operation_mode = device_data["mode"]
                     self._is_away = False
                 else:
@@ -112,7 +112,7 @@ class NeviwebThermostat(ClimateDevice):
 
     @property
     def unique_id(self):
-        """Return unique ID based on Neviweb device ID."""
+        """Return unique ID based on Sinope device ID."""
         return self._id
 
     @property
@@ -125,7 +125,7 @@ class NeviwebThermostat(ClimateDevice):
         """Return current state i.e. heat, off, idle."""
         if self.is_on:
             return STATE_HEAT
-        if self._operation_mode == NEVIWEB_STATE_OFF:
+        if self._operation_mode == SINOPE_STATE_OFF:
             return STATE_OFF
         return STATE_IDLE
 
@@ -197,26 +197,26 @@ class NeviwebThermostat(ClimateDevice):
 
     def set_operation_mode(self, operation_mode):
         """Set new operation mode."""
-        mode = self.to_neviweb_operation_mode(operation_mode)
+        mode = self.to_sinope_operation_mode(operation_mode)
         self._client.set_mode(self._id, mode)
 
-    def to_neviweb_operation_mode(self, mode):
-        """Translate hass operation modes to neviweb modes."""
-        if mode in HA_TO_NEVIWEB_STATE:
-            return HA_TO_NEVIWEB_STATE[mode]
-        _LOGGER.error("Operation mode %s could not be mapped to neviweb", mode)
+    def to_sinope_operation_mode(self, mode):
+        """Translate hass operation modes to sinope modes."""
+        if mode in HA_TO_SINOPE_STATE:
+            return HA_TO_SINOPE_STATE[mode]
+        _LOGGER.error("Operation mode %s could not be mapped to sinope", mode)
         return None
         
     def to_hass_operation_mode(self, mode):
-        """Translate neviweb operation modes to hass operation modes."""
-        if mode in NEVIWEB_TO_HA_STATE:
-            return NEVIWEB_TO_HA_STATE[mode]
+        """Translate sinope operation modes to hass operation modes."""
+        if mode in SINOPE_TO_HA_STATE:
+            return SINOPE_TO_HA_STATE[mode]
         _LOGGER.error("Operation mode %s could not be mapped to hass", mode)
         return None
     
     def turn_away_mode_on(self):
         """Turn away mode on."""
-        self._client.set_mode(self._id, NEVIWEB_STATE_AWAY)
+        self._client.set_mode(self._id, SINOPE_STATE_AWAY)
         self._is_away = True
 
     def turn_away_mode_off(self):
@@ -228,7 +228,7 @@ class NeviwebThermostat(ClimateDevice):
         
     def turn_off(self):
         """Turn device off."""
-        self._client.set_mode(self._id, NEVIWEB_STATE_OFF)
+        self._client.set_mode(self._id, SINOPE_STATE_OFF)
 
     def turn_on(self):
         """Turn device on (auto mode)."""
