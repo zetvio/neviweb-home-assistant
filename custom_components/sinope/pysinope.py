@@ -298,10 +298,10 @@ def get_event(data):
     tc2 = tc1[:6]
     return  tc2 #int(float.fromhex(tc2))
 
-def set_timer_lenght(num): # 0=desabled, 1 to 255 lenght on
+def set_timer_length(num): # 0=desabled, 1 to 255 lenght on
     return "01"+bytearray(struct.pack('<i', num)[:1]).hex()
   
-def get_timer_lenght(data): # 0=desabled, 1 to 255 lenght on
+def get_timer_length(data): # 0=desabled, 1 to 255 lenght on
     print(data)
     sequence = data[12:]
     laseq = sequence[:8]
