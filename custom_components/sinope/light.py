@@ -40,12 +40,13 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     data = hass.data[sinope.DATA_DOMAIN]
     
     devices = []
-    for device_info in data.sinope_client.gateway_data:
-        if device_info["type"] in IMPLEMENTED_DEVICE_TYPES:
-            device_name = '{} {} {}'.format(DEFAULT_NAME, 
-                "dimmer" if device_info["type"] in DEVICE_TYPE_DIMMER 
-                else "light", device_info["name"])
-            devices.append(SinopeLight(data, device_info, device_name))
+    data_file = json.loads(open('devices.json').read())
+    for data_file['type'] in IMPLEMENTED_DEVICE_TYPES:
+        device_name = '{} {} {}'.format(DEFAULT_NAME, 
+                "dimmer" if data_file["type"] in DEVICE_TYPE_DIMMER 
+                else "light", data_file["name"])
+        device_id = "{} {}".format(DEFAULT_NAME, data_file["id"])
+        devices.append(SinopeLight(device_info, device_id, device_name))
 
     add_devices(devices, True)
 
@@ -60,11 +61,11 @@ def brightness_from_percentage(percent):
 class SinopeLight(Light):
     """Implementation of a Sinope light."""
 
-    def __init__(self, data, device_info, name):
+    def __init__(self, device_info, id, name):
         """Initialize."""
         self._name = name
         self._client = data.sinope_client
-        self._id = device_info["id"]
+        self._id = id
         self._wattage_override = device_info["wattageOverride"]
         self._brightness_pct = None
         self._operation_mode = None
