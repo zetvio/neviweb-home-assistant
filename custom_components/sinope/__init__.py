@@ -107,11 +107,40 @@ class SinopeClient(object):
             mode = get_mode(bytearray(send_request(data_read_request(data_read_command,device_id,data_mode))).hex())
             away = get_is_away(bytearray(send_request(data_read_request(data_read_command,device_id,data_away))).hex())
         except OSError:
-            raise PySinopeError("Cannot get data")
+            raise PySinopeError("Cannot get climate data")
         # Prepare data
         data = "{'setpoint': '"+setpoint+"', 'mode': "+mode+", 'alarm': 0, 'temperature': "+temperature+", 'heatLevel': "+heatlevel+", 'away': "+away+"}"
         return data
 
+    def get_light_device_data(self, device_id):
+        """Get device data."""
+        # Prepare return
+        data = {}
+        # send requests
+        try:
+            intensity = get_intensity(bytearray(send_request(data_read_request(data_read_command,device_id,data_light_intensity))).hex())
+            mode = get_mode(bytearray(send_request(data_read_request(data_read_command,device_id,data_light_mode))).hex())
+        except OSError:
+            raise PySinopeError("Cannot get light data")
+        # Prepare data
+        data = "{'intensity': '"+intensity+"', 'mode': "+mode+", 'alarm': 0, 'rssi': 0}"
+        return data
+
+    def get_switch_device_data(self, device_id):
+        """Get device data."""
+        # Prepare return
+        data = {}
+        # send requests
+        try:
+            intensity = get_intensity(bytearray(send_request(data_read_request(data_read_command,device_id,data_power_intensity))).hex())
+            mode = get_mode(bytearray(send_request(data_read_request(data_read_command,device_id,data_power_mode))).hex())
+            powerwatt = get_power_connected(bytearray(send_request(data_read_request(data_read_command,device_id,data_power_connected))).hex())
+        except OSError:
+            raise PySinopeError("Cannot get switch data")
+        # Prepare data
+        data = "{'intensity': '"+intensity+"', 'mode': "+mode+", 'powerWatt': "+powerwatt+", 'alarm': 0, 'rssi': 0}"
+        return data    
+    
     def get_climate_device_info(self, device_id):
         """Get information for this device."""
         # Prepare return
@@ -121,9 +150,9 @@ class SinopeClient(object):
             tempmax = get_temperature(bytearray(send_request(data_read_request(data_read_command,device_id,data_max_temp))).hex())
             tempmin = get_temperature(bytearray(send_request(data_read_request(data_read_command,device_id,data_min_temp))).hex())
             wattload = get_power_connected(bytearray(send_request(data_read_request(data_read_command,device_id,data_load))).hex())
-            wattoveride = get_power_load(bytearray(send_request(data_read_request(data_read_command,device_id,data_power_load))).hex())
+            wattoveride = get_power_load(bytearray(send_request(data_read_request(data_read_command,device_id,data_power_connected))).hex())
         except OSError:
-            raise PySinopeError("Cannot get info")    
+            raise PySinopeError("Cannot get climate info")    
         # Prepare data
         data = "{'active': 1, 'tempMax': "+tempmax+", 'tempMin': "+tempmin+", 'wattage': "+wattload+", 'wattageOverride': "+wattoveride+"}"
         return data
@@ -134,11 +163,11 @@ class SinopeClient(object):
         data = {}
         # send requests
         try:
-            wattoveride = get_power_load(bytearray(send_request(data_read_request(data_read_command,device_id,data_power_load))).hex())
+            timer = get_timer_lenght(bytearray(send_request(data_read_request(data_read_command,device_id,data_light_timer))).hex())        except OSError:
         except OSError:
-            raise PySinopeError("Cannot get info")    
+            raise PySinopeError("Cannot get light info")    
         # Prepare data
-        data = "{'active': 1, 'wattageOverride': "+wattoveride+"}"
+        data = "{'active': 1, 'timer': "+timer+"}"
         return data
 
     def get_switch_device_info(self, device_id):
@@ -147,11 +176,12 @@ class SinopeClient(object):
         data = {}
         # send requests
         try:
-            wattload = get_power_connected(bytearray(send_request(data_read_request(data_read_command,device_id,data_load))).hex())
+            wattload = get_power_connected(bytearray(send_request(data_read_request(data_read_command,device_id,data_power_load))).hex())
+            timer = get_timer_lenght(bytearray(send_request(data_read_request(data_read_command,device_id,data_power_timer))).hex())
         except OSError:
-            raise PySinopeError("Cannot get info")    
+            raise PySinopeError("Cannot get switch info")    
         # Prepare data
-        data = "{'active': 1, 'wattage': "+wattload+"}"
+        data = "{'active': 1, 'wattage': "+wattload+", 'timer': "+timer+"}"
         return data
     
     def ping_device(self, device_id):
@@ -210,7 +240,15 @@ class SinopeClient(object):
         except OSError:
             raise PyNeviwebError("Cannot set device setpoint temperature")
         return result
-      
+
+    def set_timer(self, device_id, timer_length):
+        """Set device timer length."""
+        try:
+            result = get_result(bytearray(send_request(data_write_request(data_write_command,device_id,data_light_timer,set_timer_length(timer_length)))).hex())
+        except OSError:
+            raise PyNeviwebError("Cannot set device timer length")
+        return result 
+    
     def set_report(self, device_id):
         """Set report to send data to each devices"""
         try:
