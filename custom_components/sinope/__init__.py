@@ -121,10 +121,11 @@ class SinopeClient(object):
             tempmax = get_temperature(bytearray(send_request(data_read_request(data_read_command,device_id,data_max_temp))).hex())
             tempmin = get_temperature(bytearray(send_request(data_read_request(data_read_command,device_id,data_min_temp))).hex())
             wattload = get_power_connected(bytearray(send_request(data_read_request(data_read_command,device_id,data_load))).hex())
+            wattoveride = get_power_load(bytearray(send_request(data_read_request(data_read_command,device_id,data_power_load))).hex())
         except OSError:
             raise PySinopeError("Cannot get info")    
         # Prepare data
-        data = "{'active': 1, 'tempMax': "+tempmax+", 'tempMin': "+tempmin+", 'model': 1122, 'name': 'Cave', 'wattage': "+wattload+", 'wattageOverride': None}"
+        data = "{'active': 1, 'tempMax': "+tempmax+", 'tempMin': "+tempmin+", 'wattage': "+wattload+", 'wattageOverride': "+wattoveride+"}"
         return data
 
     def ping_device(self, device_id):
