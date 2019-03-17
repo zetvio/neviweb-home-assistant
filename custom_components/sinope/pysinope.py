@@ -8,12 +8,15 @@ import pytz
 from astral import Astral
 
 ### data that will come from HA
-SERVER = '192.168.xxx.xxx' #ip address of the GT125
+S#ERVER = '192.168.xxx.xxx' #ip address of the GT125
+SERVER = config.get(CONF_SERVER)
 #write key here once you get it with the ping request
-Api_Key = None
+#Api_Key = None
+Api_Key = config.get(CONF_API_KEY)
 # this is the ID printed on your GT125 but you need to write it reversly.
 # ex. ID: 0123 4567 89AB CDEF => EFCDAB8967452301
-Api_ID = "xxxxxxxxxxxxxxxx" 
+#Api_ID = "xxxxxxxxxxxxxxxx" 
+Api_ID = config.get(CONF_API_ID)
 
 PORT = 4550
 city_name = 'Montreal'
@@ -128,10 +131,10 @@ def set_sun_time(period): # period = sunrise or sunset
 def get_heat_level(data):
     sequence = data[12:]
     laseq = sequence[:8]
-    print('sequence = '+laseq)
+#    print('sequence = '+laseq)
     dev = data[26:]
     deviceID = dev[:8]
-    print('device ID = '+deviceID)
+#    print('device ID = '+deviceID)
     tc1 = data[46:]
     tc2 = tc1[:2]
     return int(float.fromhex(tc2))
@@ -143,10 +146,10 @@ def set_temperature(temp_celcius): #temperature is always in celcius sent as 0.0
 def get_temperature(data):
     sequence = data[12:]
     laseq = sequence[:8]
-    print('sequence = '+laseq)
+#    print('sequence = '+laseq)
     dev = data[26:]
     deviceID = dev[:8]
-    print('device ID = '+deviceID)
+#    print('device ID = '+deviceID)
     result = data[20:]
     status = result[:2]
     if status == "fc":
@@ -168,7 +171,7 @@ def from_celcius(temp):
 def get_outside_temperature(): #https://api.darksky.net/forecast/{your dark sky key}/{latitude},{logitude}
     r = requests.get('https://api.darksky.net/forecast/{Dark sky key}/{latitude},{longitude}?exclude=minutely,hourly,daily,alerts,flags')
     ledata =r.json()
-    print(to_celcius(float(json.dumps(ledata["currently"]["temperature"]))))
+    return to_celcius(float(json.dumps(ledata["currently"]["temperature"])))
 
 def set_is_away(away): #0=home,2=away
     return "01"+bytearray(struct.pack('<i', away)[:1]).hex()
@@ -176,10 +179,10 @@ def set_is_away(away): #0=home,2=away
 def get_is_away(data):
     sequence = data[12:]
     laseq = sequence[:8]
-    print('sequence = '+laseq)
+#    print('sequence = '+laseq)
     dev = data[26:]
     deviceID = dev[:8]
-    print('device ID = '+deviceID)
+#    print('device ID = '+deviceID)
     tc1 = data[46:]
     tc2 = tc1[:2]
     return int(float.fromhex(tc2))  
@@ -190,10 +193,10 @@ def set_mode(mode): #0=off,1=freeze,2=manual,3=auto,5=away
 def get_mode(data):
     sequence = data[12:]
     laseq = sequence[:8]
-    print('sequence = '+laseq)
+#    print('sequence = '+laseq)
     dev = data[26:]
     deviceID = dev[:8]
-    print('device ID = '+deviceID)
+#    print('device ID = '+deviceID)
     tc1 = data[46:]
     tc2 = tc1[:2]
     return int(float.fromhex(tc2))
@@ -204,10 +207,10 @@ def set_intensity(num):
 def get_intensity(data):
     sequence = data[12:]
     laseq = sequence[:8]
-    print('sequence = '+laseq)
+#    print('sequence = '+laseq)
     dev = data[26:]
     deviceID = dev[:8]
-    print('device ID = '+deviceID)
+#    print('device ID = '+deviceID)
     tc1 = data[46:]
     tc2 = tc1[:2]
     return int(float.fromhex(tc2))
@@ -215,10 +218,10 @@ def get_intensity(data):
 def get_power_connected(data): #get power in watt connected to the device
     sequence = data[12:]
     laseq = sequence[:8]
-    print('sequence = '+laseq)
+#    print('sequence = '+laseq)
     dev = data[26:]
     deviceID = dev[:8]
-    print('device ID = '+deviceID)
+#    print('device ID = '+deviceID)
     result = data[20:]
     status = result[:2]
     if status == "fc":
@@ -234,10 +237,10 @@ def get_power_connected(data): #get power in watt connected to the device
 def get_power_load(data): # get power in watt use by the device
     sequence = data[12:]
     laseq = sequence[:8]
-    print('sequence = '+laseq)
+#    print('sequence = '+laseq)
     dev = data[26:]
     deviceID = dev[:8]
-    print('device ID = '+deviceID)
+#    print('device ID = '+deviceID)
     result = data[20:]
     status = result[:2]
     if status == "fc":
@@ -287,13 +290,12 @@ def set_event_off(num): #1 = light on, 2 = light off, 3 = intensity changed
     return b0+b1+b2+b3
 
 def get_event(data):
-    print(data)
     sequence = data[12:]
     laseq = sequence[:8]
-    print('sequence = '+laseq)
+#    print('sequence = '+laseq)
     dev = data[26:]
     deviceID = dev[:8]
-    print('device ID = '+deviceID)
+#    print('device ID = '+deviceID)
     tc1 = data[54:]
     tc2 = tc1[:6]
     return  tc2 #int(float.fromhex(tc2))
@@ -302,25 +304,23 @@ def set_timer_length(num): # 0=desabled, 1 to 255 lenght on
     return "01"+bytearray(struct.pack('<i', num)[:1]).hex()
   
 def get_timer_length(data): # 0=desabled, 1 to 255 lenght on
-    print(data)
     sequence = data[12:]
     laseq = sequence[:8]
-    print('sequence = '+laseq)
+#    print('sequence = '+laseq)
     dev = data[26:]
     deviceID = dev[:8]
-    print('device ID = '+deviceID)
+#    print('device ID = '+deviceID)
     tc1 = data[46:]
     tc2 = tc1[:2]
     return int(float.fromhex(tc2))
 
 def get_result(data): # check if data write was successfull, return True or False
-    print(data)
     sequence = data[12:]
     laseq = sequence[:8]
-    print('sequence = '+laseq)
+#    print('sequence = '+laseq)
     dev = data[26:]
     deviceID = dev[:8]
-    print('device ID = '+deviceID)
+#    print('device ID = '+deviceID)
     tc1 = data[20:]
     tc2 = tc1[:2]
     if str(tc2) == "0a": #data read or write
@@ -350,10 +350,10 @@ def send_request(data):
     try:
       sock.sendall(login_request())
       if binascii.hexlify(sock.recv(1024)) == b'55000c001101000000030000032000009c': #login ok
-         print('sending data request')
+#         print('sending data request')
          sock.sendall(data)
          reply = sock.recv(1024)
-         print('answer = "%s"' % binascii.hexlify(reply))
+#         print('answer = "%s"' % binascii.hexlify(reply))
          if crc_check(reply):  # receive acknoledge, check status and if we will receive more data
              seq_num = binascii.hexlify(reply)[12:20] #sequence id to link response to the correct request
              deviceid = binascii.hexlify(reply)[26:33]
@@ -379,7 +379,7 @@ def get_device_id():
     try:
       sock.sendall(login_request())
       if binascii.hexlify(sock.recv(1024)) == b'55000c001101000000030000032000009c': #login ok
-        print('Please push the two buttons on the device you want to identify')
+#        print('Please push the two buttons on the device you want to identify')
         datarec = sock.recv(1024)
         id = bytearray(datarec).hex()[14:22]
       return id
@@ -397,9 +397,6 @@ def send_ping_request(data):
           return reply
     finally:
       sock.close()
-      
-def split_received_data(data): 
-    return
 
 def retreive_key(data):
     binary = data[18:]
@@ -445,7 +442,7 @@ def data_read_request(command,unit_id,data_app): # 21310500 ou FFFFFFFF
     app_data_size = "04"
     size = count_data_frame(command+data_seq+data_type+data_res+unit_id+app_data_size+data_app)
     data_frame = head+size+command+data_seq+data_type+data_res+unit_id+app_data_size+data_app
-    print('data frame = "%s"' % data_frame)
+#    print('data frame = "%s"' % data_frame)
     read_crc = bytes.fromhex(crc_count(bytes.fromhex(data_frame)))
     return bytes.fromhex(data_frame)+read_crc
   
@@ -459,7 +456,7 @@ def data_report_request(command,unit_id,data_app,data): # data = size+time or si
     app_data_size = count_data(data_app+data)
     size = count_data_frame(command+data_seq+data_type+data_res+unit_id+app_data_size+data_app+data)
     data_frame = head+size+command+data_seq+data_type+data_res+unit_id+app_data_size+data_app+data
-    print('data frame = "%s"' % data_frame)
+#    print('data frame = "%s"' % data_frame)
     read_crc = bytes.fromhex(crc_count(bytes.fromhex(data_frame)))
     return bytes.fromhex(data_frame)+read_crc
   
@@ -473,7 +470,7 @@ def data_write_request(command,unit_id,data_app,data): # data = size+data to sen
     app_data_size = count_data(data_app+data)
     size = count_data_frame(command+data_seq+data_type+data_res+unit_id+app_data_size+data_app+data)
     data_frame = head+size+command+data_seq+data_type+data_res+unit_id+app_data_size+data_app+data
-    print('data frame = "%s"' % data_frame)
+#    print('data frame = "%s"' % data_frame)
     read_crc = bytes.fromhex(crc_count(bytes.fromhex(data_frame)))
     return bytes.fromhex(data_frame)+read_crc
   
