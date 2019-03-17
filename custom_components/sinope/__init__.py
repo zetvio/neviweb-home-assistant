@@ -95,7 +95,7 @@ class SinopeClient(object):
     def update(self):
         self.__get_device_data()
 
-    def get_device_data(self, device_id):
+    def get_climate_device_data(self, device_id):
         """Get device data."""
         # Prepare return
         data = {}
@@ -112,7 +112,7 @@ class SinopeClient(object):
         data = "{'setpoint': '"+setpoint+"', 'mode': "+mode+", 'alarm': 0, 'temperature': "+temperature+", 'heatLevel': "+heatlevel+", 'away': "+away+"}"
         return data
 
-    def get_device_info(self, device_id):
+    def get_climate_device_info(self, device_id):
         """Get information for this device."""
         # Prepare return
         data = {}
@@ -128,6 +128,32 @@ class SinopeClient(object):
         data = "{'active': 1, 'tempMax': "+tempmax+", 'tempMin': "+tempmin+", 'wattage': "+wattload+", 'wattageOverride': "+wattoveride+"}"
         return data
 
+    def get_light_device_info(self, device_id):
+        """Get information for this device."""
+        # Prepare return
+        data = {}
+        # send requests
+        try:
+            wattoveride = get_power_load(bytearray(send_request(data_read_request(data_read_command,device_id,data_power_load))).hex())
+        except OSError:
+            raise PySinopeError("Cannot get info")    
+        # Prepare data
+        data = "{'active': 1, 'wattageOverride': "+wattoveride+"}"
+        return data
+
+    def get_switch_device_info(self, device_id):
+        """Get information for this device."""
+        # Prepare return
+        data = {}
+        # send requests
+        try:
+            wattload = get_power_connected(bytearray(send_request(data_read_request(data_read_command,device_id,data_load))).hex())
+        except OSError:
+            raise PySinopeError("Cannot get info")    
+        # Prepare data
+        data = "{'active': 1, 'wattage': "+wattload+"}"
+        return data
+    
     def ping_device(self, device_id):
         """Ping a device."""
         # Prepare return
