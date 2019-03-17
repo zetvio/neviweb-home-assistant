@@ -111,7 +111,7 @@ if binascii.hexlify(send_ping_request(ping_request())) == b'55000200130021':
       # finding device ID, one by one
       dev = get_device_id()
       # setup data line
-      data = '["'+dev+'", " ", " "]'
+      data = '["'+dev+'", " ", " ", " "]'
       # write data to file
       with io.open('devices.json', 'a', encoding='utf8') as outfile:
           outfile.write('\n')
