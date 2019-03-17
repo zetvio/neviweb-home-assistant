@@ -110,15 +110,13 @@ if binascii.hexlify(send_ping_request(ping_request())) == b'55000200130021':
     else:
       # finding device ID, one by one
       dev = get_device_id()
-      # define data
-      data = {'id': dev, 'type': ' ' ,'name': ' '}
+      # setup data line
+      data = '["'+dev+'", " ", " "]'
       # write data to file
       with io.open('devices.json', 'a', encoding='utf8') as outfile:
-          str = json.dumps(data,
-                      indent=4, sort_keys=True,
-                      separators=(',', ': '), ensure_ascii=False)
-          outfile.write(str)
           outfile.write('\n')
+          outfile.write(data)
       outfile.close()
       print('repeat program for each device')
-      print('when finished, edit file devices.json to add more information about your devices')  
+      print('when finished, edit file devices.json to add more information about your devices name and type')
+      print('Device type are listed in climate.py, light.py and switch.py')
