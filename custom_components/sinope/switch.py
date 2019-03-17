@@ -36,25 +36,35 @@ IMPLEMENTED_DEVICE_TYPES = [120] #power control device
 def setup_platform(hass, config, add_devices, discovery_info=None):
     """Set up the Sinope switch."""
     data = hass.data[sinope.DATA_DOMAIN]
-    
+    dev_list = []
+    with open('devices.json') as f:
+        for line in f:
+            dev_list.append(json.loads(line))         
+    f.close()
+    i = 1
+    tot = len(dev_list)
     devices = []
-    data_file = json.loads(open('devices.json').read())
-    for data_file['type'] in IMPLEMENTED_DEVICE_TYPES:
-        device_name = "{} {}".format(DEFAULT_NAME, data_file["name"])
-        device_id = "{} {}".format(DEFAULT_NAME, data_file["id"])
-        device_info = get_device_info(self,data_file["id"])
-        devices.append(SinopeThermostat(device_info, device_id, device_name))
+    for a in dev_list:
+        x = int(dev_list[i][2])
+        if x in IMPLEMENTED_DEVICE_TYPES:
+            device_name = "{} {}".format(DEFAULT_NAME, dev_list[i][1])
+            device_id = "{} {}".format(DEFAULT_NAME, dev_list[i][0])
+            device_info = get_device_info(self,dev_list[i][0])
+            devices.append(SinopeThermostat(device_info, device_id, device_name))
+        if i == tot-1:
+            break
+        i = i + 1
 
     add_devices(devices, True)
 
 class SinopeSwitch(SwitchDevice):
     """Implementation of a Sinope switch."""
 
-    def __init__(self, device_info, id, name):
+    def __init__(self, device_info, device_id, name):
         """Initialize."""
         self._name = name
         self._client = data.sinope_client
-        self._id = id
+        self._id = device_id
         self._wattage = device_info["wattage"]
         self._brightness = None
         self._operation_mode = None
