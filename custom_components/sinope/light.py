@@ -53,7 +53,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
                 "dimmer" if x in DEVICE_TYPE_DIMMER 
                 else "light", dev_list[i][1])
             device_id = "{} {}".format(DEFAULT_NAME, dev_list[i][0])
-            device_info = get_device_info(self,dev_list[i][0])
+            device_info = get_light_device_info(self,dev_list[i][0])
             devices.append(SinopeLight(device_info, device_id, device_name))
         if i == tot-1:
             break
