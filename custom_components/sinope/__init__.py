@@ -109,7 +109,7 @@ class SinopeClient(object):
         except OSError:
             raise PySinopeError("Cannot get data")
         # Prepare data
-        data = "{'setpoint': '"+setpoint+"', 'mode': "+mode+", 'alarm': 0, 'temperature': '"+temperature+"', 'heatLevel': "+heatlevel+", 'away': "+away+"}"
+        data = "{'setpoint': '"+setpoint+"', 'mode': "+mode+", 'alarm': 0, 'temperature': "+temperature+", 'heatLevel': "+heatlevel+", 'away': "+away+"}"
         return data
 
     def get_device_info(self, device_id):
