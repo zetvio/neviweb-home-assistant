@@ -165,7 +165,7 @@ class SinopeClient(object):
             raise PyNeviwebError("Cannot set device operation mode")
         return result
       
-     def set_is_away(self, device_id, away):
+    def set_is_away(self, device_id, away):
         """Set device away mode."""
         try:
             if device_id == "all":
