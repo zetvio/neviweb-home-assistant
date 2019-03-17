@@ -72,6 +72,7 @@ class SinopeSwitch(SwitchDevice):
         self._current_power_w = None
         self._today_energy_kwh = None
         self._rssi = None
+        self._timer = device_info["timer"]
         _LOGGER.debug("Setting up %s: %s", self._name, device_info)
 
     def update(self):
@@ -123,7 +124,8 @@ class SinopeSwitch(SwitchDevice):
                 'operation_mode': self.operation_mode,
                 'rssi': self._rssi,
                 'wattage': self._wattage,
-                'id': self._id}
+                'id': self._id,
+                'timer': self._timer}
        
     @property
     def operation_mode(self):
