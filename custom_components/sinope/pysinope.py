@@ -147,12 +147,17 @@ def get_temperature(data):
     dev = data[26:]
     deviceID = dev[:8]
     print('device ID = '+deviceID)
-    tc1 = data[46:]
-    tc2 = tc1[:2]
-    tc3 = data[48:]
-    tc4 = tc3[:2]
-    latemp = tc4+tc2
-    return float.fromhex(latemp)*0.01 
+    result = data[20:]
+    status = result[:2]
+    if status == "fc":
+        return None # device didn't answer, wrong device
+    else:  
+        tc1 = data[46:]
+        tc2 = tc1[:2]
+        tc3 = data[48:]
+        tc4 = tc3[:2]
+        latemp = tc4+tc2
+        return float.fromhex(latemp)*0.01
 
 def to_celcius(temp):
     return round((temp-32)*0.5555, 2)
@@ -214,12 +219,17 @@ def get_power_connected(data): #get power in watt connected to the device
     dev = data[26:]
     deviceID = dev[:8]
     print('device ID = '+deviceID)
-    tc1 = data[46:]
-    tc2 = tc1[:2]
-    tc3 = data[48:]
-    tc4 = tc3[:2]
-    lepower = tc4+tc2
-    return int(float.fromhex(lepower))
+    result = data[20:]
+    status = result[:2]
+    if status == "fc":
+        return None # device didn't answer, wrong device
+    else:  
+        tc1 = data[46:]
+        tc2 = tc1[:2]
+        tc3 = data[48:]
+        tc4 = tc3[:2]
+        lepower = tc4+tc2
+        return int(float.fromhex(lepower))
   
 def get_power_load(data): # get power in watt use by the device
     sequence = data[12:]
@@ -228,12 +238,17 @@ def get_power_load(data): # get power in watt use by the device
     dev = data[26:]
     deviceID = dev[:8]
     print('device ID = '+deviceID)
-    tc1 = data[46:]
-    tc2 = tc1[:2]
-    tc3 = data[48:]
-    tc4 = tc3[:2]
-    lepower = tc4+tc2
-    return int(float.fromhex(lepower))
+    result = data[20:]
+    status = result[:2]
+    if status == "fc":
+        return None # device didn't answer, wrong device
+    else:     
+        tc1 = data[46:]
+        tc2 = tc1[:2]
+        tc3 = data[48:]
+        tc4 = tc3[:2]
+        lepower = tc4+tc2
+        return int(float.fromhex(lepower))
 
 def set_event_on(num): #1 = light on, 2 = light off, 3 = intensity changed 
     b0 = "10"
