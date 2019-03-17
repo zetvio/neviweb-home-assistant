@@ -38,21 +38,23 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     data = hass.data[sinope.DATA_DOMAIN]
     
     devices = []
-    for device_info in data.sinope_client.gateway_data:
-        if device_info["type"] in IMPLEMENTED_DEVICE_TYPES:
-            device_name = '{} {}'.format(DEFAULT_NAME, device_info["name"])
-            devices.append(SinopeSwitch(data, device_info, device_name))
+    data_file = json.loads(open('devices.json').read())
+    for data_file['type'] in IMPLEMENTED_DEVICE_TYPES:
+        device_name = "{} {}".format(DEFAULT_NAME, data_file["name"])
+        device_id = "{} {}".format(DEFAULT_NAME, data_file["id"])
+        device_info = get_device_info(self,data_file["id"])
+        devices.append(SinopeThermostat(device_info, device_id, device_name))
 
     add_devices(devices, True)
 
 class SinopeSwitch(SwitchDevice):
     """Implementation of a Sinope switch."""
 
-    def __init__(self, data, device_info, name):
+    def __init__(self, device_info, id, name):
         """Initialize."""
         self._name = name
         self._client = data.sinope_client
-        self._id = device_info["id"]
+        self._id = id
         self._wattage = device_info["wattage"]
         self._brightness = None
         self._operation_mode = None
