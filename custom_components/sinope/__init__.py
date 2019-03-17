@@ -31,7 +31,7 @@ CONFIG_SCHEMA = vol.Schema({
     DOMAIN: vol.Schema({
         vol.Required(CONF_API_KEY): cv.string,
         vol.Required(CONF_API_ID): cv.string,
-        vol.Optional(CONF_SERVER): cv.string,
+        vol.Required(CONF_SERVER): cv.string,
         vol.Optional(CONF_SCAN_INTERVAL, default=SCAN_INTERVAL):
             cv.time_period
     })
