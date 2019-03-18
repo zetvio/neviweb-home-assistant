@@ -252,19 +252,19 @@ class SinopeClient(object):
     def set_report(self, device_id):
         """Set report to send data to each devices"""
         try:
-            result = get_result(bytearray(send_request(data_report_request(data_report_command,device_id,data_time,set_time()))).hex()))
+            result = get_result(bytearray(send_request(data_report_request(data_report_command,device_id,data_time,set_time()))).hex())
             if result == False:
                 return result
-            result = get_result(bytearray(send_request(data_report_request(data_report_command,device_id,data_date,set_date()))).hex()))
+            result = get_result(bytearray(send_request(data_report_request(data_report_command,device_id,data_date,set_date()))).hex())
             if result == False:
                 return result
-            result = get_result(bytearray(send_request(data_report_request(data_report_command,device_id,data_sunrise,set_sun_time("sunrise")))).hex()))
+            result = get_result(bytearray(send_request(data_report_request(data_report_command,device_id,data_sunrise,set_sun_time("sunrise")))).hex())
             if result == False:
                 return result
-            result = get_result(bytearray(send_request(data_report_request(data_report_command,device_id,data_sunset,set_sun_time("sunset")))).hex()))
+            result = get_result(bytearray(send_request(data_report_request(data_report_command,device_id,data_sunset,set_sun_time("sunset")))).hex())
             if result == False:
                 return result
-            result = get_result(bytearray(send_request(data_report_request(data_report_command,device_id,data_outdoor_temperature,set_temperature(get_outside_temperature())))).hex()))
+            result = get_result(bytearray(send_request(data_report_request(data_report_command,device_id,data_outdoor_temperature,set_temperature(get_outside_temperature())))).hex())
         except OSError:
             raise PyNeviwebError("Cannot send report to each devices")
         return result
