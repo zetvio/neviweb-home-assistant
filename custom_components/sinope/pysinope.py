@@ -16,7 +16,7 @@ Api_Key = config.get(CONF_API_KEY)
 # this is the ID printed on your GT125 but you need to write it reversly.
 # ex. ID: 0123 4567 89AB CDEF => EFCDAB8967452301
 #Api_ID = "xxxxxxxxxxxxxxxx" 
-Api_ID = config.get(CONF_API_ID)
+Api_ID = config.get(CONF_ID)
 
 PORT = 4550
 city_name = 'Montreal'
