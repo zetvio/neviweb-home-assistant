@@ -7,7 +7,7 @@ import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers import discovery
-from homeassistant.const import (CONF_USERNAME, CONF_PASSWORD,
+from homeassistant.const import (CONF_API_KEY, CONF_ID,
     CONF_SCAN_INTERVAL)
 from homeassistant.util import Throttle
 
@@ -30,7 +30,7 @@ REQUESTS_TIMEOUT = 30
 CONFIG_SCHEMA = vol.Schema({
     DOMAIN: vol.Schema({
         vol.Required(CONF_API_KEY): cv.string,
-        vol.Required(CONF_API_ID): cv.string,
+        vol.Required(CONF_ID): cv.string,
         vol.Required(CONF_SERVER): cv.string,
         vol.Optional(CONF_SCAN_INTERVAL, default=SCAN_INTERVAL):
             cv.time_period
@@ -60,7 +60,7 @@ class SinopeData:
         """Init the sinope data object."""
         # from pysinope import SinopeClient
         api_key = config.get(CONF_API_KEY)
-        api_id = config.get(CONF_API_ID)
+        api_id = config.get(CONF_ID)
         server = config.get(CONF_SERVER)
         self.sinope_client = SinopeClient(api_key, api_id, server)
 
