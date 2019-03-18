@@ -36,7 +36,7 @@ To setup this custom_component, login to your Rpi and cd to the directory where 
 - Edit the file device.py to add your GT125 IP address at the line 10.
 - Add your device Api_ID, written on the back of your GT125, on line 15. (see how below) 
 
-Execute the command: python3 setup.py. This is required to get the Api_Key and the deviceID for each Sinopé devices connected to your GT125. On first run, setup.py send a ping request to the GT125 and it will ask you to push de WEB button on the GT125. 
+Execute the command: python3 device.py. This is required to get the Api_Key and the deviceID for each Sinopé devices connected to your GT125. On first run, device.py send a ping request to the GT125 and it will ask you to push de WEB button on the GT125. 
 This will give you the Api Key that you need to write on line 12, 
 ```yaml
 Api_Key = "xxxxxxxxxxxxxxxx" 
@@ -79,9 +79,9 @@ to one device. One exception is when we sent request to change mode to auto. We 
 For the data report request it is possible to send data to all device at once by using a specific deviceID = FFFFFFFF. 
 It is used to send time, date, sunset and sunrise hour, outside temperature, set all device to away mode, etc, broadcasted to all device.
 
-Look like the GT125 use a different deviceID then Neviweb. You will need to run device.py many time to request deviceID for each devices on your network one by one. You need to do this once for all devices. The program will wait for you to push on both button of your device to revceive the deviceID of that device. Once you get one, write it on line 39 (device_id = "XXXXXXXX") of the file pysinope.py for testing. You need one to start playing with. All devices id will be written in file devices.json. once you have all your devices, edit devices.json and add the name and type of each devices (its better to edit the file after getting each device so you know which one it is). For device type you can get tehm at the top of each file climate.py, light.py and switch.py.
+Look like the GT125 use a different deviceID then Neviweb. You will need to run device.py many time to request deviceID for each devices on your network one by one. You need to do this once for all devices. The program will wait for you to push on both button of your device to revceive the deviceID of that device. Once you get one, write it on line 39 (device_id = "XXXXXXXX") of the file pysinope.py for testing. You need one to start playing with. All devices id will be written in file devices.json. once you have all your devices, edit devices.json and add the name, type and wattage (for light devices) of each devices (its better to edit the file after getting each device so you know which one it is). For device type you can get them at the top of each file climate.py, light.py and switch.py. Light connected watt is not measured by the light devices but instead written in Neviweb on setup of light devices. We need to write it to devices.json (kind of Neviweb equivalent).
 
-I've added command for the thermostat first because I think it is what most people are waiting for. now all command for the light switch, dimmer and power controler are in also.
+I've added command for the thermostat first because I think it is what most people are waiting for. Now all command for the light switch, dimmer and power controler have been added.
 
 For now there is a lot of print() command in the code. It's to help debug in console mode. Will be removed when connected to HA.
 
