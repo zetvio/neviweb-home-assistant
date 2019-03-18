@@ -27,7 +27,7 @@ Once ready you will need to add entry for sinope in your configuration.yaml like
 # Example configuration.yaml entry
 sinope:
   server: '<Ip adress of your GT125>'
-  Api_ID: '<ID written on the back of your GT125>'
+  ID: '<ID written on the back of your GT125>'
   Api_Key: '<Api_key received on first connection with the GT125>'
 ```
 ## First run
@@ -51,7 +51,7 @@ Because all command are sent in binary with following spec:
 - CRC 8
 
 Enter the GT125 ID, written on the back, in a specific maner: 
-ex: if ID = 0123 4567 89AB CDEF then write EFCDAB8967452301 at line 15 for Api_ID = xxxx (will be changed later)
+ex: if ID = 0123 4567 89AB CDEF then write EFCDAB8967452301 at line 15 for API_ID = xxxx (will be changed later)
 
 - You must add your GT125 IP address on line 10.
 ```yaml
