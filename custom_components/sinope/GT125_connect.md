@@ -27,19 +27,19 @@ Once ready you will need to add entry for sinope in your configuration.yaml like
 # Example configuration.yaml entry
 sinope:
   server: '<Ip adress of your GT125>'
-  ID: '<ID written on the back of your GT125>'
-  Api_Key: '<Api_key received on first connection with the GT125>'
+  id: '<ID written on the back of your GT125>'
+  api_key: '<Api_key received on first connection with the GT125>'
 ```
 ## First run
 
 To setup this custom_component, login to your Rpi and cd to the directory where you have copied the file.
 - Edit the file device.py to add your GT125 IP address at the line 10.
-- Add your device Api_ID, written on the back of your GT125, on line 15. (see how below) 
+- Add your device ID, written on the back of your GT125, on line 15. (see how below) 
 
 Execute the command: python3 device.py. This is required to get the Api_Key and the deviceID for each Sinopé devices connected to your GT125. On first run, device.py send a ping request to the GT125 and it will ask you to push de WEB button on the GT125. 
 This will give you the Api Key that you need to write on line 12, 
 ```yaml
-Api_Key = "xxxxxxxxxxxxxxxx" 
+api_key = "xxxxxxxxxxxxxxxx" 
 ```
 - You will need to edit the file device.py to add your GT125 ID that is writen on the back of the router.
 Because all command are sent in binary with following spec:
@@ -51,11 +51,11 @@ Because all command are sent in binary with following spec:
 - CRC 8
 
 Enter the GT125 ID, written on the back, in a specific maner: 
-ex: if ID = 0123 4567 89AB CDEF then write EFCDAB8967452301 at line 15 for API_ID = xxxx (will be changed later)
+ex: if ID = 0123 4567 89AB CDEF then write EFCDAB8967452301 at line 15 for id = xxxx (will be changed later)
 
 - You must add your GT125 IP address on line 10.
 ```yaml
-SERVER = 192.168.x.x 
+server = 192.168.x.x 
 ```
 - make sure your GT125 use the port 4550, this is the one by default.
 
