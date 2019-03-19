@@ -21,11 +21,6 @@ _LOGGER = logging.getLogger(__name__)
 SCAN_INTERVAL = timedelta(seconds=900)
 
 REQUESTS_TIMEOUT = 30
-#HOST = "https://neviweb.com"
-#LOGIN_URL = "{}/api/login".format(HOST)
-#GATEWAY_URL = "{}/api/gateway".format(HOST)
-#GATEWAY_DEVICE_URL = "{}/api/device?gatewayId=".format(HOST)
-#DEVICE_DATA_URL = "{}/api/device/".format(HOST)
 
 CONFIG_SCHEMA = vol.Schema({
     DOMAIN: vol.Schema({
@@ -90,10 +85,7 @@ class SinopeClient(object):
         self._api_id = api_id
         self._network_name = server
         self.device_data = {}
-        self.__get_device_data()
-
-    def update(self):
-        self.__get_device_data()
+#        self.__get_device_data()
 
     def get_climate_device_data(self, device_id):
         """Get device data."""
@@ -182,23 +174,6 @@ class SinopeClient(object):
             raise PySinopeError("Cannot get switch info")    
         # Prepare data
         data = "{'active': 1, 'wattage': "+wattload+", 'timer': "+timer+"}"
-        return data
-    
-    def ping_device(self, device_id):
-        """Ping a device."""
-        # Prepare return
-        data = {}
-        # Http request
-        try:
-            raw_res = requests.get(DEVICE_DATA_URL + str(device_id) +
-                "/ping?force=1", headers=self._headers, cookies=self._cookies,
-                timeout=self._timeout)
-        except OSError:
-            raise PyNeviwebError("Cannot ping device")
-        # Update cookies
-        self._cookies.update(raw_res.cookies)
-        # Prepare data
-        data = raw_res.json()
         return data
 
     def set_brightness(self, device_id, brightness):
