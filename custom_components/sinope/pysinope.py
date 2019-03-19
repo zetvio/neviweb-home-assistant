@@ -122,6 +122,7 @@ def set_sun_time(period): # period = sunrise or sunset
        now = sun['sunrise']
     else:
        now = sun['sunset']
+
     s = bytearray(struct.pack('<i', int(now.strftime("%S")))[:1]).hex() #second converted to bytes
     m = bytearray(struct.pack('<i', int(now.strftime("%M")))[:1]).hex() #minutes converted to bytes
     h = bytearray(struct.pack('<i', int(now.strftime("%H"))+get_dst())[:1]).hex() #hours converted to bytes
@@ -475,14 +476,14 @@ def data_write_request(command,unit_id,data_app,data): # data = size+data to sen
     return bytes.fromhex(data_frame)+read_crc
   
 # send ping to gt125      
-if binascii.hexlify(send_ping_request(ping_request())) == b'55000200130021':
-    if Api_Key == None:
-      print("ok we can send the api_key request\n")
-      print("push the GT125 web button")
-      print('Api key : ',retreive_key(binascii.hexlify(send_request(key_request(Api_ID)))))
-      print('Copy this value in the Api_Key, replacing the _None_ value')
+#if binascii.hexlify(send_ping_request(ping_request())) == b'55000200130021':
+#    if Api_Key == None:
+#      print("ok we can send the api_key request\n")
+#      print("push the GT125 web button")
+#      print('Api key : ',retreive_key(binascii.hexlify(send_request(key_request(Api_ID)))))
+#      print('Copy this value in the Api_Key, replacing the _None_ value')
 
-print('Sending app data request')
+#print('Sending app data request')
 ### example data read request uncoment the one you want to test
 # read thermostat heat level
 #print(get_heat_level(bytearray(send_request(data_read_request(data_read_command,device_id,data_heat_level))).hex()))
