@@ -11,7 +11,7 @@ from homeassistant.const import (CONF_API_KEY, CONF_ID,
     CONF_SCAN_INTERVAL)
 from homeassistant.util import Throttle
 
-REQUIREMENTS = ['pysinope==1.0.0']
+#REQUIREMENTS = ['pysinope==1.0.0']
 
 DOMAIN = 'sinope'
 DATA_DOMAIN = 'data_' + DOMAIN
@@ -34,7 +34,7 @@ CONFIG_SCHEMA = vol.Schema({
 
 def setup(hass, hass_config):
     """Set up sinope."""
-    import pysinope
+#    import pysinope
     data = SinopeData(hass_config[DOMAIN])
     hass.data[DATA_DOMAIN] = data
 
