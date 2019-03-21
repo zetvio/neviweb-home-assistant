@@ -4,6 +4,7 @@ type 120 = load controller device, RM3250RF and RM3200RF
 For more details about this platform, please refer to the documentation at  
 https://www.sinopetech.com/en/support/#api
 """
+import json
 import logging
 
 import voluptuous as vol
