@@ -216,26 +216,7 @@ def get_intensity(data):
     tc2 = tc1[:2]
     return int(float.fromhex(tc2))
 
-def get_power_connected(data): #get power in watt connected to the device
-    sequence = data[12:]
-    laseq = sequence[:8]
-#    print('sequence = '+laseq)
-    dev = data[26:]
-    deviceID = dev[:8]
-#    print('device ID = '+deviceID)
-    result = data[20:]
-    status = result[:2]
-    if status == "fc":
-        return None # device didn't answer, wrong device
-    else:  
-        tc1 = data[46:]
-        tc2 = tc1[:2]
-        tc3 = data[48:]
-        tc4 = tc3[:2]
-        lepower = tc4+tc2
-        return int(float.fromhex(lepower))
-  
-def get_power_load(data): # get power in watt use by the device
+def get_power_load(data): # get power in watt, use by the device or connected to the device
     sequence = data[12:]
     laseq = sequence[:8]
 #    print('sequence = '+laseq)
