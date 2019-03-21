@@ -126,7 +126,7 @@ class SinopeClient(object):
         try:
             intensity = get_intensity(bytearray(send_request(data_read_request(data_read_command,device_id,data_power_intensity))).hex())
             mode = get_mode(bytearray(send_request(data_read_request(data_read_command,device_id,data_power_mode))).hex())
-            powerwatt = get_power_connected(bytearray(send_request(data_read_request(data_read_command,device_id,data_power_connected))).hex())
+            powerwatt = get_power_load(bytearray(send_request(data_read_request(data_read_command,device_id,data_power_connected))).hex())
         except OSError:
             raise PySinopeError("Cannot get switch data")
         # Prepare data
@@ -141,7 +141,7 @@ class SinopeClient(object):
         try:
             tempmax = get_temperature(bytearray(send_request(data_read_request(data_read_command,device_id,data_max_temp))).hex())
             tempmin = get_temperature(bytearray(send_request(data_read_request(data_read_command,device_id,data_min_temp))).hex())
-            wattload = get_power_connected(bytearray(send_request(data_read_request(data_read_command,device_id,data_load))).hex())
+            wattload = get_power_load(bytearray(send_request(data_read_request(data_read_command,device_id,data_load))).hex())
             wattoveride = get_power_load(bytearray(send_request(data_read_request(data_read_command,device_id,data_power_connected))).hex())
         except OSError:
             raise PySinopeError("Cannot get climate info")    
@@ -168,7 +168,7 @@ class SinopeClient(object):
         data = {}
         # send requests
         try:
-            wattload = get_power_connected(bytearray(send_request(data_read_request(data_read_command,device_id,data_power_load))).hex())
+            wattload = get_power_load(bytearray(send_request(data_read_request(data_read_command,device_id,data_power_load))).hex())
             timer = get_timer_lenght(bytearray(send_request(data_read_request(data_read_command,device_id,data_power_timer))).hex())
         except OSError:
             raise PySinopeError("Cannot get switch info")    
