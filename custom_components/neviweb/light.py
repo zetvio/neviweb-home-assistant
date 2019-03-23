@@ -83,7 +83,8 @@ class NeviwebLight(Light):
             self._name, elapsed, device_data)
         if "errorCode" in device_data:
             if device_data["errorCode"] == None:
-                self._brightness_pct = device_data["intensity"]
+                self._brightness_pct = device_data["intensity"] if \
+                    device_data["intensity"] is not None else 0.0
                 self._operation_mode = device_data["mode"]
                 self._alarm = device_data["alarm"]
                 self._rssi = device_data["rssi"]
