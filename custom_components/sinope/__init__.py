@@ -11,7 +11,7 @@ from homeassistant.const import (CONF_API_KEY, CONF_ID,
     CONF_SCAN_INTERVAL)
 from homeassistant.util import Throttle
 
-#REQUIREMENTS = ['pysinope==1.0.0']
+#REQUIREMENTS = ['PY_Sinope==0.1.0']
 
 DOMAIN = 'sinope'
 DATA_DOMAIN = 'data_' + DOMAIN
@@ -53,7 +53,6 @@ class SinopeData:
 
     def __init__(self, config):
         """Init the sinope data object."""
-        # from pysinope import SinopeClient
         api_key = config.get(CONF_API_KEY)
         api_id = config.get(CONF_ID)
         server = config.get(CONF_SERVER)
@@ -74,6 +73,8 @@ class SinopeData:
 # Home Assistant should only interact with objects and not make direct calls to the API."
 # So all code below this line should eventually be integrated in a PyPi project.
 
+#from PY_Sinope import pysinope
+
 class PySinopeError(Exception):
     pass
 
@@ -85,7 +86,6 @@ class SinopeClient(object):
         self._api_id = api_id
         self._network_name = server
         self.device_data = {}
-#        self.__get_device_data()
 
     def get_climate_device_data(self, device_id):
         """Get device data."""
@@ -101,7 +101,7 @@ class SinopeClient(object):
         except OSError:
             raise PySinopeError("Cannot get climate data")
         # Prepare data
-        data = "{'setpoint': '"+setpoint+"', 'mode': "+mode+", 'alarm': 0, 'temperature': "+temperature+", 'heatLevel': "+heatlevel+", 'away': "+away+"}"
+        data = "{'setpoint': '"+setpoint+"', 'mode': "+mode+", 'alarm': 0, 'rssi': 0, 'temperature': "+temperature+", 'heatLevel': "+heatlevel+", 'away': "+away+"}"
         return data
 
     def get_light_device_data(self, device_id):
