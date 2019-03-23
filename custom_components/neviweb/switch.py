@@ -72,7 +72,8 @@ class NeviwebSwitch(SwitchDevice):
         _LOGGER.debug("Updating %s (%s sec): %s",
             self._name, elapsed, device_data)
         if "errorCode" not in device_data:
-            self._brightness = device_data["intensity"]
+            self._brightness = device_data["intensity"] if \
+                device_data["intensity"] is not None else 0.0
             self._operation_mode = device_data["mode"]
             self._alarm = device_data["alarm"]
             self._current_power_w = device_data["powerWatt"]
