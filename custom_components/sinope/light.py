@@ -40,7 +40,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     """Set up the sinope light."""
     data = hass.data[sinope.DATA_DOMAIN]
     dev_list = []
-    with open('devices.json') as f:
+    with open('/home/homeassistant/.homeassistant/custom_components/sinope/devices.json') as f: #will be loaded from config later
         for line in f:
             dev_list.append(json.loads(line))         
     f.close()
@@ -53,10 +53,10 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
             device_name = '{} {} {}'.format(DEFAULT_NAME, 
                 "dimmer" if x in DEVICE_TYPE_DIMMER 
                 else "light", dev_list[i][1])
-            device_id = "{} {}".format(DEFAULT_NAME, dev_list[i][0])
-            watt = "{} {}".format(DEFAULT_NAME, dev_list[i][3])
-            device_info = get_light_device_info(self,dev_list[i][0])
-            devices.append(SinopeLight(device_info, device_id, device_name, watt))
+            device_id = "{}".format(dev_list[i][0])
+            watt = "{}".format(dev_list[i][3])
+            device_type = "{}".format(int(dev_list[i][2]))
+            devices.append(SinopeLight(data, device_id, device_name, watt, device_type))
         if i == tot-1:
             break
         i = i + 1
@@ -74,40 +74,42 @@ def brightness_from_percentage(percent):
 class SinopeLight(Light):
     """Implementation of a Sinope light."""
 
-    def __init__(self, device_info, device_id, name, wattage):
+    def __init__(self, data, device_id, name, wattage, device_type):
         """Initialize."""
         self._name = name
+        self._type = device_type
         self._client = data.sinope_client
         self._id = device_id
         self._wattage_override = wattage
         self._brightness_pct = None
-        self._operation_mode = None
+        self._operation_mode = 1
         self._alarm = None
         self._rssi = None
-        self._timer = device_info["timer"]
-        self._is_dimmable = device_info["type"] in DEVICE_TYPE_DIMMER
-        _LOGGER.debug("Setting up %s: %s", self._name, device_info)
+        self._timer = 0
+        self._is_dimmable = device_type in DEVICE_TYPE_DIMMER
+        _LOGGER.debug("Setting up %s: %s", self._name, self._type)
         
     def update(self):
         """Get the latest data from Sinope and update the state."""
         start = time.time()
-        device_data = self._client.get_device_data(self._id)
+        device_data = self._client.get_light_device_data(self._id)
         end = time.time()
         elapsed = round(end - start, 3)
         _LOGGER.debug("Updating %s (%s sec): %s",
             self._name, elapsed, device_data)
-        if "errorCode" in device_data:
-            if device_data["errorCode"] == None:
-                self._brightness_pct = device_data["intensity"]
-                self._operation_mode = device_data["mode"]
-                self._alarm = device_data["alarm"]
-                self._rssi = device_data["rssi"]
-                return
-        elif "code" in device_data:
-            _LOGGER.warning("Error while updating %s. %s: %s", self._name,
-                device_data["code"], device_data["message"])
-        else:
-            _LOGGER.warning("Cannot update %s: %s", self._name, device_data)   
+        self._brightness_pct = device_data["intensity"] if \
+            device_data["intensity"] is not None else 0.0
+        self._operation_mode = device_data["mode"]
+        self._alarm = device_data["alarm"]
+        self._rssi = device_data["rssi"]
+        return
+#        _LOGGER.warning("Cannot update %s: %s", self._name, device_data)
+
+    def update_light_device_info(self): 
+        device_info = get_light_device_info(self._id)
+        self._timer = device_info["timer"]
+        return  
+#        _LOGGER.warning("Cannot update %s: %s", self._name, device_info)
         
     @property
     def supported_features(self):
