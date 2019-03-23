@@ -38,7 +38,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     """Set up the Sinope switch."""
     data = hass.data[sinope.DATA_DOMAIN]
     dev_list = []
-    with open('devices.json') as f:
+    with open('/home/homeassistant/.homeassistant/custom_components/sinope/devices.json') as f: #will be loaded from config later
         for line in f:
             dev_list.append(json.loads(line))         
     f.close()
@@ -49,9 +49,9 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
         x = int(dev_list[i][2])
         if x in IMPLEMENTED_DEVICE_TYPES:
             device_name = "{} {}".format(DEFAULT_NAME, dev_list[i][1])
-            device_id = "{} {}".format(DEFAULT_NAME, dev_list[i][0])
-            device_info = get_switch_device_info(self,dev_list[i][0])
-            devices.append(SinopeThermostat(device_info, device_id, device_name))
+            device_id = "{}".format(dev_list[i][0])
+            device_type = "{}".format(int(dev_list[i][2]))
+            devices.append(SinopeThermostat(data, device_id, device_name, device_type))
         if i == tot-1:
             break
         i = i + 1
@@ -61,39 +61,43 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
 class SinopeSwitch(SwitchDevice):
     """Implementation of a Sinope switch."""
 
-    def __init__(self, device_info, device_id, name):
+    def __init__(self, data, device_id, name, device_type):
         """Initialize."""
         self._name = name
+        self._type = device_type
         self._client = data.sinope_client
         self._id = device_id
-        self._wattage = device_info["wattage"]
+        self._wattage = 0
         self._brightness = None
-        self._operation_mode = None
+        self._operation_mode = 1
         self._alarm = None
         self._current_power_w = None
-        self._today_energy_kwh = None
         self._rssi = None
-        self._timer = device_info["timer"]
-        _LOGGER.debug("Setting up %s: %s", self._name, device_info)
+        self._timer = 0
+        _LOGGER.debug("Setting up %s: %s", self._name, device_type)
 
     def update(self):
         """Get the latest data from Sinope and update the state."""
         start = time.time()
-        device_data = self._client.get_device_data(self._id)
-        device_daily_stats = self._client.get_device_daily_stats(self._id)
+        device_data = self._client.get_switch_device_data(self._id)
         end = time.time()
         elapsed = round(end - start, 3)
         _LOGGER.debug("Updating %s (%s sec): %s",
             self._name, elapsed, device_data)
-        if "errorCode" not in device_data:
-            self._brightness = device_data["intensity"]
-            self._operation_mode = device_data["mode"]
-            self._alarm = device_data["alarm"]
-            self._current_power_w = device_data["powerWatt"]
-            self._rssi = device_data["rssi"]
-            self._today_energy_kwh = device_daily_stats[0] / 1000
-            return
-        _LOGGER.warning("Cannot update %s: %s", self._name, device_data)     
+        self._brightness = device_data["intensity"]
+        self._operation_mode = device_data["mode"]
+        self._alarm = device_data["alarm"]
+        self._current_power_w = device_data["powerWatt"]
+        self._rssi = device_data["rssi"]
+        return
+#        _LOGGER.warning("Cannot update %s: %s", self._name, device_data)
+
+    def update_switch_device_info(self): 
+        device_info = get_switch_device_info(self._id)
+        self._wattage = device_info["wattage"]
+        self._timer = device_info["timer"]
+        return  
+#       _LOGGER.warning("Cannot update %s: %s", self._name, device_info)
 
     @property
     def unique_id(self):
