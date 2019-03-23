@@ -52,7 +52,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     """Set up the sinope thermostats."""
     data = hass.data[sinope.DATA_DOMAIN]
     dev_list = []
-    with open('devices.json') as f:
+    with open('/home/homeassistant/.homeassistant/custom_components/sinope/devices.json') as f: # will be loaded from config later
         for line in f:
             dev_list.append(json.loads(line))         
     f.close()
@@ -63,9 +63,9 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
         x = int(dev_list[i][2])
         if x in IMPLEMENTED_DEVICE_TYPES:
             device_name = "{} {}".format(DEFAULT_NAME, dev_list[i][1])
-            device_id = "{} {}".format(DEFAULT_NAME, dev_list[i][0])
-            device_info = get_climate_device_info(self,dev_list[i][0])
-            devices.append(SinopeThermostat(device_info, device_id, device_name))
+            device_id = "{}".format(dev_list[i][0])
+            device_type = "{}".format(int(dev_list[i][2]))
+            devices.append(SinopeThermostat(data, device_id, device_name, device_type))
         if i == tot-1:
 	        break
 	i = i + 1
@@ -75,23 +75,24 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
 class SinopeThermostat(ClimateDevice):
     """Implementation of a Sinope thermostat."""
 
-    def __init__(self, device_info, device_id, name):
+    def __init__(self, data, device_id, name, device_type):
         """Initialize."""
         self._name = name
+	self._type = device_type
         self._client = data.sinope_client
         self._id = device_id
-        self._wattage = device_info["wattage"]
-        self._wattage_override = device_info["wattageOverride"]
-        self._min_temp = device_info["tempMin"]
-        self._max_temp = device_info["tempMax"]
+        self._wattage = None
+        self._wattage_override = None
+        self._min_temp = None
+        self._max_temp = None
         self._target_temp = None
         self._cur_temp = None
         self._rssi = None
         self._alarm = None
-        self._operation_mode = None
+        self._operation_mode = 2
         self._heat_level = None
         self._is_away = False
-        _LOGGER.debug("Setting up %s: %s", self._name, device_info)
+        _LOGGER.debug("Setting up %s: %s", self._name, self._id)
 
     def update(self):
         """Get the latest data from Sinope and update the state."""
@@ -101,27 +102,30 @@ class SinopeThermostat(ClimateDevice):
         elapsed = round(end - start, 3)
         _LOGGER.debug("Updating %s (%s sec): %s",
         self._name, elapsed, device_data)
-
-        if "errorCode" in device_data:
-            if device_data["errorCode"] == None:
-                self._cur_temp = float(device_data["temperature"])
-                self._target_temp = float(device_data["setpoint"]) if \
-                    device_data["setpoint"] is not None else 0.0
-                self._heat_level = device_data["heatLevel"] if \
-                    device_data["heatLevel"] is not None else 0
-                self._alarm = device_data["alarm"]
-                self._rssi = device_data["rssi"]
-                if device_data["mode"] != SINOPE_STATE_AWAY:
-                    self._operation_mode = device_data["mode"]
-                    self._is_away = False
-                else:
-                    self._is_away = True
-                return
-        elif "code" in device_data:
-            _LOGGER.warning("Error while updating %s. %s: %s", self._name,
-                device_data["code"], device_data["message"])
+	
+        self._cur_temp = float(device_data["temperature"])
+        self._target_temp = float(device_data["setpoint"]) if \
+            device_data["setpoint"] is not None else 0.0
+        self._heat_level = device_data["heatLevel"] if \
+            device_data["heatLevel"] is not None else 0
+        self._alarm = device_data["alarm"]
+        self._rssi = device_data["rssi"]
+        if device_data["mode"] != SINOPE_STATE_AWAY:
+            self._operation_mode = device_data["mode"]
+            self._is_away = False
         else:
-            _LOGGER.warning("Cannot update %s: %s", self._name, device_data)
+            self._is_away = True
+        return
+#            _LOGGER.warning("Cannot update %s: %s", self._name, device_data)
+
+    def update_climate_device_info(self): 
+        device_info = get_climate_device_info(self._id)
+        self._wattage = device_info["wattage"]
+        self._wattage_override = device_info["wattageOverride"]
+        self._min_temp = device_info["tempMin"]
+        self._max_temp = device_info["tempMax"]
+        return  
+#       _LOGGER.warning("Cannot update %s: %s", self._name, device_info)
 
     @property
     def unique_id(self):
