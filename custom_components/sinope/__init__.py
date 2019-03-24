@@ -8,7 +8,7 @@ import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers import discovery
 from homeassistant.const import (CONF_API_KEY, CONF_ID,
-    CONF_SCAN_INTERVAL)
+    CONF_SCAN_INTERVAL, CONF_TIME_ZONE)
 from homeassistant.util import Throttle
 
 #REQUIREMENTS = ['PY_Sinope==0.1.0']
@@ -56,6 +56,8 @@ class SinopeData:
         api_key = config.get(CONF_API_KEY)
         api_id = config.get(CONF_ID)
         server = config.get(CONF_SERVER)
+        city_name = "Montreal" # FIXME must come from configuration.yaml
+        tz = config.get(CONF_TIME_ZONE)
         self.sinope_client = SinopeClient(api_key, api_id, server)
 
     # Need some refactoring here concerning the class used to transport data
@@ -80,11 +82,13 @@ class PySinopeError(Exception):
 
 class SinopeClient(object):
 
-    def __init__(self, api_key, api_id, server, timeout=REQUESTS_TIMEOUT):
+    def __init__(self, api_key, api_id, server, city_name, tz, timeout=REQUESTS_TIMEOUT):
         """Initialize the client object."""
         self._api_key = api_key
         self._api_id = api_id
         self._network_name = server
+        self._city_name = city_name
+        self._tz = tz
         self.device_data = {}
 
     def get_climate_device_data(self, device_id):
