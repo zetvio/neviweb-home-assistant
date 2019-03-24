@@ -16,6 +16,7 @@ from homeassistant.util import Throttle
 DOMAIN = 'sinope'
 DATA_DOMAIN = 'data_' + DOMAIN
 CONF_SERVER = 'server'
+CONF_DK_KEY = 'dk_key'
 _LOGGER = logging.getLogger(__name__)
 
 SCAN_INTERVAL = timedelta(seconds=900)
@@ -27,6 +28,7 @@ CONFIG_SCHEMA = vol.Schema({
         vol.Required(CONF_API_KEY): cv.string,
         vol.Required(CONF_ID): cv.string,
         vol.Required(CONF_SERVER): cv.string,
+        vol.Required(CONF_DK_KEY): cv.string,
         vol.Optional(CONF_SCAN_INTERVAL, default=SCAN_INTERVAL):
             cv.time_period
     })
@@ -56,11 +58,12 @@ class SinopeData:
         api_key = config.get(CONF_API_KEY)
         api_id = config.get(CONF_ID)
         server = config.get(CONF_SERVER)
+        dk_key = config.get(CONF_DK_KEY)
         city_name = "Montreal" # FIXME must come from configuration.yaml
         tz = config.get(CONF_TIME_ZONE)
         latitude = config.get(CONF_LATITUDE)
         longitude = config.get(CONF_LONGITUDE)
-        self.sinope_client = SinopeClient(api_key, api_id, server, city_name, tz, latitude, longitude)
+        self.sinope_client = SinopeClient(api_key, api_id, server, city_name, tz, latitude, longitude, dk_key)
 
     # Need some refactoring here concerning the class used to transport data
     # @Throttle(SCAN_INTERVAL)
@@ -84,7 +87,7 @@ class PySinopeError(Exception):
 
 class SinopeClient(object):
 
-    def __init__(self, api_key, api_id, server, city_name, tz, latitude, longitude, timeout=REQUESTS_TIMEOUT):
+    def __init__(self, api_key, api_id, server, city_name, tz, latitude, longitude, dk_key, timeout=REQUESTS_TIMEOUT):
         """Initialize the client object."""
         self._api_key = api_key
         self._api_id = api_id
@@ -93,6 +96,7 @@ class SinopeClient(object):
         self._tz = tz
         self._latitude = latitude
         self._longitude = longitude
+        self._dk_key = dk_key
         self.device_data = {}
 
     def get_climate_device_data(self, device_id):
