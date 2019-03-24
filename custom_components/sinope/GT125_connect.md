@@ -87,10 +87,10 @@ I've added command for the thermostat first because I think it is what most peop
 For now there is a lot of print() command in the code. It's to help debug in console mode. Will be removed when connected to HA.
 
 ## Pypi module
-As requested by HA, all API specific code has to be part of a third party library hosted on PyPi. I will soon add PY_Sinope module to Pypi that will include pysinope.py for direct connection to GT125. This module will also include al api for neviweb component with the file pyneviweb.py.
+As requested by HA, all API specific code has to be part of a third party library hosted on PyPi. I will soon add PY_Sinope module to Pypi that will include pysinope.py for direct connection to GT125. This module will also include al api for Neviweb component with the file pyneviweb.py.
 
 ## Update
 PY_Sinope have been uploaded to TestPyPi. Once stable it will go to PyPi.
-I<ll update neviweb and Sinope custom components to make tyhem aware of TestPyPi package PY_Sinope.
+I'll update Neviweb and Sinope custom components to make tyhem aware of TestPyPi package PY_Sinope.
 
 Test it and let me know. Any help is welcome. There is still lot of work to do to use it in HA.
