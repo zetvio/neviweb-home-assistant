@@ -11,7 +11,7 @@ from homeassistant.const import (CONF_USERNAME, CONF_PASSWORD,
     CONF_SCAN_INTERVAL)
 from homeassistant.util import Throttle
 
-# REQUIREMENTS = ['python-neviweb-api']
+#REQUIREMENTS = ['PY_Sinope==0.1.0']
 
 DOMAIN = 'neviweb'
 DATA_DOMAIN = 'data_' + DOMAIN
@@ -77,6 +77,8 @@ class NeviwebData:
 # "All API specific code has to be part of a third party library hosted on PyPi. 
 # Home Assistant should only interact with objects and not make direct calls to the API."
 # So all code below this line should eventually be integrated in a PyPi project.
+
+#from PY_Sinope import pyneviweb
 
 class PyNeviwebError(Exception):
     pass
