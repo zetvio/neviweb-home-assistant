@@ -185,6 +185,8 @@ class NeviwebThermostat(ClimateDevice):
 
     @property
     def is_on(self):
+        if self._heat_level == None:
+            self._heat_level = 0
         return self._heat_level > 0
 
     def set_temperature(self, **kwargs):
