@@ -11,7 +11,7 @@ from homeassistant.const import (CONF_API_KEY, CONF_ID,
     CONF_SCAN_INTERVAL, CONF_TIME_ZONE, CONF_LONGITUDE, CONF_LATITUDE)
 from homeassistant.util import Throttle
 
-#REQUIREMENTS = ['PY_Sinope==0.1.0']
+#REQUIREMENTS = ['PY_Sinope==0.1.5']
 
 DOMAIN = 'sinope'
 DATA_DOMAIN = 'data_' + DOMAIN
