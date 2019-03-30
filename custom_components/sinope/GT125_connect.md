@@ -81,12 +81,14 @@ Look like the GT125 use a different deviceID then Neviweb. Once you have your Ap
 
 ```yaml
 ["id", "name", "type", "watt"] <- do not edit this line
-["00470100", " ", " ", " "] <- add devices info between the " "
-["2e320100", "Office heating", "10", " "] <- thermostat
-["5a2c0100", "Office light", "102", "60"] <- light
-["6a560100", "Outside timer", "120", " "] <- power switch
-["00470100", "Dimmer TV Room", "112", "110"] <- Dimmer
+["00470100", " ", " ", " "] <- once discovered by device.py, add devices info between the " "
+["2e320100", "Office heating", "10", " "] <- thermostat ex.
+["5a2c0100", "Office light", "102", "60"] <- light ex.
+["6a560100", "Outside timer", "120", " "] <- power switch ex.
+["00470100", "Dimmer TV Room", "112", "110"] <- Dimmer ex.
 ```
+
+Each time you will add a new device to your GT125 you will need to do that setup
 
 ## Pypi module
 As requested by HA, all API specific code has to be part of a third party library hosted on PyPi. I will soon add modules to Pypi that will include all specific code for direct connection to GT125 or to neviweb. 
@@ -94,11 +96,13 @@ As requested by HA, all API specific code has to be part of a third party librar
 - PI_Sinope, this module is for Sinope component for the GT125 connection
 - PI_Neviweb, this module is for Neviweb component to work with Neviweb.
 
-I will first upload to testPyPi and once stable, I'll switch them to Pypi. Them these module will be loaded automatically by HA at startup.
+I will first upload to testPyPi and once stable, I'll switch them to PyPi. Then these module will be loaded automatically by HA at startup.
 
 ## TO DO
-- detect event from light dimer and switch so we can receive state change from the GT125 without polling the devices.
-- send time, date, sunset, sunrise once a day to each devices
-- send outside temperature to thermostat once per hour to have it displayed on the second display line. 
+- Leave socket open to listen for events from devices state changes and answers from our data request. For now I open, send request, get result then close socket.
+- Detect events from light dimer and switch so we can receive state changes from the GT125 without polling the devices (faster).
+- Send time, date, sunset, sunrise once a day to each devices. Need to find out how to do that once a day at specific time.
+- Send outside temperature to thermostat once per hour to have it displayed on the second display line.
+- Improve logging and debug.
 
-Test it and let me know. Any help is welcome. There is still lot of work to do to use it in HA.
+Test it and let me know. Any help is welcome. There is still work to do to use it in HA.
