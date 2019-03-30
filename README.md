@@ -144,7 +144,7 @@ Because all command are sent in binary with following specs:
 - CRC 8
 
 Enter the GT125 ID, written on the back, in a specific maner: 
-ex: if ID = 0123 4567 89AB CDEF then write EFCDAB8967452301 at line 15 for id = xxxx (will be changed later but you need to do it only once)
+ex: if ID = 0123 4567 89AB CDEF then write EFCDAB8967452301 at line 15 for id = xxxx (will be changed later but you need to do it only once). You will need to write it the same way in your configuration.yaml file.
 
 - You must add your GT125 IP address on line 10.
 ```yaml
