@@ -93,7 +93,7 @@ class SinopeSwitch(SwitchDevice):
 #        _LOGGER.warning("Cannot update %s: %s", self._name, device_data)
 
     def update_switch_device_info(self): 
-        device_info = get_switch_device_info(self._id)
+        device_info = self._client.get_switch_device_info(self._id)
         self._wattage = device_info["wattage"]
         self._timer = device_info["timer"]
         return  
