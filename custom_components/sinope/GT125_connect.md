@@ -1,19 +1,15 @@
 # Home Assistant Sinopé Custom Component with direct connection to your GT125
 
-The file pysinope.py is a preliminary implementation of a direct connection to the GT125.
-Presently it work manualy via a ssh login to my Rpi hassbian where HA is installed.
-
-Since the direct connection is working we will start to implement a separate custom_component to 
-prevent interfering with the more stable neviweb custom_component.
+The file pysinope.py is not needed anymore as the Sinope custom_component is working. I leave it there in case someone want to test outside of HA. Everything  have been ported in HA Sinope custom_component.
 
 ## Supported Devices
 
-Same as neviweb custom_component.
+Same as Neviweb custom_component.
 
 ## Prerequisite
 
-- You need to install CRC8 module from PyPI with the command:
-pip install crc8 (in my case it was pip3 install crc8)
+- CRC8-0.0.5 module from PyPI should be installed by HA on first run automatically. In hassbian look in directory /srv/homeassistant/lib/python3.5/site-packages to find out if it is there. (crc8-0.0.5.dist-info)
+- For the devices setup you still need to install crc8 to directory /usr/local/lib/python3.5/dist-packages with the command <pip3 install crc8>
 
 ## Installation
 
@@ -28,22 +24,22 @@ Once ready you will need to add entry for sinope in your configuration.yaml like
 sinope:
   server: '<Ip adress of your GT125>'
   id: '<ID written on the back of your GT125>'
-  api_key: '<Api_key received on first connection with the GT125>'
-  dk_key: '<Dark sky key>'
+  api_key: '<Api_key received on first manual connection with the GT125>'
+  dk_key: '<your Dark sky key>'
+  scan_interval: 120 #you can go down to 60 if you want depending on how many devices you have to update. default set to 180
 ```
 ## First run
-
 To setup this custom_component, login to your Rpi and cd to the directory where you have copied the file.
 - Edit the file device.py to add your GT125 IP address at the line 10.
 - Add your device ID, written on the back of your GT125, on line 15. (see how below) 
 
-Execute the command: python3 device.py. This is required to get the Api_Key and the deviceID for each Sinopé devices connected to your GT125. On first run, device.py send a ping request to the GT125 and it will ask you to push de WEB button on the GT125. 
+Execute the command: python3 device.py. This is required to get the Api_Key and the deviceID for each Sinopé devices connected to your GT125. On first run, device.py send a ping request to the GT125 and it will ask you to push de "WEB" button on the GT125. 
 This will give you the Api Key that you need to write on line 12, 
 ```yaml
 api_key = "xxxxxxxxxxxxxxxx" 
 ```
 - You will need to edit the file device.py to add your GT125 ID that is writen on the back of the router.
-Because all command are sent in binary with following spec:
+Because all command are sent in binary with following specs:
 
 - Byte order:    LSB first 
 - Bit order:     msb first 
@@ -52,13 +48,13 @@ Because all command are sent in binary with following spec:
 - CRC 8
 
 Enter the GT125 ID, written on the back, in a specific maner: 
-ex: if ID = 0123 4567 89AB CDEF then write EFCDAB8967452301 at line 15 for id = xxxx (will be changed later)
+ex: if ID = 0123 4567 89AB CDEF then write EFCDAB8967452301 at line 15 for id = xxxx (will be changed later but you need to do it only once)
 
 - You must add your GT125 IP address on line 10.
 ```yaml
 server = 192.168.x.x 
 ```
-- make sure your GT125 use the port 4550, this is the one by default.
+- make sure your GT125 use the port 4550, this is the one by default or change line 18 accordingly.
 
 I've put lots of comment in the code so I think you will understand.
 
@@ -80,17 +76,29 @@ to one device. One exception is when we sent request to change mode to auto. We 
 For the data report request it is possible to send data to all device at once by using a specific deviceID = FFFFFFFF. 
 It is used to send time, date, sunset and sunrise hour, outside temperature, set all device to away mode, etc, broadcasted to all device.
 
-Look like the GT125 use a different deviceID then Neviweb. You will need to run device.py many time to request deviceID for each devices on your network one by one. You need to do this once for all devices. The program will wait for you to push on both button of your device to revceive the deviceID of that device. Once you get one, write it on line 39 (device_id = "XXXXXXXX") of the file pysinope.py for testing. You need one to start playing with. All devices id will be written in file devices.json. once you have all your devices, edit devices.json and add the name, type and wattage (for light devices) of each devices (its better to edit the file after getting each device so you know which one it is). For device type you can get them at the top of each file climate.py, light.py and switch.py. Light connected watt is not measured by the light devices but instead written in Neviweb on setup of light devices. We need to write it to devices.json (kind of Neviweb equivalent).
+## Devices discovery
+Look like the GT125 use a different deviceID then Neviweb. Once you have your Api_key written in device.py, you will need to run it many time to request deviceID for each devices on your network one by one. You need to do this once for all devices. The program will wait for you to push on both button of your device to revceive the deviceID of that device. All devices id will be written in file devices.json. Once you have all your devices, edit devices.json and add the name, type and wattage (for light devices) of each devices (its better to edit the file after getting each device so you know which one it is). For device type you can get them at the top of each file climate.py, light.py and switch.py. Light connected watt load is not measured by the light devices but instead written in Neviweb on setup of light devices. We need to write it to devices.json (kind of Neviweb equivalent) to finish the devices setup.
 
-I've added command for the thermostat first because I think it is what most people are waiting for. Now all command for the light switch, dimmer and power controler have been added.
-
-For now there is a lot of print() command in the code. It's to help debug in console mode. Will be removed when connected to HA.
+```yaml
+["id", "name", "type", "watt"] <- do not edit this line
+["00470100", " ", " ", " "] <- add devices info between the " "
+["2e320100", "Office heating", "10", " "] <- thermostat
+["5a2c0100", "Office light", "102", "60"] <- light
+["6a560100", "Outside timer", "120", " "] <- power switch
+["00470100", "Dimmer TV Room", "112", "110"] <- Dimmer
+```
 
 ## Pypi module
-As requested by HA, all API specific code has to be part of a third party library hosted on PyPi. I will soon add PY_Sinope module to Pypi that will include pysinope.py for direct connection to GT125. This module will also include al api for Neviweb component with the file pyneviweb.py.
+As requested by HA, all API specific code has to be part of a third party library hosted on PyPi. I will soon add modules to Pypi that will include all specific code for direct connection to GT125 or to neviweb. 
 
-## Update
-PY_Sinope have been uploaded to TestPyPi. Once stable it will go to PyPi.
-I'll update Neviweb and Sinope custom components to make tyhem aware of TestPyPi package PY_Sinope.
+- PI_Sinope, this module is for Sinope component for the GT125 connection
+- PI_Neviweb, this module is for Neviweb component to work with Neviweb.
+
+I will first upload to testPyPi and once stable, I'll switch them to Pypi. Them these module will be loaded automatically by HA at startup.
+
+## TO DO
+- detect event from light dimer and switch so we can receive state change from the GT125 without polling the devices.
+- send time, date, sunset, sunrise once a day to each devices
+- send outside temperature to thermostat once per hour to have it displayed on the second display line. 
 
 Test it and let me know. Any help is welcome. There is still lot of work to do to use it in HA.
