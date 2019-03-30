@@ -217,7 +217,9 @@ class SinopeThermostat(ClimateDevice):
     def set_operation_mode(self, operation_mode):
         """Set new operation mode."""
         mode = self.to_sinope_operation_mode(operation_mode)
-        self._client.set_mode(self._id, mode)
+	if mode == 3: #auto mode
+            self._client.send_time(self._id)
+        self._client.set_mode(self._id, self._type, mode)
 
     def to_sinope_operation_mode(self, mode):
         """Translate hass operation modes to sinope modes."""
@@ -235,20 +237,20 @@ class SinopeThermostat(ClimateDevice):
     
     def turn_away_mode_on(self):
         """Turn away mode on."""
-        self._client.set_mode(self._id, SINOPE_STATE_AWAY)
+        self._client.set_mode(self._id, self._type, SINOPE_STATE_AWAY)
         self._is_away = True
 
     def turn_away_mode_off(self):
         """Turn away mode off."""
         if self._operation_mode >= 129:
             self._operation_mode = 3 
-        self._client.set_mode(self._id, self._operation_mode)
+        self._client.set_mode(self._id, self._type, self._operation_mode)
         self._is_away = False
         
     def turn_off(self):
         """Turn device off."""
-        self._client.set_mode(self._id, SINOPE_STATE_OFF)
+        self._client.set_mode(self._id, self._type, SINOPE_STATE_OFF)
 
     def turn_on(self):
         """Turn device on (auto mode)."""
-        self._client.set_mode(self._id, 3)
+        self._client.set_mode(self._id, self._type, 3)
