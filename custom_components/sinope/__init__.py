@@ -446,8 +446,8 @@ def data_report_request(*arg): # data = size+time or size+temperature (command,u
     data_res = "000000000000"
 #    data_dest_id = unit_id
     app_data_size = count_data(arg[2]+arg[3])
-    size = count_data_frame(arg[0]+data_seq+data_type+data_res+arg[1]+app_data_size+data_app+arg[3])
-    data_frame = head+size+arg[0]+data_seq+data_type+data_res+arg[1]+app_data_size+data_app+arg[3]
+    size = count_data_frame(arg[0]+data_seq+data_type+data_res+arg[1]+app_data_size+arg[2]+arg[3])
+    data_frame = head+size+arg[0]+data_seq+data_type+data_res+arg[1]+app_data_size+arg[2]+arg[3]
     read_crc = bytes.fromhex(crc_count(bytes.fromhex(data_frame)))
     return bytes.fromhex(data_frame)+read_crc
  
@@ -459,8 +459,8 @@ def data_write_request(*arg): # data = size+data to send (command,unit_id,data_a
     data_res = "000000000000"
 #    data_dest_id = unit_id
     app_data_size = count_data(arg[2]+arg[3])
-    size = count_data_frame(arg[0]+data_seq+data_type+data_res+arg[1]+app_data_size+data_app+arg[3])
-    data_frame = head+size+arg[0]+data_seq+data_type+data_res+arg[1]+app_data_size+data_app+arg[3]
+    size = count_data_frame(arg[0]+data_seq+data_type+data_res+arg[1]+app_data_size+arg[2]+arg[3])
+    data_frame = head+size+arg[0]+data_seq+data_type+data_res+arg[1]+app_data_size+arg[2]+arg[3]
     read_crc = bytes.fromhex(crc_count(bytes.fromhex(data_frame)))
     return bytes.fromhex(data_frame)+read_crc    
 
