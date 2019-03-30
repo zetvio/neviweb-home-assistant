@@ -51,7 +51,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
             device_name = "{} {}".format(DEFAULT_NAME, dev_list[i][1])
             device_id = "{}".format(dev_list[i][0])
             device_type = "{}".format(int(dev_list[i][2]))
-            devices.append(SinopeThermostat(data, device_id, device_name, device_type))
+            devices.append(SinopeSwitch(data, device_id, device_name, device_type))
         if i == tot-1:
             break
         i = i + 1
@@ -141,10 +141,10 @@ class SinopeSwitch(SwitchDevice):
         """Return the current power usage in W."""
         return self._current_power_w
 
-    @property
-    def today_energy_kwh(self):
-        """Return the today total energy usage in kWh."""
-        return self._today_energy_kwh
+#    @property
+#    def today_energy_kwh(self):
+#        """Return the today total energy usage in kWh."""
+#        return self._today_energy_kwh
     
     @property
     def is_standby(self):
