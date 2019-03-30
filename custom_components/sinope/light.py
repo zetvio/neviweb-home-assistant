@@ -106,7 +106,7 @@ class SinopeLight(Light):
 #        _LOGGER.warning("Cannot update %s: %s", self._name, device_data)
 
     def update_light_device_info(self): 
-        device_info = get_light_device_info(self._id)
+        device_info = self._client.get_light_device_info(self._id)
         self._timer = device_info["timer"]
         return  
 #        _LOGGER.warning("Cannot update %s: %s", self._name, device_info)
@@ -140,7 +140,7 @@ class SinopeLight(Light):
 
     # For the turn_on and turn_off functions, we would normally check if the
     # the requested state is different from the actual state to issue the 
-    # command. But since we update the state every 15 minutes, there is good
+    # command. But since we update the state every 5 minutes, there is good
     # chance that the current stored state doesn't match with real device 
     # state. So we force the set_brightness each time.
     def turn_on(self, **kwargs):
