@@ -101,7 +101,7 @@ class SinopeThermostat(ClimateDevice):
         end = time.time()
         elapsed = round(end - start, 3)
         _LOGGER.debug("Updating %s (%s sec): %s",
-        self._name, elapsed, device_data)
+            self._name, elapsed, device_data)
 	
         self._cur_temp = float(device_data["temperature"])
         self._target_temp = float(device_data["setpoint"]) if \
@@ -202,6 +202,8 @@ class SinopeThermostat(ClimateDevice):
 
     @property
     def is_on(self):
+	if self._heat_level == None:
+            return False
         return self._heat_level > 0
 
     def set_temperature(self, **kwargs):
