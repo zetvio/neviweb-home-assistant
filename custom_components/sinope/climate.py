@@ -97,7 +97,7 @@ class SinopeThermostat(ClimateDevice):
     def update(self):
         """Get the latest data from Sinope and update the state."""
         start = time.time()
-        device_data = self._client.get_device_data(self._id)
+        device_data = self._client.get_climate_device_data(self._id)
         end = time.time()
         elapsed = round(end - start, 3)
         _LOGGER.debug("Updating %s (%s sec): %s",
@@ -119,7 +119,7 @@ class SinopeThermostat(ClimateDevice):
 #            _LOGGER.warning("Cannot update %s: %s", self._name, device_data)
 
     def update_climate_device_info(self): 
-        device_info = get_climate_device_info(self._id)
+        device_info = self._client.get_climate_device_info(self._id)
         self._wattage = device_info["wattage"]
         self._wattage_override = device_info["wattageOverride"]
         self._min_temp = device_info["tempMin"]
