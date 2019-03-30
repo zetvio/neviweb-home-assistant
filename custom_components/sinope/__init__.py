@@ -94,8 +94,7 @@ class PySinopeError(Exception):
 #import PY_Sinope
 
 PORT = 4550
-#city_name = 'Montreal'
-#tz = pytz.timezone('America/Toronto')
+
 all_unit = "FFFFFFFF"
 #sequential number to identify the current request. Could be any unique number that is different at each request
 # could we use timestamp value ?
@@ -160,14 +159,14 @@ def crc_check(bufer):
         return "00"
     return None
 
-def get_dst(): # daylight saving time is on or not
-    localtime = datetime.now(self._tz)
+def get_dst(zone): # daylight saving time is on or not
+    localtime = datetime.now(zone)
     if localtime.dst():
         return 128
     return 0
 
-def set_date():
-    now = datetime.now(self._tz)
+def set_date(zone):
+    now = datetime.now(zone)
     day = int(now.strftime("%w"))-1
     if day == -1:
         day = 6
@@ -178,25 +177,25 @@ def set_date():
     date = '04'+w+d+m+y #xxwwddmmyy,  xx = lenght of data date = 04
     return date
 
-def set_time():
-    now = datetime.now(self._tz)
+def set_time(zone):
+    now = datetime.now(zone)
     s = bytearray(struct.pack('<i', int(now.strftime("%S")))[:1]).hex() #second converted to bytes
     m = bytearray(struct.pack('<i', int(now.strftime("%M")))[:1]).hex() #minutes converted to bytes
-    h = bytearray(struct.pack('<i', int(now.strftime("%H"))+get_dst())[:1]).hex() #hours converted to bytes
+    h = bytearray(struct.pack('<i', int(now.strftime("%H"))+get_dst(zone))[:1]).hex() #hours converted to bytes
     time = '03'+s+m+h #xxssmmhh  24hr, 16:09:00 pm, xx = lenght of data time = 03
     return time
   
-def set_sun_time(period): # period = sunrise or sunset
+def set_sun_time(city, zone, period): # period = sunrise or sunset
     a = Astral()
-    city = a[self._city_name]
-    sun = city.sun(date=datetime.now(self._tz), local=True)
+    city = a[city]
+    sun = city.sun(date=datetime.now(zone), local=True)
     if period == "sunrise":
         now = sun['sunrise']
     else:
         now = sun['sunset']
     s = bytearray(struct.pack('<i', int(now.strftime("%S")))[:1]).hex() #second converted to bytes
     m = bytearray(struct.pack('<i', int(now.strftime("%M")))[:1]).hex() #minutes converted to bytes
-    h = bytearray(struct.pack('<i', int(now.strftime("%H"))+get_dst())[:1]).hex() #hours converted to bytes
+    h = bytearray(struct.pack('<i', int(now.strftime("%H"))+get_dst(zone))[:1]).hex() #hours converted to bytes
     time = '03'+s+m+h #xxssmmhh  24hr, 16:09:00 pm, xx = lenght of data time = 03
     return time
   
@@ -236,8 +235,8 @@ def to_celcius(temp):
 def from_celcius(temp):
     return round((temp+1.8)+32, 2)
   
-def get_outside_temperature(): #https://api.darksky.net/forecast/{your dark sky key}/{latitude},{logitude}
-    r = requests.get('https://api.darksky.net/forecast/'+self._dk_key+'/'+self._latitude+','+self._longitude+'?exclude=minutely,hourly,daily,alerts,flags')
+def get_outside_temperature(key, latitude, longitude): #https://api.darksky.net/forecast/{your dark sky key}/{latitude},{logitude}
+    r = requests.get('https://api.darksky.net/forecast/'+key+'/'+latitude+','+longitude+'?exclude=minutely,hourly,daily,alerts,flags')
     ledata =r.json()
     return to_celcius(float(json.dumps(ledata["currently"]["temperature"])))
     
@@ -563,67 +562,75 @@ class SinopeClient(object):
     def set_brightness(self, device_id, brightness):
         """Set device intensity."""
         try:
-            self._brightness = get_result(bytearray(send_request(self, data_write_request(data_write_command,device_id,data_light_intensity,set_intensity(brightness)))).hex())
+            response = get_result(bytearray(send_request(self, data_write_request(data_write_command,device_id,data_light_intensity,set_intensity(brightness)))).hex())
         except OSError:
             raise PySinopeError("Cannot set device brightness")
-        return self._brightness
+        return response
 
+    def send_time(self, device_id):
+        """Send current time to device. it is required to set device mode to auto"""
+        try:
+            response = get_result(bytearray(send_request(self, data_write_request(data_write_command,device_id,data_time,set_time(self._tz)))).hex())
+        except OSError:
+            raise PySinopeError("Cannot send current time to device")
+        return response
+    
     def set_mode(self, device_id, device_type, mode):
         """Set device operation mode."""
         # prepare data
         try:
-            if device_type < 100:
-                self._mode = get_result(bytearray(send_request(data_write_request(self, data_write_command,device_id,data_mode,set_mode(mode)))).hex())
+            if int(device_type) < 100:
+                response = get_result(bytearray(send_request(data_write_request(self, data_write_command,device_id,data_mode,set_mode(mode)))).hex())
             else:
-                self._mode = get_result(bytearray(send_request(data_write_request(self, data_write_command,device_id,data_light_mode,set_mode(mode)))).hex())
+                response = get_result(bytearray(send_request(data_write_request(self, data_write_command,device_id,data_light_mode,set_mode(mode)))).hex())
         except OSError:
             raise PyNeviwebError("Cannot set device operation mode")
-        return self._mode
+        return response
       
     def set_is_away(self, device_id, away):
         """Set device away mode."""
         try:
             if device_id == "all":
                 device_id = "FFFFFFFF"
-                self._away = get_result(bytearray(send_request(self, data_report_request(data_report_command,device_id,data_away,set_is_away(away)))).hex())
+                response = get_result(bytearray(send_request(self, data_report_request(data_report_command,device_id,data_away,set_is_away(away)))).hex())
             else:    
-                self._away = get_result(bytearray(send_request(self, data_write_request(data_write_command,device_id,data_away,set_is_away(away)))).hex())
+                response = get_result(bytearray(send_request(self, data_write_request(data_write_command,device_id,data_away,set_is_away(away)))).hex())
         except OSError:
             raise PyNeviwebError("Cannot set device away mode")
-        return self._away 
+        return response 
       
     def set_temperature(self, device_id, temperature):
         """Set device temperature."""
         try:
-            self._temperature = get_result(bytearray(send_request(self, data_write_request(data_write_command,device_id,data_setpoint,set_temperature(temperature)))).hex())
+            response = get_result(bytearray(send_request(self, data_write_request(data_write_command,device_id,data_setpoint,set_temperature(temperature)))).hex())
         except OSError:
             raise PyNeviwebError("Cannot set device setpoint temperature")
-        return self._temperature
+        return response
 
     def set_timer(self, device_id, timer_length):
         """Set device timer length."""
         try:
-            self._timer = get_result(bytearray(send_request(self, data_write_request(data_write_command,device_id,data_light_timer,set_timer_length(timer_length)))).hex())
+            response = get_result(bytearray(send_request(self, data_write_request(data_write_command,device_id,data_light_timer,set_timer_length(timer_length)))).hex())
         except OSError:
             raise PyNeviwebError("Cannot set device timer length")
-        return self._timer 
+        return response 
     
     def set_report(self, device_id):
         """Set report to send data to each devices"""
         try:
-            result = get_result(bytearray(send_request(self, data_report_request(data_report_command,device_id,data_time,set_time()))).hex())
+            result = get_result(bytearray(send_request(self, data_report_request(data_report_command,device_id,data_time,set_time(self._tz)))).hex())
             if result == False:
                 return result
-            result = get_result(bytearray(send_request(self, data_report_request(data_report_command,device_id,data_date,set_date()))).hex())
+            result = get_result(bytearray(send_request(self, data_report_request(data_report_command,device_id,data_date,set_date(self._tz)))).hex())
             if result == False:
                 return result
-            result = get_result(bytearray(send_request(self, data_report_request(data_report_command,device_id,data_sunrise,set_sun_time("sunrise")))).hex())
+            result = get_result(bytearray(send_request(self, data_report_request(data_report_command,device_id,data_sunrise,set_sun_time(self._city_name, self._tz, "sunrise")))).hex())
             if result == False:
                 return result
-            result = get_result(bytearray(send_request(self, data_report_request(data_report_command,device_id,data_sunset,set_sun_time("sunset")))).hex())
+            result = get_result(bytearray(send_request(self, data_report_request(data_report_command,device_id,data_sunset,set_sun_time(self._city_name, self._tz, "sunset")))).hex())
             if result == False:
                 return result
-            result = get_result(bytearray(send_request(self, data_report_request(data_report_command,device_id,data_outdoor_temperature,set_temperature(get_outside_temperature())))).hex())
+            result = get_result(bytearray(send_request(self, data_report_request(data_report_command,device_id,data_outdoor_temperature,set_temperature(get_outside_temperature(self._dk_key, self._latitude, self._longitude))))).hex())
         except OSError:
             raise PyNeviwebError("Cannot send report to each devices")
         return result
