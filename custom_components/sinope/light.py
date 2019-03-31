@@ -77,7 +77,7 @@ class SinopeLight(Light):
     def __init__(self, data, device_id, name, wattage, device_type):
         """Initialize."""
         self._name = name
-        self._type = device_type
+        self._type = int(device_type)
         self._client = data.sinope_client
         self._id = device_id
         self._wattage_override = wattage
@@ -86,7 +86,7 @@ class SinopeLight(Light):
         self._alarm = None
         self._rssi = None
         self._timer = 0
-        self._is_dimmable = device_type in DEVICE_TYPE_DIMMER
+        self._is_dimmable = int(device_type) in DEVICE_TYPE_DIMMER
         _LOGGER.debug("Setting up %s: %s", self._name, self._type)
         
     def update(self):
@@ -161,7 +161,7 @@ class SinopeLight(Light):
     def device_state_attributes(self):
         """Return the state attributes."""
         data = {}
-        if self._is_dimmable and self._brightness_pct:
+        if self._is_dimmable:
             data = {ATTR_BRIGHTNESS_PCT: self._brightness_pct}
         data.update({'alarm': self._alarm,
                      'operation_mode': self.operation_mode,
