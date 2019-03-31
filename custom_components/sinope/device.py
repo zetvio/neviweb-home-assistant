@@ -9,7 +9,7 @@ import io
 ### data that will come from HA
 SERVER = 'XXX.XXX.XXX.XXX' #ip address of the GT125
 #write key here once you get it with the ping request
-Api_Key = None 
+Api_Key = None # "api_key"
 # this is the ID printed on your GT125 but you need to write it reversely.
 # ex. ID: 0123 4567 89AB CDEF => EFCDAB8967452301
 Api_ID = "xxxxxxxxxxxxxxxx" 
