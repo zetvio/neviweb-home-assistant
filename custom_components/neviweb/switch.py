@@ -74,7 +74,8 @@ class NeviwebSwitch(SwitchDevice):
         if "errorCode" not in device_data:
             self._brightness = device_data["intensity"] if \
                 device_data["intensity"] is not None else 0.0
-            self._operation_mode = device_data["mode"]
+            self._operation_mode = device_data["mode"] if \
+                device_data["mode"] is not None else 1
             self._alarm = device_data["alarm"]
             self._current_power_w = device_data["powerWatt"]
             self._rssi = device_data["rssi"]
