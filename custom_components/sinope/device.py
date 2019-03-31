@@ -68,7 +68,7 @@ def key_request(serial):
 def retreive_key(data):
     binary = data[18:]
     key = binary[:16]
-    return key_crc
+    return key
 
 def login_request():
     login_data = "550012001001"+Api_ID+Api_Key
