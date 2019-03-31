@@ -93,7 +93,7 @@ if binascii.hexlify(send_ping_request(ping_request())) == b'55000200130021':
       print("ok we can send the api_key request\n")
       print("push the GT125 <web> button")
       print('Api key : ',retreive_key(binascii.hexlify(send_key_request(key_request(Api_ID)))))
-      print("Copy the value between the b'...' in the Api_Key, line 13, replacing the <None> value")
+      print("Copy the value between the b'...' in the Api_Key, line 15, replacing the <None> value")
       print('and copy it to your sinope section in your configuration.yaml file, Api_Key: ')
     else:
       # finding device ID, one by one
