@@ -75,27 +75,15 @@ def login_request():
     login_crc = bytes.fromhex(crc_count(bytes.fromhex(login_data)))
     return bytes.fromhex(login_data)+login_crc
 
-def send_request(data):
+def send_key_request(data):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_address = (SERVER, PORT)
     sock.connect(server_address)
     try:
-      sock.sendall(login_request())
-      if binascii.hexlify(sock.recv(1024)) == b'55000c001101000000030000032000009c': #login ok
-         print('sending data request')
-         sock.sendall(data)
-         reply = sock.recv(1024)
-         print('answer = "%s"' % binascii.hexlify(reply))
-         if crc_check(reply):  # receive acknoledge, check status and if we will receive more data
-             status = binascii.hexlify(reply)[20:22]
-             more = binascii.hexlify(reply)[24:26] #check if we will receive other data
-             if status == b'00': # request status = ok
-                 if more == b'01': #GT125 is sending another data
-                     datarec = sock.recv(1024)           
-                     return datarec
-             else:       
-                 print('Error data sent')
-         return reply   
+      print('Sending key request...')
+      sock.sendall(data)
+      reply = sock.recv(1024)
+      return reply    
     finally:
       sock.close()
 
@@ -104,8 +92,8 @@ if binascii.hexlify(send_ping_request(ping_request())) == b'55000200130021':
     if Api_Key == None:
       print("ok we can send the api_key request\n")
       print("push the GT125 <web> button")
-      print('Api key : ',retreive_key(binascii.hexlify(send_request(key_request(Api_ID)))))
-      print('Copy this value in the Api_Key, line 13, replacing the <None> value')
+      print('Api key : ',retreive_key(binascii.hexlify(send_key_request(key_request(Api_ID)))))
+      print("Copy the value between the b'...' in the Api_Key, line 13, replacing the <None> value")
       print('and copy it to your sinope section in your configuration.yaml file, Api_Key: ')
     else:
       # finding device ID, one by one
