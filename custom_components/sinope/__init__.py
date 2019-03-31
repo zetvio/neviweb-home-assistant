@@ -94,7 +94,7 @@ class PySinopeError(Exception):
 #import PY_Sinope
 
 PORT = 4550
-
+login_answer = <your login answer> #ex. b'55000c001101000000030000032000009c'
 all_unit = "FFFFFFFF"
 #sequential number to identify the current request. Could be any unique number that is different at each request
 # could we use timestamp value ?
@@ -383,7 +383,7 @@ def send_request(self, *arg): #data
     sock.connect(server_address)
     try:
         sock.sendall(login_request(self))
-        if binascii.hexlify(sock.recv(1024)) == b'55000c001101000000030000032000009c': #login ok
+        if binascii.hexlify(sock.recv(1024)) == login_answer: #login ok
             _LOGGER.debug("sinope login = ok")
             sock.sendall(arg[0])
             reply = sock.recv(1024)
