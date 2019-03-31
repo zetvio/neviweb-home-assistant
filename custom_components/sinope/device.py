@@ -12,7 +12,9 @@ SERVER = 'XXX.XXX.XXX.XXX' #ip address of the GT125
 Api_Key = None # "api_key"
 # this is the ID printed on your GT125 but you need to write it reversely.
 # ex. ID: 0123 4567 89AB CDEF => EFCDAB8967452301
-Api_ID = "xxxxxxxxxxxxxxxx" 
+Api_ID = "xxxxxxxxxxxxxxxx"
+# login answer replace None by the value you will get 
+login_answer = None # ex. login_answer = b'55000c001101000000030000032000009c'
 ###
 
 PORT = 4550
@@ -35,11 +37,16 @@ def get_device_id():
     sock.connect(server_address)
     try:
       sock.sendall(login_request())
-      if binascii.hexlify(sock.recv(1024)) == b'55000c001101000000030000032000009c': #login ok
-        print('Please push the two button on the device you want to identify')
-        datarec = sock.recv(1024)
-        id = bytearray(datarec).hex()[14:22]
-      return id
+      if login_answer == None:
+        print('write that code on line 17 login_answer = ', binascii.hexlify(sock.recv(1024)))
+        print('You will need to add it to file __init__.py, near line 97')
+        return None
+      else:
+        if binascii.hexlify(sock.recv(1024)) == login_answer: #login ok
+            print('Please push the two button on the device you want to identify')
+            datarec = sock.recv(1024)
+            id = bytearray(datarec).hex()[14:22]
+            return id
     finally:
       sock.close()
 
@@ -99,12 +106,13 @@ if binascii.hexlify(send_ping_request(ping_request())) == b'55000200130021':
       # finding device ID, one by one
       dev = get_device_id()
       # setup data line
-      data = '["'+dev+'", " ", " ", " "]'
-      # write data to file
-      with io.open('devices.json', 'a', encoding='utf8') as outfile:
-          outfile.write('\n')
-          outfile.write(data)
-      outfile.close()
-      print('repeat program for each device')
-      print('when finished, edit file devices.json to add more information about your devices name and type')
-      print('Device type are listed in climate.py, light.py and switch.py')
+      if dev is not None:
+        data = '["'+dev+'", " ", " ", " "]'
+        # write data device to file
+        with io.open('devices.json', 'a', encoding='utf8') as outfile:
+            outfile.write('\n')
+            outfile.write(data)
+        outfile.close()
+        print('repeat this program for each device')
+        print('when finished, edit file devices.json to add more information about your devices name and type')
+        print('Device type are listed in climate.py, light.py and switch.py')
