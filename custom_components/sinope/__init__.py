@@ -174,7 +174,7 @@ def set_date(zone):
     d = bytearray(struct.pack('<i', int(now.strftime("%d")))[:1]).hex() #day of month converted to bytes
     m = bytearray(struct.pack('<i', int(now.strftime("%m")))[:1]).hex() #month converted to bytes
     y = bytearray(struct.pack('<i', int(now.strftime("%y")))[:1]).hex() #year converted to bytes
-    date = '04'+w+d+m+y #xxwwddmmyy,  xx = lenght of data date = 04
+    date = '04'+w+d+m+y #xxwwddmmyy,  xx = length of data date = 04
     return date
 
 def set_time(zone):
@@ -182,7 +182,7 @@ def set_time(zone):
     s = bytearray(struct.pack('<i', int(now.strftime("%S")))[:1]).hex() #second converted to bytes
     m = bytearray(struct.pack('<i', int(now.strftime("%M")))[:1]).hex() #minutes converted to bytes
     h = bytearray(struct.pack('<i', int(now.strftime("%H"))+get_dst(zone))[:1]).hex() #hours converted to bytes
-    time = '03'+s+m+h #xxssmmhh  24hr, 16:09:00 pm, xx = lenght of data time = 03
+    time = '03'+s+m+h #xxssmmhh  24hr, 16:09:00 pm, xx = length of data time = 03
     return time
   
 def set_sun_time(city, zone, period): # period = sunrise or sunset
@@ -196,7 +196,7 @@ def set_sun_time(city, zone, period): # period = sunrise or sunset
     s = bytearray(struct.pack('<i', int(now.strftime("%S")))[:1]).hex() #second converted to bytes
     m = bytearray(struct.pack('<i', int(now.strftime("%M")))[:1]).hex() #minutes converted to bytes
     h = bytearray(struct.pack('<i', int(now.strftime("%H"))+get_dst(zone))[:1]).hex() #hours converted to bytes
-    time = '03'+s+m+h #xxssmmhh  24hr, 16:09:00 pm, xx = lenght of data time = 03
+    time = '03'+s+m+h #xxssmmhh  24hr, 16:09:00 pm, xx = length of data time = 03
     return time
   
 def get_heat_level(data):
@@ -540,7 +540,7 @@ class SinopeClient(object):
         """Get information for this device."""
         # send requests
         try:
-            timer = get_timer_lenght(bytearray(send_request(self, data_read_request(data_read_command,device_id,data_light_timer))).hex())        except OSError:
+            timer = get_timer_length(bytearray(send_request(self, data_read_request(data_read_command,device_id,data_light_timer))).hex())        except OSError:
         except OSError:
             raise PySinopeError("Cannot get light info")    
         # Prepare data
@@ -552,7 +552,7 @@ class SinopeClient(object):
         # send requests
         try:
             wattload = get_power_load(bytearray(send_request(self, data_read_request(data_read_command,device_id,data_power_load))).hex())
-            timer = get_timer_lenght(bytearray(send_request(self, data_read_request(data_read_command,device_id,data_power_timer))).hex())
+            timer = get_timer_length(bytearray(send_request(self, data_read_request(data_read_command,device_id,data_power_timer))).hex())
         except OSError:
             raise PySinopeError("Cannot get switch info")    
         # Prepare data
