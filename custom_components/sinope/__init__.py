@@ -615,6 +615,14 @@ class SinopeClient(object):
             raise PyNeviwebError("Cannot set device timer length")
         return response 
     
+    def set_all_away(self, away):
+        """Set all devices to away mode 0=home, 2=away"""
+        try:
+	    response = get_result(bytearray(send_request(self, data_report_request(data_report_command,all_unit,data_away,set_is_away(away)))).hex())
+        except OSError:
+            raise PyNeviwebError("Cannot set all devices to away or home mode")
+        return response
+    
     def set_report(self, device_id):
         """Set report to send data to each devices"""
         try:
