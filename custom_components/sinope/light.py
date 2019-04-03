@@ -102,13 +102,15 @@ class SinopeLight(Light):
         self._operation_mode = device_data["mode"]
         self._alarm = device_data["alarm"]
         self._rssi = device_data["rssi"]
+        device_info = self._client.get_light_device_info(self._id)
+        self._timer = device_info["timer"]
         return
 #        _LOGGER.warning("Cannot update %s: %s", self._name, device_data)
 
-    def update_light_device_info(self): 
-        device_info = self._client.get_light_device_info(self._id)
-        self._timer = device_info["timer"]
-        return  
+#    def update_info(self): 
+#        device_info = self._client.get_light_device_info(self._id)
+#        self._timer = device_info["timer"]
+#        return  
 #        _LOGGER.warning("Cannot update %s: %s", self._name, device_info)
         
     @property
