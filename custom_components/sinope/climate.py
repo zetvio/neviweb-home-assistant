@@ -115,16 +115,21 @@ class SinopeThermostat(ClimateDevice):
             self._is_away = False
         else:
             self._is_away = True
-        return
-#            _LOGGER.warning("Cannot update %s: %s", self._name, device_data)
-
-    def update_climate_device_info(self): 
-        device_info = self._client.get_climate_device_info(self._id)
+	device_info = self._client.get_climate_device_info(self._id)
         self._wattage = device_info["wattage"]
         self._wattage_override = device_info["wattageOverride"]
         self._min_temp = device_info["tempMin"]
         self._max_temp = device_info["tempMax"]
-        return  
+        return
+#            _LOGGER.warning("Cannot update %s: %s", self._name, device_data)
+
+#    def update_info(self): 
+#        device_info = self._client.get_climate_device_info(self._id)
+#        self._wattage = device_info["wattage"]
+#        self._wattage_override = device_info["wattageOverride"]
+#        self._min_temp = device_info["tempMin"]
+#        self._max_temp = device_info["tempMax"]
+#        return  
 #       _LOGGER.warning("Cannot update %s: %s", self._name, device_info)
 
     @property
