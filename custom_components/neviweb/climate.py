@@ -30,12 +30,14 @@ SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE | SUPPORT_OPERATION_MODE |
 DEFAULT_NAME = "neviweb climate"
 
 STATE_STANDBY = 'bypass'
+STATE_AWAY = 'away'
 NEVIWEB_STATE_AWAY = 5
 NEVIWEB_STATE_OFF = 0
 NEVIWEB_TO_HA_STATE = {
     0: STATE_OFF,
     2: STATE_MANUAL,
     3: STATE_AUTO,
+    5: STATE_AWAY,
     129: STATE_STANDBY,
     131: STATE_STANDBY,
     133: STATE_STANDBY
@@ -43,7 +45,7 @@ NEVIWEB_TO_HA_STATE = {
 HA_TO_NEVIWEB_STATE = {
     value: key for key, value in NEVIWEB_TO_HA_STATE.items()
 }
-OPERATION_LIST = [STATE_OFF, STATE_MANUAL, STATE_AUTO, STATE_STANDBY]
+OPERATION_LIST = [STATE_OFF, STATE_MANUAL, STATE_AUTO, STATE_AWAY, STATE_STANDBY]
 
 IMPLEMENTED_DEVICE_TYPES = [10, 20, 21]
 
@@ -103,6 +105,7 @@ class NeviwebThermostat(ClimateDevice):
                         device_data["mode"] is not None else 2
                     self._is_away = False
                 else:
+                    self._operation_mode = device_data["mode"]
                     self._is_away = True
                 return
         elif "code" in device_data:
