@@ -112,11 +112,10 @@ class SinopeThermostat(ClimateDevice):
             device_data["heatLevel"] is not None else 0
         self._alarm = device_data["alarm"]
         self._rssi = device_data["rssi"]
+	self._operation_mode = device_data["mode"]
         if device_data["mode"] != SINOPE_STATE_AWAY:
-            self._operation_mode = device_data["mode"]
             self._is_away = False
         else:
-	    self._operation_mode = device_data["mode"]
             self._is_away = True
 	device_info = self._client.get_climate_device_info(self._id)
         self._wattage = device_info["wattage"]
