@@ -101,7 +101,7 @@ class NeviwebThermostat(ClimateDevice):
                 self._alarm = device_data["alarm"]
                 self._rssi = device_data["rssi"]
                 self._operation_mode = device_data["mode"] if \
-                        device_data["mode"] is not None else 2
+                    device_data["mode"] is not None else 2
                 if device_data["mode"] != NEVIWEB_STATE_AWAY:
                     self._is_away = False
                 else:
