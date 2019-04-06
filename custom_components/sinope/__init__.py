@@ -596,7 +596,7 @@ class SinopeClient(object):
             else:    
                 response = get_result(bytearray(send_request(self, data_write_request(data_write_command,device_id,data_away,set_is_away(away)))).hex())
         except OSError:
-            raise PyNeviwebError("Cannot set device away mode")
+            raise PyNeviwebError("Cannot set device away")
         return response 
       
     def set_temperature(self, device_id, temperature):
