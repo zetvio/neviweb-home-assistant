@@ -645,22 +645,21 @@ class SinopeClient(object):
             raise PySinopeError("Cannot change lock device state")
         return response
 
-    def set_report(self, device_id):
-        """Set report to send data to each devices"""
+    def set_daily_report(self):
+        """Set report to send data to each devices once a day. Needed to get proper auto mode operation"""
         try:
-            result = get_result(bytearray(send_request(self, data_report_request(data_report_command,device_id,data_time,set_time(self._tz)))).hex())
-            if result == False:
-                return result
-            result = get_result(bytearray(send_request(self, data_report_request(data_report_command,device_id,data_date,set_date(self._tz)))).hex())
-            if result == False:
-                return result
-            result = get_result(bytearray(send_request(self, data_report_request(data_report_command,device_id,data_sunrise,set_sun_time(self._city_name, self._tz, "sunrise")))).hex())
-            if result == False:
-                return result
-            result = get_result(bytearray(send_request(self, data_report_request(data_report_command,device_id,data_sunset,set_sun_time(self._city_name, self._tz, "sunset")))).hex())
-            if result == False:
-                return result
-            result = get_result(bytearray(send_request(self, data_report_request(data_report_command,device_id,data_outdoor_temperature,set_temperature(get_outside_temperature(self._dk_key, self._latitude, self._longitude))))).hex())
+            result = get_result(bytearray(send_request(self, data_report_request(data_report_command,all_unit,data_time,set_time(self._tz)))).hex())
+            result = get_result(bytearray(send_request(self, data_report_request(data_report_command,all_unit,data_date,set_date(self._tz)))).hex())
+            result = get_result(bytearray(send_request(self, data_report_request(data_report_command,all_unit,data_sunrise,set_sun_time(self._city_name, self._tz, "sunrise")))).hex())
+            result = get_result(bytearray(send_request(self, data_report_request(data_report_command,all_unit,data_sunset,set_sun_time(self._city_name, self._tz, "sunset")))).hex())
         except OSError:
-            raise PySinopeError("Cannot send report to each devices")
+            raise PySinopeError("Cannot send daily report to each devices")
+        return result
+      
+    def set_hourly_report(self):
+        """we need to send temperature once per hour if we want it to be displayed on second thermostat display line"""
+        try:
+            result = get_result(bytearray(send_request(self, data_report_request(data_report_command,all_unit,data_outdoor_temperature,set_temperature(get_outside_temperature(self._dk_key, self._latitude, self._longitude))))).hex())
+        except OSError:
+            raise PySinopeError("Cannot send temperature report to each devices")
         return result
