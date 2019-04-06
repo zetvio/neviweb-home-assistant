@@ -116,7 +116,6 @@ data_away = "00070000"  #set device mode to away, 0=home, 2=away
 #thermostat info read
 data_display_format = "00090000" # 0 = celcius, 1 = fahrenheit
 data_time_format = "01090000" # 0 = 24h, 1 = 12h
-data_lock = "02090000" # 0 = unlock, 1 = lock
 data_load = "000D0000" # 0-65519 watt, 1=1 watt, (2 bytes)
 data_display2 = "30090000" # 0 = default setpoint, 1 = outdoor temp.
 data_min_temp = "0A020000" # Minimum room setpoint, 5-30oC (2 bytes)
@@ -146,6 +145,9 @@ data_power_connected = "000D0000" # actual load connected to the device
 data_power_load = "020D0000" # load used by the device
 data_power_event = "010F0000"  #0= no event sent, 1=timer active, 2= event sent for turn_on or turn_off
 data_power_timer = "000F0000" # time in minutes the power will stay on 0--255
+
+# general
+data_lock = "02090000" # 0 = unlock, 1 = lock, for keyboard device
 
 def crc_count(bufer):
     hash = crc8.crc8()
@@ -275,7 +277,19 @@ def get_intensity(data):
     tc1 = data[46:]
     tc2 = tc1[:2]
     return int(float.fromhex(tc2))
-   
+
+def set_lock(lock):
+    return "01"+bytearray(struct.pack('<i', lock)[:1]).hex()
+  
+def get_lock(data):
+    sequence = data[12:]
+    laseq = sequence[:8]
+    dev = data[26:]
+    deviceID = dev[:8]
+    tc1 = data[46:]
+    tc2 = tc1[:2]
+    return int(float.fromhex(tc2))
+
 def get_power_load(data): # get power in watt use by the device
     sequence = data[12:]
     laseq = sequence[:8]
@@ -622,7 +636,15 @@ class SinopeClient(object):
         except OSError:
             raise PyNeviwebError("Cannot set all devices to away or home mode")
         return response
-    
+
+    def set_keyboard_lock(self, device_id, lock):
+        """lock/unlock device keyboard, unlock=0, lock=1"""
+        try:
+            response = get_result(bytearray(send_request(self, data_write_request(data_write_command,device_id,data_lock,set_lock(lock)))).hex())
+        except OSError:
+            raise PySinopeError("Cannot change lock device state")
+        return response
+
     def set_report(self, device_id):
         """Set report to send data to each devices"""
         try:
