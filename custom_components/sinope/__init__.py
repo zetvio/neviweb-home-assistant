@@ -598,7 +598,7 @@ class SinopeClient(object):
             else:
                 response = get_result(bytearray(send_request(data_write_request(self, data_write_command,device_id,data_light_mode,set_mode(mode)))).hex())
         except OSError:
-            raise PyNeviwebError("Cannot set device operation mode")
+            raise PySinopeError("Cannot set device operation mode")
         return response
       
     def set_is_away(self, device_id, away):
@@ -610,7 +610,7 @@ class SinopeClient(object):
             else:    
                 response = get_result(bytearray(send_request(self, data_write_request(data_write_command,device_id,data_away,set_is_away(away)))).hex())
         except OSError:
-            raise PyNeviwebError("Cannot set device away")
+            raise PySinopeError("Cannot set device away")
         return response 
       
     def set_temperature(self, device_id, temperature):
@@ -618,7 +618,7 @@ class SinopeClient(object):
         try:
             response = get_result(bytearray(send_request(self, data_write_request(data_write_command,device_id,data_setpoint,set_temperature(temperature)))).hex())
         except OSError:
-            raise PyNeviwebError("Cannot set device setpoint temperature")
+            raise PySinopeError("Cannot set device setpoint temperature")
         return response
 
     def set_timer(self, device_id, timer_length):
@@ -626,7 +626,7 @@ class SinopeClient(object):
         try:
             response = get_result(bytearray(send_request(self, data_write_request(data_write_command,device_id,data_light_timer,set_timer_length(timer_length)))).hex())
         except OSError:
-            raise PyNeviwebError("Cannot set device timer length")
+            raise PySinopeError("Cannot set device timer length")
         return response 
     
     def set_all_away(self, away):
@@ -634,7 +634,7 @@ class SinopeClient(object):
         try:
 	    response = get_result(bytearray(send_request(self, data_report_request(data_report_command,all_unit,data_away,set_is_away(away)))).hex())
         except OSError:
-            raise PyNeviwebError("Cannot set all devices to away or home mode")
+            raise PySinopeError("Cannot set all devices to away or home mode")
         return response
 
     def set_keyboard_lock(self, device_id, lock):
@@ -662,5 +662,5 @@ class SinopeClient(object):
                 return result
             result = get_result(bytearray(send_request(self, data_report_request(data_report_command,device_id,data_outdoor_temperature,set_temperature(get_outside_temperature(self._dk_key, self._latitude, self._longitude))))).hex())
         except OSError:
-            raise PyNeviwebError("Cannot send report to each devices")
+            raise PySinopeError("Cannot send report to each devices")
         return result
