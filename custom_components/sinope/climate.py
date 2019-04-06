@@ -242,16 +242,14 @@ class SinopeThermostat(ClimateDevice):
         _LOGGER.error("Operation mode %s could not be mapped to hass", mode)
         return None
     
-    def turn_away_mode_on(self):
+    def turn_away_on(self):
         """Turn away mode on."""
-        self._client.set_mode(self._id, self._type, SINOPE_STATE_AWAY)
+        self._client.set_is_away(self._id, 2)
         self._is_away = True
 
-    def turn_away_mode_off(self):
+    def turn_away_off(self):
         """Turn away mode off."""
-        if self._operation_mode >= 129:
-            self._operation_mode = 3 
-        self._client.set_mode(self._id, self._type, self._operation_mode)
+        self._client.set_is_away(self._id, 0)
         self._is_away = False
         
     def turn_off(self):
@@ -260,4 +258,5 @@ class SinopeThermostat(ClimateDevice):
 
     def turn_on(self):
         """Turn device on (auto mode)."""
+	self._client.send_time(self._id)
         self._client.set_mode(self._id, self._type, 3)
