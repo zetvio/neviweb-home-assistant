@@ -244,12 +244,12 @@ class SinopeThermostat(ClimateDevice):
     
     def turn_away_on(self):
         """Turn away mode on."""
-        self._client.set_is_away(self._id, 2)
+        self._client.set_away_mode(self._id, 2)
         self._is_away = True
 
     def turn_away_off(self):
         """Turn away mode off."""
-        self._client.set_is_away(self._id, 0)
+        self._client.set_away_mode(self._id, 0)
         self._is_away = False
         
     def turn_off(self):
