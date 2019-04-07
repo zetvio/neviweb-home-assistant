@@ -229,7 +229,7 @@ def get_temperature(data):
         tc3 = data[48:]
         tc4 = tc3[:2]
         latemp = tc4+tc2
-        return float.fromhex(latemp)*0.01
+        return round(float.fromhex(latemp)*0.01, 2)
   
 def to_celcius(temp):
     return round((temp-32)*0.5555, 2)
@@ -242,10 +242,10 @@ def get_outside_temperature(key, latitude, longitude): #https://api.darksky.net/
     ledata =r.json()
     return to_celcius(float(json.dumps(ledata["currently"]["temperature"])))
     
-def set_is_away(away): #0=home,2=away
+def set_away(away): #0=home,2=away
     return "01"+bytearray(struct.pack('<i', away)[:1]).hex()
   
-def get_is_away(data):
+def get_away(data):
     sequence = data[12:]
     laseq = sequence[:8]
     dev = data[26:]
@@ -502,7 +502,7 @@ class SinopeClient(object):
             setpoint = get_temperature(bytearray(send_request(self, data_read_request(data_read_command,device_id,data_setpoint))).hex())
             heatlevel = get_heat_level(bytearray(send_request(self, data_read_request(data_read_command,device_id,data_heat_level))).hex())
             mode = get_mode(bytearray(send_request(self, data_read_request(data_read_command,device_id,data_mode))).hex())
-            away = get_is_away(bytearray(send_request(self, data_read_request(data_read_command,device_id,data_away))).hex())
+            away = get_away(bytearray(send_request(self, data_read_request(data_read_command,device_id,data_away))).hex())
         except OSError:
             raise PySinopeError("Cannot get climate data")
         # Prepare data
@@ -601,14 +601,14 @@ class SinopeClient(object):
             raise PySinopeError("Cannot set device operation mode")
         return response
       
-    def set_is_away(self, device_id, away):
+    def set_away_mode(self, device_id, away):
         """Set device away mode."""
         try:
             if device_id == "all":
                 device_id = "FFFFFFFF"
-                response = get_result(bytearray(send_request(self, data_report_request(data_report_command,device_id,data_away,set_is_away(away)))).hex())
+                response = get_result(bytearray(send_request(self, data_report_request(data_report_command,device_id,data_away,set_away(away)))).hex())
             else:    
-                response = get_result(bytearray(send_request(self, data_write_request(data_write_command,device_id,data_away,set_is_away(away)))).hex())
+                response = get_result(bytearray(send_request(self, data_write_request(data_write_command,device_id,data_away,set_away(away)))).hex())
         except OSError:
             raise PySinopeError("Cannot set device away")
         return response 
@@ -632,7 +632,7 @@ class SinopeClient(object):
     def set_all_away(self, away):
         """Set all devices to away mode 0=home, 2=away"""
         try:
-	    response = get_result(bytearray(send_request(self, data_report_request(data_report_command,all_unit,data_away,set_is_away(away)))).hex())
+	    response = get_result(bytearray(send_request(self, data_report_request(data_report_command,all_unit,data_away,set_away(away)))).hex())
         except OSError:
             raise PySinopeError("Cannot set all devices to away or home mode")
         return response
