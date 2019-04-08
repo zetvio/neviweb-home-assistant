@@ -107,6 +107,8 @@ if binascii.hexlify(send_ping_request(ping_request())) == b'55000200130021':
       dev = get_device_id()
       # setup data line
       if dev is not None:
+        print('your device ID is : ',dev)
+        print('It has been added to the file devices.json')
         data = '["'+dev+'", " ", " ", " "]'
         # write data device to file
         with io.open('devices.json', 'a', encoding='utf8') as outfile:
