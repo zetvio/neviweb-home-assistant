@@ -42,8 +42,13 @@ def get_device_id():
         print('You will need to add it to file __init__.py, near line 97')
         return None
       else:
-        if binascii.hexlify(sock.recv(1024)) == login_answer: #login ok
-            print('Please push the two button on the device you want to identify')
+        answer = sock.recv(1024)
+        status = bytearray(answer).hex()[0:14]
+        if status == "55000c001101ff":
+          print('Login fail, please check you Api_Key')
+        if binascii.hexlify(answer) == login_answer: #login ok
+            print('Login ok !')
+            print('Please push the two buttons on the device you want to identify')
             datarec = sock.recv(1024)
             id = bytearray(datarec).hex()[14:22]
             return id
@@ -75,6 +80,8 @@ def key_request(serial):
 def retreive_key(data):
     binary = data[18:]
     key = binary[:16]
+    if key == b'0000000000000000':
+      print('key request failed. Check you Api_ID')
     return key
 
 def login_request():
