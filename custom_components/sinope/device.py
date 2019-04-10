@@ -8,12 +8,10 @@ import io
 
 ### data that will come from HA config
 SERVER = 'XXX.XXX.XXX.XXX' #ip address of the GT125
-#write key here once you get it with the ping request (first run)
+# write key here once you get it with the ping request (first run)
 Api_Key = None # ex: "801C0E0F12C1001A"
 # write the ID printed on your GT125, no space
 Api_ID = "xxxxxxxxxxxxxxxx"
-# login answer replace None by the value you will get 
-login_answer = None # ex. login_answer = b'55000c001101000000030000032000009c'
 # Port number to reach your GT125
 PORT = 4550
 
@@ -86,7 +84,7 @@ def retreive_key(data):
     binary = data[18:]
     key = binary[:16]
     if key == b'0000000000000000':
-      print('key request failed. Check you Api_ID')
+      print('key request failed. Check your Api_ID')
     return key
 
 def login_request():
@@ -113,7 +111,7 @@ if binascii.hexlify(send_ping_request(ping_request())) == b'55000200130021':
       print("push the GT125 <web> button")
       print('Api key : ',retreive_key(binascii.hexlify(send_key_request(key_request(invert(Api_ID))))))
       print("Copy the value between the b'...' in the Api_Key, line 12, replacing the <None> value")
-      print('and copy it to your sinope section in your configuration.yaml file, Api_Key: ')
+      print('and copy it to your sinope section in your configuration.yaml file, api_key: ')
     else:
       # finding device ID, one by one
       dev = get_device_id()
@@ -127,6 +125,6 @@ if binascii.hexlify(send_ping_request(ping_request())) == b'55000200130021':
             outfile.write('\n')
             outfile.write(data)
         outfile.close()
-        print('repeat this program for each device')
+        print('Repeat this program for each device')
         print('when finished, edit file devices.json to add more information about your devices name and type')
         print('Device type are listed in climate.py, light.py and switch.py')
