@@ -94,7 +94,7 @@ class PySinopeError(Exception):
 #import PY_Sinope
 
 PORT = 4550
-#login_answer = <your login answer> #ex. b'55000c001101000000030000032000009c'
+
 all_unit = "FFFFFFFF"
 #sequential number to identify the current request. Could be any unique number that is different at each request
 # could we use timestamp value ?
@@ -148,6 +148,18 @@ data_power_timer = "000F0000" # time in minutes the power will stay on 0--255
 
 # general
 data_lock = "02090000" # 0 = unlock, 1 = lock, for keyboard device
+
+def invert(id):
+    """The Api_ID must be sent in reversed order"""
+    k1 = id[14:16:]
+    k2 = id[12:14:]
+    k3 = id[10:12:]
+    k4 = id[8:10:]
+    k5 = id[6:8:]
+    k6 = id[4:6:]
+    k7 = id[2:4:]
+    k8 = id[0:2:]
+    return k1+k2+k3+k4+k5+k6+k7+k8
 
 def crc_count(bufer):
     hash = crc8.crc8()
@@ -422,7 +434,7 @@ def send_request(self, *arg): #data
         sock.close()
         
 def login_request(self):
-    login_data = "550012001001"+self._api_id+self._api_key
+    login_data = "550012001001"+invert(self._api_id)+self._api_key
     login_crc = bytes.fromhex(crc_count(bytes.fromhex(login_data)))
     return bytes.fromhex(login_data)+login_crc
   
