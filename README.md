@@ -118,7 +118,7 @@ To enable Sinope management in your installation, add the following to your `con
 # Example configuration.yaml entry
 sinope:
   server: '<Ip adress of your GT125>'
-  id: '<ID written on the back of your GT125>'
+  id: '<ID written on the back of your GT125>' non space
   api_key: '<Api_key received on first manual connection with the GT125>' #run device.py for that
   dk_key: '<your Dark sky key>'
   scan_interval: 120 #you can go down to 60 if you want depending on how many devices you have to update. Default set to 180
@@ -127,7 +127,7 @@ sinope:
 
 To setup this custom_component, login to your Rpi and cd to the directory where you have copied the file.
 - Edit the file device.py to add your GT125 IP address at the line 10.
-- Add your device ID, written on the back of your GT125, on line 15. (see how below) 
+- Add your device ID, written on the back of your GT125, on line 14. (no space) 
 
 Execute the command: python3 device.py in console. This is required to get the Api_Key and the deviceID for each Sinopé devices connected to your GT125. On first run, device.py send a ping request to the GT125 and it will ask you to push de "WEB" button on the GT125. 
 This will give you the Api Key that you need to write on line 12, 
@@ -135,27 +135,14 @@ This will give you the Api Key that you need to write on line 12,
 api_key = "xxxxxxxxxxxxxxxx" 
 ```
 - You will need to edit the file device.py to add your GT125 ID that is writen on the back of the router.
-Because all command are sent in binary with following specs:
-
-- Byte order:    LSB first 
-- Bit order:     msb first 
-- Initial value: 0x00 
-- Final XOR:     0x00 (none)
-- CRC 8
-
-Enter the GT125 ID, written on the back, in a specific maner: 
-ex: if ID = 0123 4567 89AB CDEF then write EFCDAB8967452301 at line 15 for id = xxxx (will be changed later but you need to do it only once). You will need to write it the same way in your configuration.yaml file.
+You will need to write it the same way in your configuration.yaml file.
 
 - You must add your GT125 IP address on line 10.
 ```yaml
 server = 192.168.x.x 
 ```
 - make sure your GT125 use the port 4550, this is the one by default or change line 18 accordingly.
-- once you get your Api_Key you will start to get the device_id for all devices connected to your GT125. On first run, device.py need to validate if your login is succesfull. You will received a login_answer that you need to write on line 17.
-ex: 
-login_answer = b'55000c001101000000030000032000009c'
-
-This login_answer is specific for each GT125 as it return the ID of your GT125. You will also need to write it in __init__.py, line 97.
+- once you get your Api_Key you will start to get the device_id for all devices connected to your GT125. 
 
 You're ready to setup your Sinopé devices.
 
