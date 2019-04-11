@@ -17,14 +17,14 @@ PORT = 4550
 
 def invert(id):
     """The Api_ID must be sent in reversed order"""
-    k1 = id[14:16:]
-    k2 = id[12:14:]
-    k3 = id[10:12:]
-    k4 = id[8:10:]
-    k5 = id[6:8:]
-    k6 = id[4:6:]
-    k7 = id[2:4:]
-    k8 = id[0:2:]
+    k1 = id[14:16]
+    k2 = id[12:14]
+    k3 = id[10:12]
+    k4 = id[8:10]
+    k5 = id[6:8]
+    k6 = id[4:6]
+    k7 = id[2:4]
+    k8 = id[0:2]
     return k1+k2+k3+k4+k5+k6+k7+k8
 
 def crc_count(bufer):
@@ -118,8 +118,20 @@ if binascii.hexlify(send_ping_request(ping_request())) == b'55000200130021':
       # setup data line
       if dev is not None:
         print('your device ID is : ',dev)
-        print('It has been added to the file devices.json')
-        data = '["'+dev+'", " ", " ", " "]'
+        print('Add a name for this device or leave empty')
+        name = input()
+        if name == "":
+          name = " "
+        print('Add device type, or leave empty')
+        type = input()
+        if type == "":
+          type = " "
+        print('Add Watt load if it is a light or switch device or leave empty')
+        watt = input()
+        if watt == "":
+          watt = " "
+        print('Device '+dev+' has been added to the file devices.json')
+        data = '["'+dev+'", "'+name+'", "'+type+'", "'+watt+'"]'
         # write data device to file
         with io.open('devices.json', 'a', encoding='utf8') as outfile:
             outfile.write('\n')
