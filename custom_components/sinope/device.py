@@ -114,29 +114,33 @@ if binascii.hexlify(send_ping_request(ping_request())) == b'55000200130021':
       print('and copy it to your sinope section in your configuration.yaml file, api_key: ')
     else:
       # finding device ID, one by one
-      dev = get_device_id()
-      # setup data line
-      if dev is not None:
-        print('your device ID is : ',dev)
-        print('Add a name for this device or leave empty')
-        name = input()
-        if name == "":
-          name = " "
-        print('Add device type, or leave empty')
-        type = input()
-        if type == "":
-          type = " "
-        print('Add Watt load if it is a light or switch device or leave empty')
-        watt = input()
-        if watt == "":
-          watt = " "
-        print('Device '+dev+' has been added to the file devices.json')
-        data = '["'+dev+'", "'+name+'", "'+type+'", "'+watt+'"]'
-        # write data device to file
-        with io.open('devices.json', 'a', encoding='utf8') as outfile:
+      while True:
+        dev = get_device_id()
+        # setup data line
+        if dev is not None:
+          print('your device ID is : ',dev)
+          print('Add a name for this device or leave empty')
+          name = input()
+          if name == "":
+            name = " "
+          print('Add device type, or leave empty')
+          type = input()
+          if type == "":
+            type = " "
+          print('Add Watt load if it is a light or switch device or leave empty')
+          watt = input()
+          if watt == "":
+            watt = " "
+          print('Device '+dev+' has been added to the file devices.json')
+          data = '["'+dev+'", "'+name+'", "'+type+'", "'+watt+'"]'
+          # write data device to file
+          with io.open('devices.json', 'a', encoding='utf8') as outfile:
             outfile.write('\n')
             outfile.write(data)
-        outfile.close()
-        print('Repeat this program for each device')
-        print('when finished, edit file devices.json to add more information about your devices name and type')
-        print('Device type are listed in climate.py, light.py and switch.py')
+          outfile.close()
+          print('Type <q> to quit or just <enter> to continue with next device')
+          quit = input()
+          if quit == "q":
+            break
+      print('Once finished, edit file devices.json to add more information about your devices.')
+      print('Device type are listed in climate.py, light.py and switch.py')
