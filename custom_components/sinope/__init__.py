@@ -294,47 +294,65 @@ def get_power_load(data): # get power in watt use by the device
         lepower = tc4+tc2
         return int(float.fromhex(lepower))
   
-def set_event_on(num): #1 = light on, 2 = light off, 3 = intensity changed 
+def set_light_event_on(num): #102 = light, 112 = dimmer
     b0 = "10"
     b1 = "00000000"
     b3 = "000000000000000000"
-    if num == 1:
-        b2 = "020000" #event on = on
-    elif num == 2:  
-        b2 = "000200" # event off = on
+    if num == 102:
+        b2 = "020200" #event on for light
     else:
-        b2 = "000002" # event dimmer = on       
+        b2 = "020202" # event on for dimmer     
     return b0+b1+b2+b3
 
-def set_timer_on(num): #1 = light on, 2 = light off, 3 = intensity changed 
+def set_light_timer_on(num): #102 = light, 112 = dimmer 
     b0 = "10"
     b1 = "00000000"
     b3 = "000000000000000000"
-    if num == 1:
-        b2 = "010000" #event on = timer start
-    elif num == 2:
-        b2 = "000100" # event off = timer start
+    if num == 102:
+        b2 = "010100" #event on = timer start
     else:
-        b2 = "000001" # event dimmer = timer start  
+        b2 = "010101" # event off = timer start  
     return b0+b1+b2+b3
 
-def set_event_off(num): #1 = light on, 2 = light off, 3 = intensity changed 
+def set_light_event_off(num): #102 = light, 112 = dimmer
     b0 = "10"
     b1 = "00000000"
     b3 = "000000000000000000"
-    if num == 1:
-        b2 = "000000" #event = off
-    elif num == 2:
-        b2 = "000000" # timer on
+    if num == 102:
+        b2 = "010100" #all event = off except timer subscription (default)
     else:
-        b2 = "000000" # event = on
+        b2 = "000001" # dimmer
     return b0+b1+b2+b3
 
-def get_event(data): #received event from devices 00100000
+def get_light_event_state(data): #received event from devices, 00100000
     sequence = data[12:20]
     deviceID = data[26:34]
-    tc2 = data[54:62]
+    tc2 = data[54:60]
     return tc2 #int(float.fromhex(tc2))
+
+def set_switch_event_on():
+    b0 = "10"
+    b1 = "0202"
+    b2 = "0000000000000000000000000000"   
+    return b0+b1+b2
+
+def set_switch_timer_on():
+    b0 = "10"
+    b1 = "0101"
+    b2 = "0000000000000000000000000000" 
+    return b0+b1+b2
+
+def set_switch_event_off():
+    b0 = "10"
+    b1 = "0000"
+    b2 = "0000000000000000000000000000"
+    return b0+b1+b2
+
+def get_switch_event_state(data): #received event from devices, 
+    sequence = data[12:20]
+    deviceID = data[26:34]
+    tc2 = data[46:50]
+    return  tc2 #int(float.fromhex(tc2))
   
 def set_timer_length(num): # 0=desabled, 1 to 255 lenght on
     return "01"+bytearray(struct.pack('<i', num)[:1]).hex()
