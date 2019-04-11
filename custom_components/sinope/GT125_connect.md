@@ -31,28 +31,15 @@ sinope:
 ## First run
 To setup this custom_component, login to your Rpi and cd to the directory where you have copied the file.
 - Edit the file device.py to add your GT125 IP address at the line 10.
-- Add your device ID, written on the back of your GT125, on line 15. (see how below) 
+```yaml
+server = 192.168.x.x 
+```
+- Add your GT125 ID, written on the back of your device, on line 14. (without space) 
 
 Execute the command: python3 device.py. This is required to get the Api_Key and the deviceID for each Sinopé devices connected to your GT125. On first run, device.py send a ping request to the GT125 and it will ask you to push de "WEB" button on the GT125. 
 This will give you the Api Key that you need to write on line 12, 
 ```yaml
 api_key = "xxxxxxxxxxxxxxxx" 
-```
-- You will need to edit the file device.py to add your GT125 ID that is writen on the back of the router.
-Because all command are sent in binary with following specs:
-
-- Byte order:    LSB first 
-- Bit order:     msb first 
-- Initial value: 0x00 
-- Final XOR:     0x00 (none)
-- CRC 8
-
-Enter the GT125 ID, written on the back, in a specific maner: 
-ex: if ID = 0123 4567 89AB CDEF then write EFCDAB8967452301 at line 15 for id = xxxx (will be changed later but you need to do it only once)
-
-- You must add your GT125 IP address on line 10.
-```yaml
-server = 192.168.x.x 
 ```
 - make sure your GT125 use the port 4550, this is the one by default or change line 18 accordingly.
 
@@ -77,7 +64,7 @@ For the data report request it is possible to send data to all device at once by
 It is used to send time, date, sunset and sunrise hour, outside temperature, set all device to away mode, etc, broadcasted to all device.
 
 ## Devices discovery
-Look like the GT125 use a different deviceID then Neviweb. Once you have your Api_key written in device.py, you will need to run it many time to request deviceID for each devices on your network one by one. You need to do this once for all devices. The program will wait for you to push on both button of your device to revceive the deviceID of that device. All devices id will be written in file devices.json. Once you have all your devices, edit devices.json and add the name, type and wattage (for light devices) of each devices (its better to edit the file after getting each device so you know which one it is). For device type you can get them at the top of each file climate.py, light.py and switch.py. Light connected watt load is not measured by the light devices but instead written in Neviweb on setup of light devices. We need to write it to devices.json (kind of Neviweb equivalent) to finish the devices setup.
+Look like the GT125 use a different deviceID then Neviweb. Once you have your Api_key written in device.py, you will need to run it to request deviceID for each devices on your network one by one. Device.py will ask for device name, type and connected watt load (for lightand switch) for each device discovered. Program will loop to discover each device one by one. When finished, type "q" to leave the program. for each device discovery,the program will wait for you to push on both button of your device to revceive the deviceID of that device. All devices id and data will be written in file devices.json. Once you have all your devices, edit devices.json and add the name, type and wattage (for light devices) for each devices. For device type you can get them at the top of each file climate.py, light.py and switch.py. Light connected watt load is not measured by the light devices but instead written in Neviweb on setup of light devices. We need to write it to devices.json (kind of Neviweb equivalent) to finish the devices setup.
 
 ```yaml
 ["id", "name", "type", "watt"] <- do not edit this line
