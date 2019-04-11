@@ -123,11 +123,11 @@ if binascii.hexlify(send_ping_request(ping_request())) == b'55000200130021':
           name = input()
           if name == "":
             name = " "
-          print('Add device type, or leave empty')
+          print('Add device type (see climate.py, light.py or switch.py), or leave empty')
           type = input()
           if type == "":
             type = " "
-          print('Add Watt load if it is a light or switch device or leave empty')
+          print('Add connected watt load if it is a light or switch device, or leave empty')
           watt = input()
           if watt == "":
             watt = " "
