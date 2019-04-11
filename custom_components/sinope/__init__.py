@@ -151,14 +151,14 @@ data_lock = "02090000" # 0 = unlock, 1 = lock, for keyboard device
 
 def invert(id):
     """The Api_ID must be sent in reversed order"""
-    k1 = id[14:16:]
-    k2 = id[12:14:]
-    k3 = id[10:12:]
-    k4 = id[8:10:]
-    k5 = id[6:8:]
-    k6 = id[4:6:]
-    k7 = id[2:4:]
-    k8 = id[0:2:]
+    k1 = id[14:16]
+    k2 = id[12:14]
+    k3 = id[10:12]
+    k4 = id[8:10]
+    k5 = id[6:8]
+    k6 = id[4:6]
+    k7 = id[2:4]
+    k8 = id[0:2]
     return k1+k2+k3+k4+k5+k6+k7+k8
 
 def crc_count(bufer):
@@ -214,12 +214,9 @@ def set_sun_time(city, zone, period): # period = sunrise or sunset
     return time
   
 def get_heat_level(data):
-    sequence = data[12:]
-    laseq = sequence[:8]
-    dev = data[26:]
-    deviceID = dev[:8]
-    tc1 = data[46:]
-    tc2 = tc1[:2]
+    sequence = data[12:20]
+    deviceID = data[26:34]
+    tc2 = data[46:48]
     return int(float.fromhex(tc2))
   
 def set_temperature(temp_celcius):
@@ -227,19 +224,14 @@ def set_temperature(temp_celcius):
     return "02"+bytearray(struct.pack('<i', temp)[:2]).hex()
   
 def get_temperature(data):
-    sequence = data[12:]
-    laseq = sequence[:8]
-    dev = data[26:]
-    deviceID = dev[:8]
-    result = data[20:]
-    status = result[:2]
+    sequence = data[12:20]
+    deviceID = data[26:34]
+    status = data[20:22]
     if status == "fc":
         return None # device didn't answer, wrong device
     else:  
-        tc1 = data[46:]
-        tc2 = tc1[:2]
-        tc3 = data[48:]
-        tc4 = tc3[:2]
+        tc2 = data[46:48]
+        tc4 = data[48:50]
         latemp = tc4+tc2
         return round(float.fromhex(latemp)*0.01, 2)
   
@@ -258,64 +250,47 @@ def set_away(away): #0=home,2=away
     return "01"+bytearray(struct.pack('<i', away)[:1]).hex()
   
 def get_away(data):
-    sequence = data[12:]
-    laseq = sequence[:8]
-    dev = data[26:]
-    deviceID = dev[:8]
-    tc1 = data[46:]
-    tc2 = tc1[:2]
+    sequence = data[12:20]
+    deviceID = data[26:34]
+    tc2 = data[46:48]
     return int(float.fromhex(tc2))  
 
 def set_mode(mode): #0=off,1=freeze protect,2=manual,3=auto,5=away
     return "01"+bytearray(struct.pack('<i', mode)[:1]).hex()
  
 def get_mode(data):
-    sequence = data[12:]
-    laseq = sequence[:8]
-    dev = data[26:]
-    deviceID = dev[:8]
-    tc1 = data[46:]
-    tc2 = tc1[:2]
+    sequence = data[12:20]
+    deviceID = data[26:34]
+    tc2 = data[46:48]
     return int(float.fromhex(tc2))
   
 def set_intensity(num):
     return "01"+bytearray(struct.pack('<i', num)[:1]).hex()
 
 def get_intensity(data):
-    sequence = data[12:]
-    laseq = sequence[:8]
-    dev = data[26:]
-    deviceID = dev[:8]
-    tc1 = data[46:]
-    tc2 = tc1[:2]
+    sequence = data[12:20]
+    deviceID = data[26:34]
+    tc2 = data[46:48]
     return int(float.fromhex(tc2))
 
 def set_lock(lock):
     return "01"+bytearray(struct.pack('<i', lock)[:1]).hex()
   
 def get_lock(data):
-    sequence = data[12:]
-    laseq = sequence[:8]
-    dev = data[26:]
-    deviceID = dev[:8]
-    tc1 = data[46:]
-    tc2 = tc1[:2]
+    sequence = data[12:20]
+    deviceID = data[26:34]
+    tc2 = data[46:48]
     return int(float.fromhex(tc2))
 
 def get_power_load(data): # get power in watt use by the device
-    sequence = data[12:]
-    laseq = sequence[:8]
-    dev = data[26:]
-    deviceID = dev[:8]
-    result = data[20:]
-    status = result[:2]
+    sequence = data[12:20]
+    deviceID = data[26:34]
+    status = data[20:22]
     if status == "fc":
         return None # device didn't answer, wrong device
     else:     
-        tc1 = data[46:]
-        tc2 = tc1[:2]
-        tc3 = data[48:]
-        tc4 = tc3[:2]
+        tc2 = data[46:48]
+        tc4 = data[48:50]
         lepower = tc4+tc2
         return int(float.fromhex(lepower))
   
@@ -356,33 +331,24 @@ def set_event_off(num): #1 = light on, 2 = light off, 3 = intensity changed
     return b0+b1+b2+b3
 
 def get_event(data): #received event from devices 00100000
-    sequence = data[12:]
-    laseq = sequence[:8]
-    dev = data[26:]
-    deviceID = dev[:8]
-    tc1 = data[54:]
-    tc2 = tc1[:8]
+    sequence = data[12:20]
+    deviceID = data[26:34]
+    tc2 = data[54:62]
     return tc2 #int(float.fromhex(tc2))
   
 def set_timer_length(num): # 0=desabled, 1 to 255 lenght on
     return "01"+bytearray(struct.pack('<i', num)[:1]).hex()
   
 def get_timer_length(data): # 0=desabled, 1 to 255 lenght on
-    sequence = data[12:]
-    laseq = sequence[:8]
-    dev = data[26:]
-    deviceID = dev[:8]
-    tc1 = data[46:]
-    tc2 = tc1[:2]
+    sequence = data[12:20]
+    deviceID = data[26:34]
+    tc2 = data[46:48]
     return int(float.fromhex(tc2))
 
 def get_result(data): # check if data write was successfull, return True or False
-    sequence = data[12:]
-    laseq = sequence[:8]
-    dev = data[26:]
-    deviceID = dev[:8]
-    tc1 = data[20:]
-    tc2 = tc1[:2]
+    sequence = data[12:20]
+    deviceID = data[26:34]
+    tc2 = data[20:22]
     if str(tc2) == "0a": #data read or write
         return True
     elif str(tc2) =="01": #data report
@@ -458,7 +424,6 @@ def data_read_request(*arg): # command,unit_id,data_app
     data_seq = get_seq(seq)
     data_type = "00"
     data_res = "000000000000"
-#    data_dest_id = unit_id
     app_data_size = "04"
     size = count_data_frame(arg[0]+data_seq+data_type+data_res+arg[1]+app_data_size+arg[2])
     data_frame = head+size+arg[0]+data_seq+data_type+data_res+arg[1]+app_data_size+arg[2]
@@ -471,7 +436,6 @@ def data_report_request(*arg): # data = size+time or size+temperature (command,u
     data_seq = get_seq(seq)
     data_type = "00"
     data_res = "000000000000"
-#    data_dest_id = unit_id
     app_data_size = count_data(arg[2]+arg[3])
     size = count_data_frame(arg[0]+data_seq+data_type+data_res+arg[1]+app_data_size+arg[2]+arg[3])
     data_frame = head+size+arg[0]+data_seq+data_type+data_res+arg[1]+app_data_size+arg[2]+arg[3]
@@ -484,7 +448,6 @@ def data_write_request(*arg): # data = size+data to send (command,unit_id,data_a
     data_seq = get_seq(seq)
     data_type = "00"
     data_res = "000000000000"
-#    data_dest_id = unit_id
     app_data_size = count_data(arg[2]+arg[3])
     size = count_data_frame(arg[0]+data_seq+data_type+data_res+arg[1]+app_data_size+arg[2]+arg[3])
     data_frame = head+size+arg[0]+data_seq+data_type+data_res+arg[1]+app_data_size+arg[2]+arg[3]
