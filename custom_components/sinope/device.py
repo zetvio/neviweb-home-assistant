@@ -27,6 +27,19 @@ def invert(id):
     k8 = id[0:2]
     return k1+k2+k3+k4+k5+k6+k7+k8
 
+def print_info():
+    print('Devices type list:')
+    print('Climate devices:')
+    print('TH1120RF (3000W, 4000W) -- 10')
+    print('TH1300RF (floor)        -- 20')
+    print('TH1400RF (low voltage)  -- 21')
+    print('Light devices:')
+    print('SW2500RF (switch)       -- 102')
+    print('DM2500RF (dimmer)       -- 112')
+    print('Power switch devices:')
+    print('RM3250RF (50 A)         -- 120')
+    print('RM3200RF (40 A)         -- 120') 
+
 def crc_count(bufer):
         hash = crc8.crc8()
         hash.update(bufer)
@@ -123,9 +136,13 @@ if binascii.hexlify(send_ping_request(ping_request())) == b'55000200130021':
           name = input()
           if name == "":
             name = " "
-          print('Add device type (see climate.py, light.py or switch.py), or leave empty')
+          print('Add device type (Enter "h" for devices list), or leave empty')
           type = input()
-          if type == "":
+          if type == "h":
+            print_info()
+            print('\nAdd device type, or leave empty')
+            type = input()
+          elif type == "":    
             type = " "
           print('Add connected watt load if it is a light or switch device, or leave empty')
           watt = input()
