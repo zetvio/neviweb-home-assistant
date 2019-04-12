@@ -33,6 +33,7 @@ def print_info():
     print('TH1120RF (3000W, 4000W) -- 10')
     print('TH1300RF (floor)        -- 20')
     print('TH1400RF (low voltage)  -- 21')
+    print('TH1500RF (Double-pole)  -- 20')
     print('Light devices:')
     print('SW2500RF (switch)       -- 102')
     print('DM2500RF (dimmer)       -- 112')
