@@ -57,6 +57,13 @@ def brightness_from_percentage(percent):
     """Convert percentage to absolute value 0..255."""
     return int((percent * 255.0) / 100.0)
 
+def keyCheck(key, arr, default, name):
+    if key in arr.keys():
+        return arr[key]
+    else:
+        _LOGGER.debug("Neviweb missing %s for %s", key, name)
+        return default
+
 class NeviwebLight(Light):
     """Implementation of a neviweb light."""
 
@@ -65,7 +72,7 @@ class NeviwebLight(Light):
         self._name = name
         self._client = data.neviweb_client
         self._id = device_info["id"]
-        self._wattage_override = device_info["wattageOverride"]
+        self._wattage_override = keyCheck("wattageOverride", device_info, 0, name)
         self._brightness_pct = None
         self._operation_mode = None
         self._alarm = None
