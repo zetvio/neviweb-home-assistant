@@ -405,7 +405,11 @@ def send_request(self, *arg): #data
                 if status == b'00': # request status = ok for read and write, we go on (read=00, report=01, write=00)
                     if more == b'01': #GT125 is sending another data response
                         datarec = sock.recv(1024) 
-                        return datarec
+                        state = binascii.hexlify(datarec)[20:22]
+                        if state == b'0a':
+                            return datarec
+                        else:
+                            error_info(state,self._name)
                 elif status == b'01': #status ok for data report
                     return reply
                 else:       
