@@ -25,10 +25,13 @@ DOMAIN = 'sinope'
 DATA_DOMAIN = 'data_' + DOMAIN
 CONF_SERVER = 'server'
 CONF_DK_KEY = 'dk_key'
+CONF_MY_CITY = 'my_city'
 
 _LOGGER = logging.getLogger(__name__)
 
-SCAN_INTERVAL = timedelta(seconds=300)
+#default values
+SCAN_INTERVAL = timedelta(seconds=180)
+MY_CITY = 'Montreal' 
 
 REQUESTS_TIMEOUT = 30
 
@@ -38,6 +41,7 @@ CONFIG_SCHEMA = vol.Schema({
         vol.Required(CONF_ID): cv.string,
         vol.Required(CONF_SERVER): cv.string,
         vol.Required(CONF_DK_KEY): cv.string,
+	vol.Optional(CONF_MY_CITY, default=MY_CITY): cv.string,
         vol.Optional(CONF_SCAN_INTERVAL, default=SCAN_INTERVAL):
             cv.time_period
     })
@@ -67,11 +71,11 @@ class SinopeData:
         api_id = config.get(CONF_ID)
         server = config.get(CONF_SERVER)
         dk_key = config.get(CONF_DK_KEY)
-        city_name = "Montreal" # FIXME must come from configuration.yaml
+        my_city = config.get(CONF_MY_CITY)
         tz = config.get(CONF_TIME_ZONE)
         latitude = config.get(CONF_LATITUDE)
         longitude = config.get(CONF_LONGITUDE)
-        self.sinope_client = SinopeClient(api_key, api_id, server, city_name, tz, latitude, longitude, dk_key)
+        self.sinope_client = SinopeClient(api_key, api_id, server, my_city, tz, latitude, longitude, dk_key)
 
     # Need some refactoring here concerning the class used to transport data
     # @Throttle(SCAN_INTERVAL)
@@ -478,12 +482,12 @@ def data_write_request(*arg): # data = size+data to send (command,unit_id,data_a
 
 class SinopeClient(object):
 
-    def __init__(self, api_key, api_id, server, city_name, tz, latitude, longitude, dk_key, timeout=REQUESTS_TIMEOUT):
+    def __init__(self, api_key, api_id, server, my_city, tz, latitude, longitude, dk_key, timeout=REQUESTS_TIMEOUT):
         """Initialize the client object."""
         self._api_key = api_key
         self._api_id = api_id
         self._server = server
-        self._city_name = city_name
+        self._my_city = my_city
         self._tz = tz
         self._latitude = latitude
         self._longitude = longitude
@@ -649,8 +653,8 @@ class SinopeClient(object):
         try:
             result = get_result(bytearray(send_request(self, data_report_request(data_report_command,all_unit,data_time,set_time(self._tz)))).hex())
             result = get_result(bytearray(send_request(self, data_report_request(data_report_command,all_unit,data_date,set_date(self._tz)))).hex())
-            result = get_result(bytearray(send_request(self, data_report_request(data_report_command,all_unit,data_sunrise,set_sun_time(self._city_name, self._tz, "sunrise")))).hex())
-            result = get_result(bytearray(send_request(self, data_report_request(data_report_command,all_unit,data_sunset,set_sun_time(self._city_name, self._tz, "sunset")))).hex())
+            result = get_result(bytearray(send_request(self, data_report_request(data_report_command,all_unit,data_sunrise,set_sun_time(self._my_city, self._tz, "sunrise")))).hex())
+            result = get_result(bytearray(send_request(self, data_report_request(data_report_command,all_unit,data_sunset,set_sun_time(self._my_city, self._tz, "sunset")))).hex())
         except OSError:
             raise PySinopeError("Cannot send daily report to each devices")
         return result
