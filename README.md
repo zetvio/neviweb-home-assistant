@@ -121,6 +121,7 @@ sinope:
   id: '<ID written on the back of your GT125>' non space
   api_key: '<Api_key received on first manual connection with the GT125>' #run device.py for that
   dk_key: '<your Dark sky key>'
+  my_city: '<the nearest city>' #needed to get sunrise and sunset hours for your location.
   scan_interval: 120 #you can go down to 60 if you want depending on how many devices you have to update. Default set to 180
   ```
 ## First run
@@ -163,7 +164,7 @@ For the data report request it is possible to send data to all device at once by
 It is used to send time, date, sunset and sunrise hour, outside temperature, set all device to away mode, etc, broadcasted to all device.
 
 ## Devices discovery
-Look like the GT125 use a different deviceID then Neviweb. Once you have your Api_key written in device.py, you will need to run it to request deviceID for each devices on your network one by one. The program will wait for you to push on both button of your device to revceive the deviceID of that device. Then, it will ask for device data like name, type and connected watt load. If you don't have all information just hit enter to leave that field blank. It will be possible to add missing data later. All devices ID and data will be written in file devices.json. Once you have all your devices, hit "q" at the end to quit the program. Edit devices.json and add the name, type and wattage (for light devices) of each devices. For device type you can get them at the top of each file climate.py, light.py and switch.py. Light connected watt load is not measured by the light devices but instead written in Neviweb on setup of light devices. We need to write it to devices.json (kind of Neviweb portal equivalent) to finish the devices setup. ex:
+Look like the GT125 use a different deviceID then Neviweb. Once you have your Api_key written in device.py, you will need to run it to request deviceID for each devices on your network one by one. The program will wait for you to push on both button of your device to revceive the deviceID of that device. Then, it will ask for device data like name, type and connected watt load. To get the list of devices types just type "h" when asked for device type. This will display all known types and then ask for your device type. If you don't have all information just hit enter to leave those fields blank. It will be possible to add missing data later. All devices ID and data will be written in file devices.json. Once you have all your devices, hit "q" at the end to quit the program. Edit devices.json and add the name, type and wattage (for light devices) for each devices. Light connected watt load is not measured by the light devices but instead written in Neviweb on setup of light devices. We need to write it to devices.json (kind of Neviweb portal equivalent) to finish the devices setup. ex:
 
 ```yaml
 ["id", "name", "type", "watt"] <- do not edit this line
