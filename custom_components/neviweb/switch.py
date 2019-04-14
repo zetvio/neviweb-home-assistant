@@ -44,6 +44,13 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
             devices.append(NeviwebSwitch(data, device_info, device_name))
 
     add_devices(devices, True)
+    
+def keyCheck(key, arr, default, name):
+    if key in arr.keys():
+        return arr[key]
+    else:
+        _LOGGER.debug("Neviweb missing %s for %s", key, name)
+        return default   
 
 class NeviwebSwitch(SwitchDevice):
     """Implementation of a Neviweb switch."""
@@ -53,7 +60,7 @@ class NeviwebSwitch(SwitchDevice):
         self._name = name
         self._client = data.neviweb_client
         self._id = device_info["id"]
-        self._wattage = device_info["wattage"]
+        self._wattage = keyCheck("wattage", device_info, 0, name)
         self._brightness = None
         self._operation_mode = None
         self._alarm = None
