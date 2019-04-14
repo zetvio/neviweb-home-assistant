@@ -403,7 +403,7 @@ def send_request(self, *arg): #data
             reply = sock.recv(1024)
             if crc_check(reply):  # receive acknoledge, check status and if we will receive more data
                 seq_num = binascii.hexlify(reply)[12:20] #sequence id to link response to the correct request
-                deviceid = binascii.hexlify(reply)[26:34]
+                deviceid = bytearray(reply)[26:34].hex()
                 status = binascii.hexlify(reply)[20:22]
                 more = binascii.hexlify(reply)[24:26] #check if we will receive other data
                 if status == b'00': # request status = ok for read and write, we go on (read=00, report=01, write=00)
@@ -413,7 +413,7 @@ def send_request(self, *arg): #data
                         if state == b'0a':
                             return datarec
                         else:
-                            error_info(state,self._name)
+                            error_info(state,deviceid)
                 elif status == b'01': #status ok for data report
                     return reply
                 else:       
