@@ -26,6 +26,7 @@ sinope:
   id: '<ID written on the back of your GT125>'
   api_key: '<Api_key received on first manual connection with the GT125>'
   dk_key: '<your Dark sky key>'
+  my_city: '<the nearest city>' #needed to get sunrise and sunset hours for your location
   scan_interval: 120 #you can go down to 60 if you want depending on how many devices you have to update. default set to 180
 ```
 ## First run
