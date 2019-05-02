@@ -21,8 +21,7 @@
             "https://github.com/claudegel/sinope-1/tree/master/custom_components/sinope/light.py",
             "https://github.com/claudegel/sinope-1/tree/master/custom_components/sinope/climate.py",
             "https://github.com/claudegel/sinope-1/tree/master/custom_components/sinope/switch.py",
-            "https://github.com/claudegel/sinope-1/tree/master/custom_components/sinope/device.py",
-            "https://github.com/claudegel/sinope-1/tree/master/custom_components/sinope/devices.json"
+            "https://github.com/claudegel/sinope-1/tree/master/custom_components/sinope/device.py"
         ]
     }
 }
