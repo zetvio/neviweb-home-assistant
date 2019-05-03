@@ -12,6 +12,7 @@ from homeassistant.const import (CONF_USERNAME, CONF_PASSWORD,
 from homeassistant.util import Throttle
 
 #REQUIREMENTS = ['PY_Sinope==0.1.5']
+VERSION = '1.0.1'
 
 DOMAIN = 'neviweb'
 DATA_DOMAIN = 'data_' + DOMAIN
