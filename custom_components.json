@@ -10,7 +10,7 @@
             "https://github.com/claudegel/sinope-1/tree/master/custom_components/neviweb/climate.py",
             "https://github.com/claudegel/sinope-1/tree/master/custom_components/neviweb/switch.py"
         ]
-    }
+    },
     "sinope": {
         "version": "1.0.0",
         "local_location": "/custom_components/sinope/__init__.py",
