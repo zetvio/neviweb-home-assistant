@@ -10,9 +10,9 @@ Same as Neviweb custom_component.
 
 - CRC8-0.0.5 module from PyPI should be installed by HA on first run automatically. In hassbian look in directory /srv/homeassistant/lib/python3.5/site-packages to find out if it is there. (crc8-0.0.5.dist-info)
 - For the devices setup you still need to install crc8 to directory /usr/local/lib/python3.5/dist-packages with the command 
-<sudo pip3 install crc8>
+  'sudo pip3 install crc8'
 - For python3.7, you will need to make sure that crc8 lib is installed in /srv/homeassistant/lib/python3.7/site-packages/.
-    crc8.py and dir crc8-0.0.5.dist-info/*
+  crc8.py and dir crc8-0.0.5.dist-info/*
 
 ## Installation
 
