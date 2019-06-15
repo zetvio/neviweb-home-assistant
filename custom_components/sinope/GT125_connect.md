@@ -13,7 +13,9 @@ Same as Neviweb custom_component.
   'sudo pip3 install crc8'
 - For python3.7, you will need to make sure that crc8 lib is installed in /srv/homeassistant/lib/python3.7/site-packages/.
   crc8.py and dir crc8-0.0.5.dist-info/*
-
+- For devices setup in python3.7 you'll need to install crc8 lib with the command:
+  sudo python3.7 -m pip install crc8
+  
 ## Installation
 
 Create a directory named sinope under custom_component in your HA setup.
@@ -40,7 +42,7 @@ server = 192.168.x.x
 ```
 - Add your GT125 ID, written on the back of your device, on line 14. (without space) 
 
-Execute the command: python3 device.py. This is required to get the Api_Key and the deviceID for each Sinopé devices connected to your GT125. On first run, device.py send a ping request to the GT125 and it will ask you to push de "WEB" button on the GT125. 
+Execute the command: python3 device.py. (for Python3.7 the command is python3.7 device.py) This is required to get the Api_Key and the deviceID for each Sinopé devices connected to your GT125. On first run, device.py send a ping request to the GT125 and it will ask you to push de "WEB" button on the GT125. 
 This will give you the Api Key that you need to write on line 12, 
 ```yaml
 api_key = "xxxxxxxxxxxxxxxx" 
@@ -68,7 +70,7 @@ For the data report request it is possible to send data to all device at once by
 It is used to send time, date, sunset and sunrise hour, outside temperature, set all device to away mode, etc, broadcasted to all device.
 
 ## Devices discovery
-Look like the GT125 use a different deviceID then Neviweb. Once you have your Api_key written in device.py, you will need to run it to request deviceID for each devices on your network one by one. Device.py will ask for device name, type and connected watt load (for lightand switch) for each device discovered. Program will loop to discover each device one by one. When finished, type "q" to leave the program. for each device discovery,the program will wait for you to push on both button of your device to revceive the deviceID of that device. All devices id and data will be written in file devices.json. Once you have all your devices, edit devices.json and add the name, type and wattage (for light devices) for each devices. For device type you can get them at the top of each file climate.py, light.py and switch.py. Light connected watt load is not measured by the light devices but instead written in Neviweb on setup of light devices. We need to write it to devices.json (kind of Neviweb equivalent) to finish the devices setup.
+Look like the GT125 use a different deviceID then Neviweb. Once you have your Api_key written in device.py, you will need to run it to request deviceID for each devices on your network one by one. Device.py will ask for device name, type and connected watt load (for light and switch) for each device discovered. Program will loop to discover each device one by one. When finished, type "q" to leave the program. for each device discovery,the program will wait for you to push on both button of your device to receive the deviceID of that device. All devices id and data will be written in file devices.json. Once you have all your devices, edit devices.json and change the name, type and wattage (for light devices), if needed, for each devices. For device type you can get them at the top of each file climate.py, light.py and switch.py. You can also get them by tiping "h" when prompted in device.py. Light connected watt load is not measured by the light devices but instead written in Neviweb on setup of light devices. We need to write it to devices.json (kind of Neviweb equivalent) to finish the devices setup.
 
 ```yaml
 ["id", "name", "type", "watt"] <- do not edit this line
@@ -84,7 +86,7 @@ Each time you will add a new device to your GT125 you will need to do that setup
 ## Pypi module
 As requested by HA, all API specific code has to be part of a third party library hosted on PyPi. I will soon add modules to Pypi that will include all specific code for direct connection to GT125 or to neviweb. 
 
-- PI_Sinope, this module is for Sinope component for the GT125 connection
+- PI_Sinope, this module is for Sinope component for the GT125 direct connection
 - PI_Neviweb, this module is for Neviweb component to work with Neviweb.
 
 I will first upload to testPyPi and once stable, I'll switch them to PyPi. Then these module will be loaded automatically by HA at startup.
