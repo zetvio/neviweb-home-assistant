@@ -1,7 +1,7 @@
 {
   "domain": "neviweb",
   "name": "Sinope Neviweb",
-  "documentation": [],
+  "documentation": "https://github.com/claudegel/sinope-1",
   "dependencies": [],
   "codeowners": ["@claudegel"],
   "requirements": []
