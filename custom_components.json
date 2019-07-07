@@ -10,18 +10,5 @@
             "https://github.com/claudegel/sinope-1/tree/master/custom_components/neviweb/climate.py",
             "https://github.com/claudegel/sinope-1/tree/master/custom_components/neviweb/switch.py"
         ]
-    },
-    "sinope": {
-        "version": "1.0.0",
-        "local_location": "/custom_components/sinope/__init__.py",
-        "remote_location": "https://github.com/claudegel/sinope-1/tree/master/custom_components/sinope/__init__.py",
-        "visit_repo": "https://github.com/claudegel/sinope-1",
-        "changelog": "https://github.com/claudegel/sinope-1/wiki/Changelog",
-        "resources": [
-            "https://github.com/claudegel/sinope-1/tree/master/custom_components/sinope/light.py",
-            "https://github.com/claudegel/sinope-1/tree/master/custom_components/sinope/climate.py",
-            "https://github.com/claudegel/sinope-1/tree/master/custom_components/sinope/switch.py",
-            "https://github.com/claudegel/sinope-1/tree/master/custom_components/sinope/device.py"
-        ]
     }
 }
