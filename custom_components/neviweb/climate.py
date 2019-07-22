@@ -16,8 +16,8 @@ from . import (SCAN_INTERVAL)
 from homeassistant.components.climate import ClimateDevice
 from homeassistant.components.climate.const import (HVAC_MODE_HEAT, 
     HVAC_MODE_OFF, HVAC_MODE_AUTO, SUPPORT_TARGET_TEMPERATURE, 
-    SUPPORT_PRESET_MODE, PRESET_AWAY, CURRENT_HVAC_HEAT, CURRENT_HVAC_IDLE,
-    CURRENT_HVAC_OFF)
+    SUPPORT_PRESET_MODE, PRESET_AWAY, PRESET_NONE, CURRENT_HVAC_HEAT, 
+    CURRENT_HVAC_IDLE, CURRENT_HVAC_OFF)
 from homeassistant.const import (TEMP_CELSIUS, TEMP_FAHRENHEIT, 
     ATTR_TEMPERATURE)
 from datetime import timedelta
@@ -43,9 +43,10 @@ NEVIWEB_MODE_AUTO_BYPASS = (NEVIWEB_MODE_AUTO | NEVIWEB_BYPASS_FLAG)
 
 SUPPORTED_HVAC_MODES = [HVAC_MODE_OFF, HVAC_MODE_AUTO, HVAC_MODE_HEAT]
 
-PRESET_BYPASS = 'bypass'
+PRESET_BYPASS = 'hold'
 PRESET_FREEZE_PROTECT = 'freeze protect'
 PRESET_MODES = [
+    PRESET_NONE,
     PRESET_AWAY,
     PRESET_BYPASS,
     PRESET_FREEZE_PROTECT
@@ -193,7 +194,7 @@ class NeviwebThermostat(ClimateDevice):
         elif self._operation_mode == NEVIWEB_MODE_AWAY:
             return PRESET_AWAY
         else:
-            return None
+            return PRESET_NONE
 
     @property
     def hvac_action(self):
@@ -237,5 +238,8 @@ class NeviwebThermostat(ClimateDevice):
             if self._operation_mode in NEVIWEB_BYPASSABLE_MODES:
                 self._client.set_mode(self._id, self._operation_mode | 
                 NEVIWEB_BYPASS_FLAG)
+        elif preset_mode == PRESET_NONE:
+            # Re-apply current hvac_mode without any preset
+            self.set_hvac_mode(self.hvac_mode)
         else:
             _LOGGER.error("Unable to set preset mode: %s.", preset_mode)
