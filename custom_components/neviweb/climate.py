@@ -43,13 +43,11 @@ NEVIWEB_MODE_AUTO_BYPASS = (NEVIWEB_MODE_AUTO | NEVIWEB_BYPASS_FLAG)
 
 SUPPORTED_HVAC_MODES = [HVAC_MODE_OFF, HVAC_MODE_AUTO, HVAC_MODE_HEAT]
 
-PRESET_BYPASS = 'hold'
-PRESET_FREEZE_PROTECT = 'freeze protect'
+PRESET_BYPASS = 'temporary'
 PRESET_MODES = [
     PRESET_NONE,
     PRESET_AWAY,
-    PRESET_BYPASS,
-    PRESET_FREEZE_PROTECT
+    PRESET_BYPASS
 ]
 
 IMPLEMENTED_DEVICE_TYPES = [10, 20, 21]
@@ -189,8 +187,6 @@ class NeviwebThermostat(ClimateDevice):
         """Return current preset mode."""
         if self._operation_mode & NEVIWEB_BYPASS_FLAG == NEVIWEB_BYPASS_FLAG:
             return PRESET_BYPASS
-        elif self._operation_mode == NEVIWEB_MODE_FREEZE_PROTECT:
-            return PRESET_FREEZE_PROTECT
         elif self._operation_mode == NEVIWEB_MODE_AWAY:
             return PRESET_AWAY
         else:
@@ -232,8 +228,6 @@ class NeviwebThermostat(ClimateDevice):
 
         if preset_mode == PRESET_AWAY:
             self._client.set_mode(self._id, NEVIWEB_MODE_AWAY)
-        elif preset_mode == PRESET_FREEZE_PROTECT:
-            self._client.set_mode(self._id, NEVIWEB_MODE_FREEZE_PROTECT)
         elif preset_mode == PRESET_BYPASS:
             if self._operation_mode in NEVIWEB_BYPASSABLE_MODES:
                 self._client.set_mode(self._id, self._operation_mode | 
