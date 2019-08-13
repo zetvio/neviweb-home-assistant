@@ -10,13 +10,12 @@ from homeassistant.helpers import discovery
 from homeassistant.const import (CONF_USERNAME, CONF_PASSWORD,
     CONF_SCAN_INTERVAL)
 from homeassistant.util import Throttle
+from .const import (DOMAIN, DATA_DOMAIN, CONF_NETWORK)
 
 #REQUIREMENTS = ['PY_Sinope==0.1.5']
 VERSION = '1.0.0'
 
-DOMAIN = 'neviweb'
-DATA_DOMAIN = 'data_' + DOMAIN
-CONF_NETWORK = 'network'
+
 _LOGGER = logging.getLogger(__name__)
 
 SCAN_INTERVAL = timedelta(seconds=900)
