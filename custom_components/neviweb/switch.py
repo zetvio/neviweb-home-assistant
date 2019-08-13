@@ -33,7 +33,7 @@ NEVIWEB_TO_HA_STATE = {
 
 IMPLEMENTED_DEVICE_TYPES = [120] #power control device
 
-def setup_platform(hass, config, add_devices, discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the Neviweb switch."""
     data = hass.data[neviweb.DATA_DOMAIN]
     
@@ -43,7 +43,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
             device_name = '{} {}'.format(DEFAULT_NAME, device_info["name"])
             devices.append(NeviwebSwitch(data, device_info, device_name))
 
-    add_devices(devices, True)
+    async_add_entities(devices, True)
     
 def keyCheck(key, arr, default, name):
     if key in arr.keys():

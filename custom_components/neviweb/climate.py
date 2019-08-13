@@ -52,7 +52,7 @@ PRESET_MODES = [
 
 IMPLEMENTED_DEVICE_TYPES = [10, 20, 21]
 
-def setup_platform(hass, config, add_devices, discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the neviweb thermostats."""
     data = hass.data[neviweb.DATA_DOMAIN]
     
@@ -62,7 +62,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
             device_name = "{} {}".format(DEFAULT_NAME, device_info["name"])
             devices.append(NeviwebThermostat(data, device_info, device_name))
 
-    add_devices(devices, True)
+    async_add_entities(devices, True)
 
 class NeviwebThermostat(ClimateDevice):
     """Implementation of a Neviweb thermostat."""

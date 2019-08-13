@@ -35,7 +35,7 @@ DEVICE_TYPE_DIMMER = [112]
 DEVICE_TYPE_LIGHT = [102]
 IMPLEMENTED_DEVICE_TYPES = DEVICE_TYPE_LIGHT + DEVICE_TYPE_DIMMER
 
-def setup_platform(hass, config, add_devices, discovery_info=None):
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the neviweb light."""
     data = hass.data[neviweb.DATA_DOMAIN]
     
@@ -47,7 +47,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
                 else "light", device_info["name"])
             devices.append(NeviwebLight(data, device_info, device_name))
 
-    add_devices(devices, True)
+    async_add_entities(devices, True)
 
 def brightness_to_percentage(brightness):
     """Convert brightness from absolute 0..255 to percentage."""
