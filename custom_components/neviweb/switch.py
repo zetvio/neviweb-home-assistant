@@ -15,6 +15,7 @@ from homeassistant.components.switch import (SwitchDevice,
     ATTR_TODAY_ENERGY_KWH, ATTR_CURRENT_POWER_W)
 from datetime import timedelta
 from homeassistant.helpers.event import track_time_interval
+from .const import (DOMAIN)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ IMPLEMENTED_DEVICE_TYPES = [120] #power control device
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the Neviweb switch."""
-    data = hass.data[neviweb.DATA_DOMAIN]
+    data = hass.data[DOMAIN]
     
     devices = []
     for device_info in data.neviweb_client.gateway_data:

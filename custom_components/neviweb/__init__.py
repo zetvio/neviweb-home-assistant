@@ -10,7 +10,7 @@ from homeassistant.helpers import discovery
 from homeassistant.const import (CONF_USERNAME, CONF_PASSWORD,
     CONF_SCAN_INTERVAL)
 from homeassistant.util import Throttle
-from .const import (DOMAIN, DATA_DOMAIN, CONF_NETWORK)
+from .const import (DOMAIN, CONF_NETWORK)
 
 #REQUIREMENTS = ['PY_Sinope==0.1.5']
 VERSION = '1.0.0'
@@ -40,7 +40,7 @@ CONFIG_SCHEMA = vol.Schema({
 async def async_setup(hass, hass_config):
     """Set up neviweb."""
     data = NeviwebData(hass_config[DOMAIN])
-    hass.data[DATA_DOMAIN] = data
+    hass.data[DOMAIN] = data
 
     global SCAN_INTERVAL 
     SCAN_INTERVAL = hass_config[DOMAIN].get(CONF_SCAN_INTERVAL)

@@ -15,6 +15,7 @@ from . import (SCAN_INTERVAL)
 from homeassistant.components.light import (Light, ATTR_BRIGHTNESS,
     ATTR_BRIGHTNESS_PCT, SUPPORT_BRIGHTNESS)
 from datetime import timedelta
+from .const import (DOMAIN)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -37,7 +38,7 @@ IMPLEMENTED_DEVICE_TYPES = DEVICE_TYPE_LIGHT + DEVICE_TYPE_DIMMER
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the neviweb light."""
-    data = hass.data[neviweb.DATA_DOMAIN]
+    data = hass.data[DOMAIN]
     
     devices = []
     for device_info in data.neviweb_client.gateway_data:

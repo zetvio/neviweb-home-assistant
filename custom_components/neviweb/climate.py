@@ -22,6 +22,7 @@ from homeassistant.const import (TEMP_CELSIUS, TEMP_FAHRENHEIT,
     ATTR_TEMPERATURE)
 from datetime import timedelta
 from homeassistant.helpers.event import track_time_interval
+from .const import (DOMAIN)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -54,7 +55,7 @@ IMPLEMENTED_DEVICE_TYPES = [10, 20, 21]
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the neviweb thermostats."""
-    data = hass.data[neviweb.DATA_DOMAIN]
+    data = hass.data[DOMAIN]
     
     devices = []
     for device_info in data.neviweb_client.gateway_data:

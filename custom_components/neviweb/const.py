@@ -2,5 +2,4 @@
 
 
 DOMAIN = "neviweb"
-DATA_DOMAIN = 'data_' + DOMAIN
 CONF_NETWORK = 'network'
