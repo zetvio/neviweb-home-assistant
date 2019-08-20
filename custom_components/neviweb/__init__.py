@@ -7,7 +7,7 @@ import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers import discovery
-from homeassistant.const import (CONF_USERNAME, CONF_PASSWORD,
+from homeassistant.const import (CONF_USERNAME, CONF_EMAIL, CONF_PASSWORD,
     CONF_SCAN_INTERVAL)
 from homeassistant.util import Throttle
 from .const import (DOMAIN, CONF_NETWORK)
@@ -85,9 +85,9 @@ class PyNeviwebError(Exception):
 
 class NeviwebClient(object):
 
-    def __init__(self, username, password, network, timeout=REQUESTS_TIMEOUT):
+    def __init__(self, email, password, network, timeout=REQUESTS_TIMEOUT):
         """Initialize the client object."""
-        self._username = username
+        self._email = email
         self._password = password
         self._network_name = network
         self._gateway_id = None
@@ -106,7 +106,7 @@ class NeviwebClient(object):
 
     def __post_login_page(self):
         """Login to Neviweb."""
-        data = {"email": self._username, "password": self._password, 
+        data = {"email": self._email, "password": self._password, 
             "stayConnected": 1}
         try:
             raw_res = requests.post(LOGIN_URL, data=data, 
