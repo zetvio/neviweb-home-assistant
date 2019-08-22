@@ -22,7 +22,10 @@ from homeassistant.const import (TEMP_CELSIUS, TEMP_FAHRENHEIT,
     ATTR_TEMPERATURE)
 from datetime import timedelta
 from homeassistant.helpers.event import track_time_interval
-from .const import (DOMAIN)
+from .const import (DOMAIN, ATTR_RSSI, ATTR_SETPOINT_MODE, ATTR_ROOM_SETPOINT,
+    ATTR_OUTPUT_PERCENT_DISPLAY, ATTR_ROOM_TEMPERATURE, ATTR_ROOM_SETPOINT_MIN,
+    ATTR_ROOM_SETPOINT_MAX, ATTR_WATTAGE, MODE_AUTO, MODE_AUTO_BYPASS, 
+    MODE_MANUAL, MODE_OFF, MODE_AWAY)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -30,17 +33,21 @@ SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE | SUPPORT_PRESET_MODE)
 
 DEFAULT_NAME = "neviweb climate"
 
-NEVIWEB_MODE_OFF = 0
-NEVIWEB_MODE_FREEZE_PROTECT = 1
-NEVIWEB_MODE_MANUAL = 2
-NEVIWEB_MODE_AUTO = 3
-NEVIWEB_MODE_AWAY = 5
+UPDATE_ATTRIBUTES = [ATTR_SETPOINT_MODE, ATTR_RSSI, ATTR_ROOM_SETPOINT,
+    ATTR_OUTPUT_PERCENT_DISPLAY, ATTR_ROOM_TEMPERATURE, ATTR_ROOM_SETPOINT_MIN,
+    ATTR_ROOM_SETPOINT_MAX, ATTR_WATTAGE]
 
-NEVIWEB_BYPASS_FLAG = 128
-NEVIWEB_BYPASSABLE_MODES = [NEVIWEB_MODE_FREEZE_PROTECT,
-                            NEVIWEB_MODE_AUTO,
-                            NEVIWEB_MODE_AWAY]
-NEVIWEB_MODE_AUTO_BYPASS = (NEVIWEB_MODE_AUTO | NEVIWEB_BYPASS_FLAG)
+# NEVIWEB_MODE_OFF = 0
+# NEVIWEB_MODE_FREEZE_PROTECT = 1
+# NEVIWEB_MODE_MANUAL = 2
+# NEVIWEB_MODE_AUTO = 3
+# NEVIWEB_MODE_AWAY = 5
+
+# NEVIWEB_BYPASS_FLAG = 128
+# NEVIWEB_BYPASSABLE_MODES = [NEVIWEB_MODE_FREEZE_PROTECT,
+#                             NEVIWEB_MODE_AUTO,
+#                             NEVIWEB_MODE_AWAY]
+# NEVIWEB_MODE_AUTO_BYPASS = (NEVIWEB_MODE_AUTO | NEVIWEB_BYPASS_FLAG)
 
 SUPPORTED_HVAC_MODES = [HVAC_MODE_OFF, HVAC_MODE_AUTO, HVAC_MODE_HEAT]
 
@@ -59,7 +66,9 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     
     devices = []
     for device_info in data.neviweb_client.gateway_data:
-        if device_info["type"] in IMPLEMENTED_DEVICE_TYPES:
+        if "signature" in device_info and \
+            "type" in device_info["signature"] and \
+            device_info["signature"]["type"] in IMPLEMENTED_DEVICE_TYPES:
             device_name = "{} {}".format(DEFAULT_NAME, device_info["name"])
             devices.append(NeviwebThermostat(data, device_info, device_name))
 
@@ -73,14 +82,14 @@ class NeviwebThermostat(ClimateDevice):
         self._name = name
         self._client = data.neviweb_client
         self._id = device_info["id"]
-        self._wattage = device_info["wattage"]
-        self._wattage_override = device_info["wattageOverride"]
-        self._min_temp = device_info["tempMin"]
-        self._max_temp = device_info["tempMax"]
+        self._wattage = 0
+        #self._wattage_override = device_info["wattageOverride"]
+        self._min_temp = 0
+        self._max_temp = 0
         self._target_temp = None
         self._cur_temp = None
         self._rssi = None
-        self._alarm = None
+        #self._alarm = None
         self._operation_mode = None
         self._heat_level = 0
         _LOGGER.debug("Setting up %s: %s", self._name, device_info)
@@ -88,29 +97,26 @@ class NeviwebThermostat(ClimateDevice):
     def update(self):
         """Get the latest data from Neviweb and update the state."""
         start = time.time()
-        device_data = self._client.get_device_data(self._id)
+        device_data = self._client.get_device_attributes(self._id,
+            UPDATE_ATTRIBUTES)
         end = time.time()
         elapsed = round(end - start, 3)
         _LOGGER.debug("Updating %s (%s sec): %s",
-        self._name, elapsed, device_data)
+            self._name, elapsed, device_data)
 
-        if "errorCode" in device_data:
-            if device_data["errorCode"] == None:
-                self._cur_temp = float(device_data["temperature"])
-                self._target_temp = float(device_data["setpoint"]) if \
-                    device_data["setpoint"] is not None else 0.0
-                self._heat_level = device_data["heatLevel"] if \
-                    device_data["heatLevel"] is not None else 0
-                self._alarm = device_data["alarm"]
-                self._rssi = device_data["rssi"]
-                self._operation_mode = device_data["mode"] if \
-                    device_data["mode"] is not None else NEVIWEB_MODE_MANUAL
-                return
-        elif "code" in device_data:
-            _LOGGER.warning("Error while updating %s. %s: %s", self._name,
-                device_data["code"], device_data["message"])
-        else:
-            _LOGGER.warning("Cannot update %s: %s", self._name, device_data)
+        if "error" not in device_data:
+            self._cur_temp = float(device_data[ATTR_ROOM_TEMPERATURE]["value"])
+            self._target_temp = float(device_data[ATTR_ROOM_SETPOINT]) if \
+                device_data[ATTR_SETPOINT_MODE] != MODE_OFF else 0.0
+            self._heat_level = device_data[ATTR_OUTPUT_PERCENT_DISPLAY]
+            #self._alarm = device_data["alarm"]
+            self._rssi = device_data[ATTR_RSSI]
+            self._operation_mode = device_data[ATTR_SETPOINT_MODE]
+            self._min_temp = device_data[ATTR_ROOM_SETPOINT_MIN]
+            self._max_temp = device_data[ATTR_ROOM_SETPOINT_MAX]
+            self._wattage = device_data[ATTR_WATTAGE]["value"]
+            return
+        _LOGGER.warning("Cannot update %s: %s", self._name, device_data)
 
     @property
     def unique_id(self):
@@ -125,11 +131,11 @@ class NeviwebThermostat(ClimateDevice):
     @property
     def device_state_attributes(self):
         """Return the state attributes."""
-        return {'alarm': self._alarm,
+        return {#'alarm': self._alarm,
                 'heat_level': self._heat_level,
                 'rssi': self._rssi,
                 'wattage': self._wattage,
-                'wattage_override': self._wattage_override,
+                #'wattage_override': self._wattage_override,
                 'id': self._id}
 
     @property
@@ -155,10 +161,9 @@ class NeviwebThermostat(ClimateDevice):
     @property
     def hvac_mode(self):
         """Return current operation"""
-        if self._operation_mode == NEVIWEB_MODE_OFF:
+        if self._operation_mode == MODE_OFF:
             return HVAC_MODE_OFF
-        elif self._operation_mode in [NEVIWEB_MODE_AUTO, 
-                                      NEVIWEB_MODE_AUTO_BYPASS]:
+        elif self._operation_mode in [MODE_AUTO, MODE_AUTO_BYPASS]:
             return HVAC_MODE_AUTO
         else:
             return HVAC_MODE_HEAT
@@ -186,9 +191,9 @@ class NeviwebThermostat(ClimateDevice):
     @property
     def preset_mode(self):
         """Return current preset mode."""
-        if self._operation_mode & NEVIWEB_BYPASS_FLAG == NEVIWEB_BYPASS_FLAG:
+        if self._operation_mode in [MODE_AUTO_BYPASS]:
             return PRESET_BYPASS
-        elif self._operation_mode == NEVIWEB_MODE_AWAY:
+        elif self._operation_mode == MODE_AWAY:
             return PRESET_AWAY
         else:
             return PRESET_NONE
@@ -196,7 +201,7 @@ class NeviwebThermostat(ClimateDevice):
     @property
     def hvac_action(self):
         """Return current HVAC action."""
-        if self._operation_mode == NEVIWEB_MODE_OFF:
+        if self._operation_mode == MODE_OFF:
             return CURRENT_HVAC_OFF
         elif self._heat_level == 0:
             return CURRENT_HVAC_IDLE
@@ -214,11 +219,11 @@ class NeviwebThermostat(ClimateDevice):
     def set_hvac_mode(self, hvac_mode):
         """Set new hvac mode."""
         if hvac_mode == HVAC_MODE_OFF:
-            self._client.set_mode(self._id, NEVIWEB_MODE_OFF)
+            self._client.set_setpoint_mode(self._id, MODE_OFF)
         elif hvac_mode == HVAC_MODE_HEAT:
-            self._client.set_mode(self._id, NEVIWEB_MODE_MANUAL)
+            self._client.set_setpoint_mode(self._id, MODE_MANUAL)
         elif hvac_mode == HVAC_MODE_AUTO:
-            self._client.set_mode(self._id, NEVIWEB_MODE_AUTO)
+            self._client.set_setpoint_mode(self._id, MODE_AUTO)
         else:
             _LOGGER.error("Unable to set hvac mode: %s.", hvac_mode)
 
@@ -228,11 +233,10 @@ class NeviwebThermostat(ClimateDevice):
             return
 
         if preset_mode == PRESET_AWAY:
-            self._client.set_mode(self._id, NEVIWEB_MODE_AWAY)
+            self._client.set_setpoint_mode(self._id, MODE_AWAY)
         elif preset_mode == PRESET_BYPASS:
-            if self._operation_mode in NEVIWEB_BYPASSABLE_MODES:
-                self._client.set_mode(self._id, self._operation_mode | 
-                NEVIWEB_BYPASS_FLAG)
+            if self._operation_mode == MODE_AUTO:
+                self._client.set_setpoint_mode(self._id, MODE_AUTO_BYPASS)
         elif preset_mode == PRESET_NONE:
             # Re-apply current hvac_mode without any preset
             self.set_hvac_mode(self.hvac_mode)
