@@ -199,6 +199,11 @@ class NeviwebClient(object):
         self._cookies.update(raw_res.cookies)
         # Prepare data
         data = raw_res.json()
+        if "error" in data:
+            if data["error"]["code"] == "USRSESSEXP":
+                _LOGGER.error("Session expired. Set a scan_interval less" +
+                "than 10 minutes, otherwise the session will end.")
+                raise PyNeviwebError("Session expired")
         return data
 
     def get_device_data(self, device_id):
