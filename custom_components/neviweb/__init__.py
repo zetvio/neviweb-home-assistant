@@ -19,7 +19,7 @@ VERSION = '1.0.0'
 
 _LOGGER = logging.getLogger(__name__)
 
-SCAN_INTERVAL = timedelta(seconds=900)
+SCAN_INTERVAL = timedelta(seconds=540)
 
 REQUESTS_TIMEOUT = 30
 HOST = "https://neviweb.com"
@@ -122,10 +122,17 @@ class NeviwebClient(object):
         self._cookies = raw_res.cookies
         data = raw_res.json()
         _LOGGER.debug("Login response: %s", data)
-        self.user = data["user"]
-        self._headers = {"Session-Id": data["session"]}
-        _LOGGER.debug("Successfully logged in")
-        return True
+        if "error" in data:
+            if data["error"]["code"] == "ACCSESSEXC":
+                _LOGGER.error("Too many active sessions. Close all neviweb " +
+                "sessions you have opened on other platform (mobile, browser" +
+                ", ...), wait a few minutes, then reboot Home Assistant.")
+            return False
+        else:
+            self.user = data["user"]
+            self._headers = {"Session-Id": data["session"]}
+            _LOGGER.debug("Successfully logged in")
+            return True
 
     def __get_network(self):
         """Get gateway id associated to the desired network."""
@@ -192,78 +199,21 @@ class NeviwebClient(object):
         self._cookies.update(raw_res.cookies)
         # Prepare data
         data = raw_res.json()
-        return data
-
-    def get_device_data(self, device_id):
-        """Get device data."""
-        # Prepare return
-        data = {}
-        # Http request
-        try:
-            raw_res = requests.get(DEVICE_DATA_URL + str(device_id) +
-                "/data?force=1", headers=self._headers, cookies=self._cookies,
-                timeout=self._timeout)
-        except requests.exceptions.ReadTimeout:
-            return {"errorCode": "ReadTimeout"}
-        except Exception as e:
-            raise PyNeviwebError("Cannot get page data_device", e)
-        # Update cookies
-        self._cookies.update(raw_res.cookies)
-        # Prepare data
-        data = raw_res.json()
-        return data
-
-    def get_device_info(self, device_id):
-        """Get gateway information for this device."""
-        self.__get_gateway_data()
-        for device_info in self.gateway_data:
-            if device_info["id"] == device_id:
-                return device_info
-        return None
-
-    def get_device_properties(self, device_id):
-        """Get device properties."""
-        # Prepare return
-        data = {}
-        # Http request
-        try:
-            raw_res = requests.get(DEVICE_DATA_URL + str(device_id) +
-                "/properties?force=1", headers=self._headers,
-                cookies=self._cookies, timeout=self._timeout)
-        except OSError:
-            raise PyNeviwebError("Cannot get properties page")
-        # Update cookies
-        self._cookies.update(raw_res.cookies)
-        # Prepare data
-        data = raw_res.json()
-        return data
-
-    def ping_device(self, device_id):
-        """Ping a device."""
-        # Prepare return
-        data = {}
-        # Http request
-        try:
-            raw_res = requests.get(DEVICE_DATA_URL + str(device_id) +
-                "/ping?force=1", headers=self._headers, cookies=self._cookies,
-                timeout=self._timeout)
-        except OSError:
-            raise PyNeviwebError("Cannot ping device")
-        # Update cookies
-        self._cookies.update(raw_res.cookies)
-        # Prepare data
-        data = raw_res.json()
+        if "error" in data:
+            if data["error"]["code"] == "USRSESSEXP":
+                _LOGGER.error("Session expired. Set a scan_interval less" +
+                "than 10 minutes, otherwise the session will end.")
+                raise PyNeviwebError("Session expired")
         return data
 
     def get_device_daily_stats(self, device_id):
-        """Get device power consumption (in watts) for the last 30 days."""
+        """Get device power consumption (in Wh) for the last 30 days."""
         # Prepare return
         data = {}
-        stats = []
         # Http request
         try:
             raw_res = requests.get(DEVICE_DATA_URL + str(device_id) +
-                    "/statistics/byDay?force=1", headers=self._headers,
+                    "/statistics/30days", headers=self._headers,
                     cookies=self._cookies, timeout=self._timeout)
         except OSError:
             raise PyNeviwebError("Cannot get device daily stats")
@@ -271,29 +221,28 @@ class NeviwebClient(object):
         self._cookies.update(raw_res.cookies)
         # Prepare data
         data = raw_res.json()
-        for day in data:
-            stats.append(day["value"])
-        return stats
+        if "values" in data:
+            return data["values"]
+        return []
 
     def get_device_hourly_stats(self, device_id):
-        """Get device power consumption (in watts) for the last 24 hours."""
+        """Get device power consumption (in Wh) for the last 24 hours."""
         # Prepare return
         data = {}
-        stats = []
         # Http request
         try:
             raw_res = requests.get(DEVICE_DATA_URL + str(device_id) +
-                "/statistics/byHour?force=1", headers=self._headers,
+                "/statistics/24hours", headers=self._headers,
                 cookies=self._cookies, timeout=self._timeout)
         except OSError:
-            raise PyNeviwebError("Cannot get device daily stats")
+            raise PyNeviwebError("Cannot get device hourly stats")
         # Update cookies
         self._cookies.update(raw_res.cookies)
         # Prepare data
         data = raw_res.json()
-        for hour in data:
-            stats.append(hour["value"])
-        return stats
+        if "values" in data:
+            return data["values"]
+        return []
 
     def set_brightness(self, device_id, brightness):
         """Set device brightness."""
