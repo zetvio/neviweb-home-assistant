@@ -122,10 +122,17 @@ class NeviwebClient(object):
         self._cookies = raw_res.cookies
         data = raw_res.json()
         _LOGGER.debug("Login response: %s", data)
-        self.user = data["user"]
-        self._headers = {"Session-Id": data["session"]}
-        _LOGGER.debug("Successfully logged in")
-        return True
+        if "error" in data:
+            if data["error"]["code"] == "ACCSESSEXC":
+                _LOGGER.error("Too many active sessions. Close all neviweb " +
+                "sessions you have opened on other platform (mobile, browser" +
+                ", ...), wait a few minutes, then reboot Home Assistant.")
+            return False
+        else:
+            self.user = data["user"]
+            self._headers = {"Session-Id": data["session"]}
+            _LOGGER.debug("Successfully logged in")
+            return True
 
     def __get_network(self):
         """Get gateway id associated to the desired network."""
