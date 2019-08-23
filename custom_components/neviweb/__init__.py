@@ -19,7 +19,7 @@ VERSION = '1.0.0'
 
 _LOGGER = logging.getLogger(__name__)
 
-SCAN_INTERVAL = timedelta(seconds=900)
+SCAN_INTERVAL = timedelta(seconds=540)
 
 REQUESTS_TIMEOUT = 30
 HOST = "https://neviweb.com"
