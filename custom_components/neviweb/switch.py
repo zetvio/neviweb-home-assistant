@@ -72,7 +72,7 @@ class NeviwebSwitch(SwitchDevice):
         self._operation_mode = None
         #self._alarm = None
         self._current_power_w = None
-        #self._today_energy_kwh = None
+        self._today_energy_kwh = None
         self._rssi = None
         _LOGGER.debug("Setting up %s: %s", self._name, device_info)
 
@@ -81,7 +81,7 @@ class NeviwebSwitch(SwitchDevice):
         start = time.time()
         device_data = self._client.get_device_attributes(self._id,
             UPDATE_ATTRIBUTES)
-        #device_daily_stats = self._client.get_device_daily_stats(self._id)
+        device_daily_stats = self._client.get_device_daily_stats(self._id)
         end = time.time()
         elapsed = round(end - start, 3)
         _LOGGER.debug("Updating %s (%s sec): %s",
@@ -95,7 +95,7 @@ class NeviwebSwitch(SwitchDevice):
             self._current_power_w = device_data[ATTR_WATTAGE_INSTANT]["value"]
             self._wattage = device_data[ATTR_WATTAGE]["value"]
             self._rssi = device_data[ATTR_RSSI]
-            #self._today_energy_kwh = device_daily_stats[0] / 1000
+            self._today_energy_kwh = device_daily_stats[0] / 1000
             return
         _LOGGER.warning("Cannot update %s: %s", self._name, device_data)     
 
@@ -140,10 +140,10 @@ class NeviwebSwitch(SwitchDevice):
         """Return the current power usage in W."""
         return self._current_power_w
 
-    # @property
-    # def today_energy_kwh(self):
-    #     """Return the today total energy usage in kWh."""
-    #     return self._today_energy_kwh
+    @property
+    def today_energy_kwh(self):
+        """Return the today total energy usage in kWh."""
+        return self._today_energy_kwh
     
     @property
     def is_standby(self):

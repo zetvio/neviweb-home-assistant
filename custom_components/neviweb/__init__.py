@@ -207,14 +207,13 @@ class NeviwebClient(object):
         return data
 
     def get_device_daily_stats(self, device_id):
-        """Get device power consumption (in watts) for the last 30 days."""
+        """Get device power consumption (in Wh) for the last 30 days."""
         # Prepare return
         data = {}
-        stats = []
         # Http request
         try:
             raw_res = requests.get(DEVICE_DATA_URL + str(device_id) +
-                    "/statistics/byDay?force=1", headers=self._headers,
+                    "/statistics/30days", headers=self._headers,
                     cookies=self._cookies, timeout=self._timeout)
         except OSError:
             raise PyNeviwebError("Cannot get device daily stats")
@@ -222,29 +221,28 @@ class NeviwebClient(object):
         self._cookies.update(raw_res.cookies)
         # Prepare data
         data = raw_res.json()
-        for day in data:
-            stats.append(day["value"])
-        return stats
+        if "values" in data:
+            return data["values"]
+        return []
 
     def get_device_hourly_stats(self, device_id):
-        """Get device power consumption (in watts) for the last 24 hours."""
+        """Get device power consumption (in Wh) for the last 24 hours."""
         # Prepare return
         data = {}
-        stats = []
         # Http request
         try:
             raw_res = requests.get(DEVICE_DATA_URL + str(device_id) +
-                "/statistics/byHour?force=1", headers=self._headers,
+                "/statistics/24hours", headers=self._headers,
                 cookies=self._cookies, timeout=self._timeout)
         except OSError:
-            raise PyNeviwebError("Cannot get device daily stats")
+            raise PyNeviwebError("Cannot get device hourly stats")
         # Update cookies
         self._cookies.update(raw_res.cookies)
         # Prepare data
         data = raw_res.json()
-        for hour in data:
-            stats.append(hour["value"])
-        return stats
+        if "values" in data:
+            return data["values"]
+        return []
 
     def set_brightness(self, device_id, brightness):
         """Set device brightness."""
