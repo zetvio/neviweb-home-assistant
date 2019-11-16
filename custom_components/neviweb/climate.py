@@ -105,16 +105,19 @@ class NeviwebThermostat(ClimateDevice):
             self._name, elapsed, device_data)
 
         if "error" not in device_data:
-            self._cur_temp = float(device_data[ATTR_ROOM_TEMPERATURE]["value"])
-            self._target_temp = float(device_data[ATTR_ROOM_SETPOINT]) if \
-                device_data[ATTR_SETPOINT_MODE] != MODE_OFF else 0.0
-            self._heat_level = device_data[ATTR_OUTPUT_PERCENT_DISPLAY]
-            #self._alarm = device_data["alarm"]
-            self._rssi = device_data[ATTR_RSSI]
-            self._operation_mode = device_data[ATTR_SETPOINT_MODE]
-            self._min_temp = device_data[ATTR_ROOM_SETPOINT_MIN]
-            self._max_temp = device_data[ATTR_ROOM_SETPOINT_MAX]
-            self._wattage = device_data[ATTR_WATTAGE]["value"]
+            if "errorCode" not in device_data:
+                self._cur_temp = float(device_data[ATTR_ROOM_TEMPERATURE]["value"])
+                self._target_temp = float(device_data[ATTR_ROOM_SETPOINT]) if \
+                    device_data[ATTR_SETPOINT_MODE] != MODE_OFF else 0.0
+                self._heat_level = device_data[ATTR_OUTPUT_PERCENT_DISPLAY]
+                #self._alarm = device_data["alarm"]
+                self._rssi = device_data[ATTR_RSSI]
+                self._operation_mode = device_data[ATTR_SETPOINT_MODE]
+                self._min_temp = device_data[ATTR_ROOM_SETPOINT_MIN]
+                self._max_temp = device_data[ATTR_ROOM_SETPOINT_MAX]
+                self._wattage = device_data[ATTR_WATTAGE]["value"]
+                return
+            _LOGGER.warning("Error in reading device %s: (%s)", self._name, device_data)
             return
         _LOGGER.warning("Cannot update %s: %s", self._name, device_data)
 
