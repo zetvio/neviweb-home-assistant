@@ -68,8 +68,8 @@ class NeviwebSwitch(SwitchDevice):
         self._client = data.neviweb_client
         self._id = device_info["id"]
         self._wattage = 0 # keyCheck("wattage", device_info, 0, name)
-        self._brightness = None
-        self._operation_mode = None
+        self._brightness = 0
+        self._operation_mode = 1
         #self._alarm = None
         self._current_power_w = None
         self._today_energy_kwh = None
@@ -87,15 +87,18 @@ class NeviwebSwitch(SwitchDevice):
         _LOGGER.debug("Updating %s (%s sec): %s",
             self._name, elapsed, device_data)
         if "error" not in device_data:
-            self._brightness = device_data[ATTR_INTENSITY] if \
-                device_data[ATTR_INTENSITY] is not None else 0.0
-            self._operation_mode = device_data[ATTR_POWER_MODE] if \
-                device_data[ATTR_POWER_MODE] is not None else MODE_MANUAL
-            #self._alarm = device_data["alarm"]
-            self._current_power_w = device_data[ATTR_WATTAGE_INSTANT]["value"]
-            self._wattage = device_data[ATTR_WATTAGE]["value"]
-            self._rssi = device_data[ATTR_RSSI]
-            self._today_energy_kwh = device_daily_stats[0] / 1000
+            if "errorCode" not in device_data:
+                self._brightness = device_data[ATTR_INTENSITY] if \
+                    device_data[ATTR_INTENSITY] is not None else 0.0
+                self._operation_mode = device_data[ATTR_POWER_MODE] if \
+                    device_data[ATTR_POWER_MODE] is not None else MODE_MANUAL
+                #self._alarm = device_data["alarm"]
+                self._current_power_w = device_data[ATTR_WATTAGE_INSTANT]["value"]
+                self._wattage = device_data[ATTR_WATTAGE]["value"]
+                self._rssi = device_data[ATTR_RSSI]
+                self._today_energy_kwh = device_daily_stats[0] / 1000
+                return
+            _LOGGER.warning("Error in reading device %s: (%s)", self._name, device_data)
             return
         _LOGGER.warning("Cannot update %s: %s", self._name, device_data)     
 
