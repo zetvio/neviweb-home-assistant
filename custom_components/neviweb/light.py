@@ -80,8 +80,8 @@ class NeviwebLight(Light):
         self._client = data.neviweb_client
         self._id = device_info["id"]
         self._wattage_override = 0 # keyCheck("wattageOverride", device_info, 0, name)
-        self._brightness_pct = None
-        self._operation_mode = None
+        self._brightness_pct = 0
+        self._operation_mode = 1
         #self._alarm = None
         self._rssi = None
         self._is_dimmable = device_info["signature"]["type"] in \
@@ -98,13 +98,16 @@ class NeviwebLight(Light):
         _LOGGER.debug("Updating %s (%s sec): %s",
             self._name, elapsed, device_data)
         if "error" not in device_data:
-            self._brightness_pct = device_data[ATTR_INTENSITY] if \
-                device_data[ATTR_INTENSITY] is not None else 0.0
-            self._operation_mode = device_data[ATTR_POWER_MODE] if \
-                device_data[ATTR_POWER_MODE] is not None else MODE_MANUAL
-            #self._alarm = device_data["alarm"]
-            self._rssi = device_data[ATTR_RSSI]
-            self._wattage_override = device_data[ATTR_WATTAGE_OVERRIDE]
+            if "errorCode" not in device_data:
+                self._brightness_pct = device_data[ATTR_INTENSITY] if \
+                    device_data[ATTR_INTENSITY] is not None else 0.0
+                self._operation_mode = device_data[ATTR_POWER_MODE] if \
+                    device_data[ATTR_POWER_MODE] is not None else MODE_MANUAL
+                #self._alarm = device_data["alarm"]
+                self._rssi = device_data[ATTR_RSSI]
+                self._wattage_override = device_data[ATTR_WATTAGE_OVERRIDE]
+                return
+            _LOGGER.warning("Error in reading device %s: (%s)", self._name, device_data)
             return
         _LOGGER.warning("Cannot update %s: %s", self._name, device_data)   
         
