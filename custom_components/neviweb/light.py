@@ -140,11 +140,6 @@ class NeviwebLight(Light):
         """Return true if device is on."""
         return self._brightness_pct != 0
     
-    @property
-    def is_home(self):
-        """return occupancy mode 'home' or 'away'"""
-        return self._occupancy == MODE_HOME
-    
     # For the turn_on and turn_off functions, we would normally check if the
     # the requested state is different from the actual state to issue the 
     # command. But since we update the state every 15 minutes, there is good
