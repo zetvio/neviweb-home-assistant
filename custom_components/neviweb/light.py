@@ -16,14 +16,14 @@ from homeassistant.components.light import (Light, ATTR_BRIGHTNESS,
     ATTR_BRIGHTNESS_PCT, SUPPORT_BRIGHTNESS)
 from datetime import timedelta
 from .const import (DOMAIN, ATTR_POWER_MODE, ATTR_INTENSITY, ATTR_RSSI,
-    ATTR_WATTAGE_OVERRIDE, MODE_AUTO, MODE_MANUAL)
+    ATTR_WATTAGE_OVERRIDE, MODE_AUTO, MODE_MANUAL, ATTR_OCCUPANCY)
 
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME = 'neviweb'
 
 UPDATE_ATTRIBUTES = [ATTR_POWER_MODE, ATTR_INTENSITY, ATTR_RSSI, 
-    ATTR_WATTAGE_OVERRIDE]
+    ATTR_WATTAGE_OVERRIDE, ATTR_OCCUPANCY]
 
 # STATE_AUTO = 'auto'
 # STATE_MANUAL = 'manual'
@@ -84,6 +84,7 @@ class NeviwebLight(Light):
         self._operation_mode = 1
         #self._alarm = None
         self._rssi = None
+        self._occupancy = None
         self._is_dimmable = device_info["signature"]["type"] in \
             DEVICE_TYPE_DIMMER
         _LOGGER.debug("Setting up %s: %s", self._name, device_info)
@@ -106,6 +107,7 @@ class NeviwebLight(Light):
                 #self._alarm = device_data["alarm"]
                 self._rssi = device_data[ATTR_RSSI]
                 self._wattage_override = device_data[ATTR_WATTAGE_OVERRIDE]
+                self._occupancy = device_data[ATTR_OCCUPANCY]
                 return
             _LOGGER.warning("Error in reading device %s: (%s)", self._name, device_data)
             return
@@ -137,7 +139,7 @@ class NeviwebLight(Light):
     def is_on(self):
         """Return true if device is on."""
         return self._brightness_pct != 0
-
+    
     # For the turn_on and turn_off functions, we would normally check if the
     # the requested state is different from the actual state to issue the 
     # command. But since we update the state every 15 minutes, there is good
@@ -166,6 +168,7 @@ class NeviwebLight(Light):
         data.update({#'alarm': self._alarm,
                      'operation_mode': self.operation_mode,
                      'rssi': self._rssi,
+                     'occupancy': self._occupancy,
                      'wattage_override': self._wattage_override,
                      'id': self._id})
         return data
