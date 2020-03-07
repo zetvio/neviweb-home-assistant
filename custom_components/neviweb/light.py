@@ -16,7 +16,7 @@ from homeassistant.components.light import (Light, ATTR_BRIGHTNESS,
     ATTR_BRIGHTNESS_PCT, SUPPORT_BRIGHTNESS)
 from datetime import timedelta
 from .const import (DOMAIN, ATTR_POWER_MODE, ATTR_INTENSITY, ATTR_RSSI,
-    ATTR_WATTAGE_OVERRIDE, MODE_AUTO, MODE_MANUAL)
+    ATTR_WATTAGE_OVERRIDE, MODE_AUTO, MODE_MANUAL, ATTR_OCCUPANCY)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -143,7 +143,7 @@ class NeviwebLight(Light):
     @property
     def is_home(self):
         """return occupancy mode 'home' or 'away'"""
-        return self._occupancy = MODE_HOME
+        return self._occupancy == MODE_HOME
     
     # For the turn_on and turn_off functions, we would normally check if the
     # the requested state is different from the actual state to issue the 
