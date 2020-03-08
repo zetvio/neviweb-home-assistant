@@ -16,14 +16,14 @@ from homeassistant.components.switch import (SwitchDevice,
 from datetime import timedelta
 from homeassistant.helpers.event import track_time_interval
 from .const import (DOMAIN, ATTR_POWER_MODE, ATTR_INTENSITY, ATTR_RSSI,
-    ATTR_WATTAGE, ATTR_WATTAGE_INSTANT, MODE_AUTO, MODE_MANUAL)
+    ATTR_WATTAGE, ATTR_WATTAGE_INSTANT, MODE_AUTO, MODE_MANUAL, ATTR_OCCUPANCY)
 
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME = 'neviweb switch'
 
 UPDATE_ATTRIBUTES = [ATTR_POWER_MODE, ATTR_INTENSITY, ATTR_RSSI, 
-    ATTR_WATTAGE, ATTR_WATTAGE_INSTANT]
+    ATTR_WATTAGE, ATTR_WATTAGE_INSTANT,ATTR_OCCUPANCY]
 
 # STATE_AUTO = 'auto'
 # STATE_MANUAL = 'manual'
@@ -74,6 +74,7 @@ class NeviwebSwitch(SwitchDevice):
         self._current_power_w = None
         self._today_energy_kwh = None
         self._rssi = None
+        self._occupancy = None
         _LOGGER.debug("Setting up %s: %s", self._name, device_info)
 
     def update(self):
@@ -96,6 +97,7 @@ class NeviwebSwitch(SwitchDevice):
                 self._current_power_w = device_data[ATTR_WATTAGE_INSTANT]["value"]
                 self._wattage = device_data[ATTR_WATTAGE]["value"]
                 self._rssi = device_data[ATTR_RSSI]
+                self._occupancy = device_data[ATTR_OCCUPANCY]
                 self._today_energy_kwh = device_daily_stats[0] / 1000
                 return
             _LOGGER.warning("Error in reading device %s: (%s)", self._name, device_data)
@@ -131,6 +133,7 @@ class NeviwebSwitch(SwitchDevice):
         return {#'alarm': self._alarm,
                 'operation_mode': self.operation_mode,
                 'rssi': self._rssi,
+                'occupancy': self._occupancy,
                 'wattage': self._wattage,
                 'id': self._id}
        
