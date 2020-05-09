@@ -1,7 +1,6 @@
 import logging
 import requests
 import json
-import asyncio
 from datetime import timedelta
 
 import voluptuous as vol
@@ -39,7 +38,7 @@ CONFIG_SCHEMA = vol.Schema({
     })
 }, extra=vol.ALLOW_EXTRA)
 
-async def async_setup(hass, hass_config):
+def setup(hass, hass_config):
     """Set up neviweb."""
     data = NeviwebData(hass_config[DOMAIN])
     hass.data[DOMAIN] = data
