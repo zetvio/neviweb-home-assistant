@@ -12,7 +12,7 @@ import time
 
 import custom_components.neviweb as neviweb
 from . import (SCAN_INTERVAL)
-from homeassistant.components.light import (LightEntity , ATTR_BRIGHTNESS,
+from homeassistant.components.light import (LightEntity, ATTR_BRIGHTNESS,
     ATTR_BRIGHTNESS_PCT, SUPPORT_BRIGHTNESS)
 from datetime import timedelta
 from .const import (DOMAIN, ATTR_POWER_MODE, ATTR_INTENSITY, ATTR_RSSI,
@@ -71,7 +71,7 @@ def brightness_from_percentage(percent):
 #         _LOGGER.debug("Neviweb missing %s for %s", key, name)
 #         return default
 
-class NeviwebLight(LightEntity ):
+class NeviwebLight(LightEntity):
     """Implementation of a neviweb light."""
 
     def __init__(self, data, device_info, name):
