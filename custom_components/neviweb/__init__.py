@@ -14,7 +14,7 @@ from .const import (DOMAIN, CONF_NETWORK, ATTR_INTENSITY, ATTR_POWER_MODE,
     ATTR_SETPOINT_MODE, ATTR_ROOM_SETPOINT, ATTR_SIGNATURE)
 
 #REQUIREMENTS = ['PY_Sinope==0.1.5']
-VERSION = '1.1.1'
+VERSION = '1.1.2'
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -33,6 +33,7 @@ CONFIG_SCHEMA = vol.Schema({
         vol.Required(CONF_USERNAME): cv.string,
         vol.Required(CONF_PASSWORD): cv.string,
         vol.Optional(CONF_NETWORK): cv.string,
+        vol.Optional(CONF_NETWORK2): cv.string,
         vol.Optional(CONF_SCAN_INTERVAL, default=SCAN_INTERVAL):
             cv.time_period
     })
@@ -62,7 +63,8 @@ class NeviwebData:
         username = config.get(CONF_USERNAME)
         password = config.get(CONF_PASSWORD)
         network = config.get(CONF_NETWORK)
-        self.neviweb_client = NeviwebClient(username, password, network)
+        network2 = config.get(CONF_NETWORK2)
+        self.neviweb_client = NeviwebClient(username, password, network, network2)
 
     # Need some refactoring here concerning the class used to transport data
     # @Throttle(SCAN_INTERVAL)
@@ -91,8 +93,11 @@ class NeviwebClient(object):
         self._email = email
         self._password = password
         self._network_name = network
+        self._network_name2 = network2
         self._gateway_id = None
+        self._gateway_id2 = None
         self.gateway_data = {}
+        self.gateway_data2 = {}
         self._headers = None
         self._cookies = None
         self._timeout = timeout
@@ -142,16 +147,23 @@ class NeviwebClient(object):
                 cookies=self._cookies, timeout=self._timeout)
             networks = raw_res.json()
 
-            if self._network_name == None: # Use 1st network found
+            if self._network_name == None and self._network_name2 == None: # Use 1st network found and second if found
                 self._gateway_id = networks[0]["id"]
                 self._network_name = networks[0]["name"]
+                self._gateway_id2 = networks[1]["id"]
+                self._network_name2 = networks[1]["name"]
+                
             else:
                 for network in networks:
                     if network["name"] == self._network_name:
                         self._gateway_id = network["id"]
-                        break
-            _LOGGER.debug("Selecting %s network among: %s",
-                self._network_name, networks)
+                        _LOGGER.debug("Selecting %s network among: %s",
+                            self._network_name, networks)
+                    elif network["name"] == self._network_name2:
+                        self._gateway_id2 = network["id"]
+                       _LOGGER.debug("Selecting %s network among: %s",
+                           self._network_name2, networks)
+                    break
         except OSError:
             raise PyNeviwebError("Cannot get network")
         # Update cookies
@@ -173,12 +185,29 @@ class NeviwebClient(object):
         self._cookies.update(raw_res.cookies)
         # Prepare data
         self.gateway_data = raw_res.json()
-
+        _LOGGER.debug("Gateway_data : %s", self.gateway_data)
+        if self._gateway_id2 is not None:
+            try:
+                raw_res2 = requests.get(GATEWAY_DEVICE_URL + str(self._gateway_id2),
+                    headers=self._headers, cookies=self._cookies, 
+                    timeout=self._timeout)
+                _LOGGER.debug("Received gateway data 2: %s", raw_res2.json())
+            except OSError:
+                raise PyNeviwebError("Cannot get gateway data 2")
+            # Prepare data
+            self.gateway_data2 = raw_res2.json()
+            _LOGGER.debug("Gateway_data2 : %s", self.gateway_data2)
         for device in self.gateway_data:
             data = self.get_device_attributes(device["id"], [ATTR_SIGNATURE])
             if ATTR_SIGNATURE in data:
                 device[ATTR_SIGNATURE] = data[ATTR_SIGNATURE]
             # _LOGGER.debug("Received signature data: %s", data)
+        if self._gateway_id2 is not None:          
+            for device in self.gateway_data2:
+                data2 = self.get_device_attributes(device["id"], [ATTR_SIGNATURE])
+                if ATTR_SIGNATURE in data2:
+                    device[ATTR_SIGNATURE] = data2[ATTR_SIGNATURE]
+                # _LOGGER.debug("Received signature data: %s", data)
         # _LOGGER.debug("Updated gateway data: %s", self.gateway_data)
 
     def get_device_attributes(self, device_id, attributes):
