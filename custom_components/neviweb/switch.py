@@ -11,7 +11,7 @@ import time
 
 import custom_components.neviweb as neviweb
 from . import (SCAN_INTERVAL)
-from homeassistant.components.switch import (SwitchDevice, 
+from homeassistant.components.switch import (SwitchEntity, 
     ATTR_TODAY_ENERGY_KWH, ATTR_CURRENT_POWER_W)
 from datetime import timedelta
 from homeassistant.helpers.event import track_time_interval
@@ -59,7 +59,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 #         _LOGGER.debug("Neviweb missing %s for %s", key, name)
 #         return default
 
-class NeviwebSwitch(SwitchDevice):
+class NeviwebSwitch(SwitchEntity):
     """Implementation of a Neviweb switch."""
 
     def __init__(self, data, device_info, name):
