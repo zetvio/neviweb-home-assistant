@@ -88,7 +88,7 @@ class PyNeviwebError(Exception):
 
 class NeviwebClient(object):
 
-    def __init__(self, email, password, network, timeout=REQUESTS_TIMEOUT):
+    def __init__(self, email, password, network, network2, timeout=REQUESTS_TIMEOUT):
         """Initialize the client object."""
         self._email = email
         self._password = password
