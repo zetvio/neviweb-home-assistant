@@ -12,7 +12,7 @@ import time
 
 import custom_components.neviweb as neviweb
 from . import (SCAN_INTERVAL)
-from homeassistant.components.light import (Light, ATTR_BRIGHTNESS,
+from homeassistant.components.light import (LightEntity, ATTR_BRIGHTNESS,
     ATTR_BRIGHTNESS_PCT, SUPPORT_BRIGHTNESS)
 from datetime import timedelta
 from .const import (DOMAIN, ATTR_POWER_MODE, ATTR_INTENSITY, ATTR_RSSI,
@@ -53,7 +53,15 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
                 "dimmer" if device_info["signature"]["type"] in DEVICE_TYPE_DIMMER 
                 else "light", device_info["name"])
             devices.append(NeviwebLight(data, device_info, device_name))
-
+    for device_info in data.neviweb2_client.gateway_data2:
+        if "signature" in device_info and \
+            "type" in device_info["signature"] and \
+            device_info["signature"]["type"] in IMPLEMENTED_DEVICE_TYPES:
+            device_name = '{} {} {}'.format(DEFAULT_NAME, 
+                "dimmer" if device_info["signature"]["type"] in DEVICE_TYPE_DIMMER 
+                else "light", device_info["name"])
+            devices.append(Neviweb2Light(data, device_info, device_name))
+            
     async_add_entities(devices, True)
 
 def brightness_to_percentage(brightness):
@@ -71,7 +79,7 @@ def brightness_from_percentage(percent):
 #         _LOGGER.debug("Neviweb missing %s for %s", key, name)
 #         return default
 
-class NeviwebLight(Light):
+class NeviwebLight(LightEntity):
     """Implementation of a neviweb light."""
 
     def __init__(self, data, device_info, name):
