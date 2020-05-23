@@ -10,7 +10,7 @@ from homeassistant.helpers import discovery
 from homeassistant.const import (CONF_USERNAME, CONF_EMAIL, CONF_PASSWORD,
     CONF_SCAN_INTERVAL)
 from homeassistant.util import Throttle
-from .const import (DOMAIN, CONF_NETWORK, ATTR_INTENSITY, ATTR_POWER_MODE,
+from .const import (DOMAIN, CONF_NETWORK, CONF_NETWORK2, ATTR_INTENSITY, ATTR_POWER_MODE,
     ATTR_SETPOINT_MODE, ATTR_ROOM_SETPOINT, ATTR_SIGNATURE)
 
 #REQUIREMENTS = ['PY_Sinope==0.1.5']
