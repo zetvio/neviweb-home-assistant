@@ -98,7 +98,8 @@ class NeviwebSwitch(SwitchEntity):
                 self._wattage = device_data[ATTR_WATTAGE]["value"]
                 self._rssi = device_data[ATTR_RSSI]
                 self._occupancy = device_data[ATTR_OCCUPANCY]
-                self._today_energy_kwh = device_daily_stats[0] / 1000
+                self._today_energy_kwh = device_daily_stats[0] / 1000 if \
+                    device_daily_stats[0] is not None else 0
                 return
             _LOGGER.warning("Error in reading device %s: (%s)", self._name, device_data)
             return
