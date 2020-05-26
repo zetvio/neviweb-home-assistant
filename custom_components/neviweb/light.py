@@ -60,7 +60,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             device_name = '{} {} {}'.format(DEFAULT_NAME, 
                 "dimmer" if device_info["signature"]["type"] in DEVICE_TYPE_DIMMER 
                 else "light", device_info["name"])
-            devices.append(Neviweb2Light(data, device_info, device_name))
+            devices.append(NeviwebLight(data, device_info, device_name))
             
     async_add_entities(devices, True)
 
