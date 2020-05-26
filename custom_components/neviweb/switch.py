@@ -54,7 +54,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             "type" in device_info["signature"] and \
             device_info["signature"]["type"] in IMPLEMENTED_DEVICE_TYPES:
             device_name = '{} {}'.format(DEFAULT_NAME, device_info["name"])
-            devices.append(Neviweb2Switch(data, device_info, device_name))
+            devices.append(NeviwebSwitch(data, device_info, device_name))
             
     async_add_entities(devices, True)
     
