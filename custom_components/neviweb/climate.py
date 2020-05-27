@@ -37,18 +37,6 @@ UPDATE_ATTRIBUTES = [ATTR_SETPOINT_MODE, ATTR_RSSI, ATTR_ROOM_SETPOINT,
     ATTR_OUTPUT_PERCENT_DISPLAY, ATTR_ROOM_TEMPERATURE, ATTR_ROOM_SETPOINT_MIN,
     ATTR_ROOM_SETPOINT_MAX, ATTR_WATTAGE]
 
-# NEVIWEB_MODE_OFF = 0
-# NEVIWEB_MODE_FREEZE_PROTECT = 1
-# NEVIWEB_MODE_MANUAL = 2
-# NEVIWEB_MODE_AUTO = 3
-# NEVIWEB_MODE_AWAY = 5
-
-# NEVIWEB_BYPASS_FLAG = 128
-# NEVIWEB_BYPASSABLE_MODES = [NEVIWEB_MODE_FREEZE_PROTECT,
-#                             NEVIWEB_MODE_AUTO,
-#                             NEVIWEB_MODE_AWAY]
-# NEVIWEB_MODE_AUTO_BYPASS = (NEVIWEB_MODE_AUTO | NEVIWEB_BYPASS_FLAG)
-
 SUPPORTED_HVAC_MODES = [HVAC_MODE_OFF, HVAC_MODE_AUTO, HVAC_MODE_HEAT]
 
 PRESET_BYPASS = 'temporary'
@@ -140,11 +128,9 @@ class NeviwebThermostat(ClimateEntity):
     @property
     def device_state_attributes(self):
         """Return the state attributes."""
-        return {#'alarm': self._alarm,
-                'heat_level': self._heat_level,
+        return {'heat_level': self._heat_level,
                 'rssi': self._rssi,
                 'wattage': self._wattage,
-                #'wattage_override': self._wattage_override,
                 'id': self._id}
 
     @property
