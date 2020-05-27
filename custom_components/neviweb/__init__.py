@@ -66,15 +66,6 @@ class NeviwebData:
         network2 = config.get(CONF_NETWORK2)
         self.neviweb_client = NeviwebClient(username, password, network, network2)
 
-    # Need some refactoring here concerning the class used to transport data
-    # @Throttle(SCAN_INTERVAL)
-    # def update(self):
-    #     """Get the latest data from pyneviweb."""
-    #     self.neviweb_client.update()
-    #     _LOGGER.debug("Neviweb data updated successfully")
-
-
-
 # According to HA: 
 # https://developers.home-assistant.io/docs/en/creating_component_code_review.html
 # "All API specific code has to be part of a third party library hosted on PyPi. 
