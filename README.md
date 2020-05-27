@@ -35,9 +35,10 @@ Here is a list of currently supported devices. Basically, it's everything that c
 ## Prerequisite
 You need to connect your devices to a GT125 web gateway and add them in your Neviweb portal before being able to interact with them within Home Assistant. Please refer to the instructions manual of your device or visit [Neviweb support](https://www.sinopetech.com/blog/support-cat/plateforme-nevi-web/).
 
-There are two custom component giving you the choice to manage your devices via the neviweb portal or directly via your GT125 gateway:
-- [Neviweb](https://github.com/claudegel/sinope-1) custom component to manage your devices via neviweb portal
-- [Sinope](https://github.com/claudegel/sinope-gt125) custom component to manage your devices directly via your GT125 web gateway
+There are three custom components giving you the choice to manage your devices via the neviweb portal or directly via your GT125 gateway:
+- [Neviweb](https://github.com/claudegel/sinope-1) custom component to manage your devices via Neviweb portal.
+- [Sinope](https://github.com/claudegel/sinope-gt125) custom component to manage your devices directly via your GT125 web gateway.
+- [Neviweb130](https://github.com/claudegel/sinope-130) custom component to manage your devices connected to your GT130 gateway via Neviweb portal.
 
 You need to install only one of them but both can be used at the same time on HA.
 
@@ -61,6 +62,7 @@ There are two methods to install this custom component:
           light.py
           switch.py
           climate.py
+          const.py
       ...
     ```
 
@@ -86,7 +88,7 @@ neviweb:
 | **scan_interval** | no | 540 | The number of seconds between access to Neviweb to update device state. Sinopé asked for a minimum of 5 minutes between polling now so you can reduce scan_interval to 300. Don't go over 600, the session will expire.
 
 ## Troubleshooting
-If you get a stack trace related to a Neviweb component in your `home-assistant.log` file, you can file an issue in this repository.
+If you get a stack trace related to a Neviweb component in your `home-assistant.log` file, you can fill an issue in this repository.
 
 You can also post in one of those threads to get help:
 - https://community.home-assistant.io/t/sinope-line-voltage-thermostats/17157
