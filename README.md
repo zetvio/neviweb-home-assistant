@@ -7,7 +7,9 @@ To support [HACS](https://community.home-assistant.io/t/custom-component-hacs/12
 # Home Assistant Neviweb Custom Components
 
 Here is a custom components to suport [Neviweb](https://neviweb.com/) in [Home Assistant](http://www.home-assistant.io). 
-Neviweb is a platform created by Sinopé Technologies to interact with their smart devices like thermostats, light switches/dimmers and load controllers. It also supports some devices made by [Ouellet](http://www.ouellet.com/en-ca/products/thermostats-and-controls/neviweb%C2%AE-wireless-communication-controls.aspx).
+Neviweb is a platform created by Sinopé Technologies to interact with their smart devices like thermostats, light switches/dimmers and load controllers. It also supports some devices made by [Ouellet](http://www.ouellet.com/en-ca/products/thermostats-and-controls/neviweb%C2%AE-wireless-communication-controls.aspx). 
+
+This custom component originally was able to load devices from one GT125 network connected to Neviweb. It as been updated to be able to load devices from two GT125 network connected to Neviweb. This will give you possibility to load devices from house and office or house and summer house at once. The two gateway should be GT125. Cannot be mixed with GT130. Use Neviweb130 custom component for this one. 
 
 ## Supported Devices
 Here is a list of currently supported devices. Basically, it's everything that can be added in Neviweb.
@@ -80,6 +82,7 @@ neviweb:
 | **username** | yes |  | Your email address used to log in Neviweb.
 | **password** | yes |  | Your Neviweb password.
 | **network** | no | 1st network found | The name of the network you want to control.
+| **network2** | no | 2nd network found | The name of the second network you want to control.
 | **scan_interval** | no | 540 | The number of seconds between access to Neviweb to update device state. Sinopé asked for a minimum of 5 minutes between polling now so you can reduce scan_interval to 300. Don't go over 600, the session will expire.
 
 ## Troubleshooting
