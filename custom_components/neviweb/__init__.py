@@ -146,12 +146,12 @@ class NeviwebClient(object):
                 
             else:
                 for network in networks:
-                    if network[0]["name"] == self._network_name:
-                        self._gateway_id = network[0]["id"]
+                    if network["name"] == self._network_name:
+                        self._gateway_id = network["id"]
                         _LOGGER.debug("Selecting %s network among: %s",
                             self._network_name, networks)
-                    elif network[1]["name"] == self._network_name2:
-                        self._gateway_id2 = network[1]["id"]
+                    elif network["name"] == self._network_name2:
+                        self._gateway_id2 = network["id"]
                         _LOGGER.debug("Selecting %s network among: %s",
                             self._network_name2, networks)
                     break
