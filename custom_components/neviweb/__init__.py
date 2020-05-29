@@ -159,7 +159,7 @@ class NeviwebClient(object):
                             self._network_name2, networks)
                     else:
                         _LOGGER.debug("Your network name %s do not correspond to %s",
-                            self._network_name, network["name"])
+                            self._network_name2, network["name"])
              
         except OSError:
             raise PyNeviwebError("Cannot get network")
