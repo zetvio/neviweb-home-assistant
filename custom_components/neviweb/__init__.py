@@ -150,11 +150,17 @@ class NeviwebClient(object):
                         self._gateway_id = network["id"]
                         _LOGGER.debug("Selecting %s network among: %s",
                             self._network_name, networks)
-                    elif network["name"] == self._network_name2:
+                    else:
+                        _LOGGER.debug("Your network name %s do not correspond to %s",
+                            self._network_name, network["name"])
+                    if network["name"] == self._network_name2:
                         self._gateway_id2 = network["id"]
                         _LOGGER.debug("Selecting %s network among: %s",
                             self._network_name2, networks)
-                    break
+                    else:
+                        _LOGGER.debug("Your network name %s do not correspond to %s",
+                            self._network_name, network["name"])
+             
         except OSError:
             raise PyNeviwebError("Cannot get network")
         # Update cookies
