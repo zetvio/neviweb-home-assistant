@@ -151,14 +151,14 @@ class NeviwebClient(object):
                         _LOGGER.debug("Selecting %s network among: %s",
                             self._network_name, networks)
                     else:
-                        _LOGGER.debug("Your network name %s do not correspond to %s",
+                        _LOGGER.debug("Your network name %s do not correspond to discovered network %s",
                             self._network_name, network["name"])
                     if network["name"] == self._network_name2:
                         self._gateway_id2 = network["id"]
                         _LOGGER.debug("Selecting %s network among: %s",
                             self._network_name2, networks)
                     else:
-                        _LOGGER.debug("Your network name %s do not correspond to %s",
+                        _LOGGER.debug("Your network name %s do not correspond to discovered network %s",
                             self._network_name2, network["name"])
              
         except OSError:
