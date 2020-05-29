@@ -75,6 +75,8 @@ To enable Neviweb management in your installation, add the following to your `co
 neviweb:
   username: '<your Neviweb username>'
   password: '<your Neviweb password>'
+  network: '<your first network>'
+  network2: '<your second network>'
 ```
 
 **Configuration options:**  
