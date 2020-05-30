@@ -150,6 +150,12 @@ class NeviwebClient(object):
                         self._gateway_id = network["id"]
                         _LOGGER.debug("Selecting %s network among: %s",
                             self._network_name, networks)
+                        continue
+                    elif network["name"] == self._network_name[0].upper()+self._network_name[1:] OR network["name"] == self._network_name[0].lower()+self._network_name[1:]:
+                        self._gateway_id = network["id"]
+                        _LOGGER.debug("Please check first letter of your network name, In capital letter or not? Selecting %s network among: %s",
+                            self._network_name, networks)
+                        continue
                     else:
                         _LOGGER.debug("Your network name %s do not correspond to discovered network %s",
                             self._network_name, network["name"])
@@ -157,12 +163,18 @@ class NeviwebClient(object):
                         self._gateway_id2 = network["id"]
                         _LOGGER.debug("Selecting %s network among: %s",
                             self._network_name2, networks)
+                        continue
+                    elif network["name"] == self._network_name2[0].upper()+self._network_name2[1:] OR network["name"] == self._network_name2[0].lower()+self._network_name2[1:]:
+                        self._gateway_id = network["id"]
+                        _LOGGER.debug("Please check first letter of your network2 name, In capital letter or not? Selecting %s network among: %s",
+                            self._network_name2, networks)
+                        continue
                     else:
                         _LOGGER.debug("Your network name %s do not correspond to discovered network %s",
                             self._network_name2, network["name"])
              
         except OSError:
-            raise PyNeviwebError("Cannot get network")
+            raise PyNeviwebError("Cannot get networks...")
         # Update cookies
         self._cookies.update(raw_res.cookies)
         # Prepare data
