@@ -89,7 +89,7 @@ neviweb:
 | **network2** | no | 2nd network found | The name of the second GT125 network you want to control.
 | **scan_interval** | no | 540 | The number of seconds between access to Neviweb to update device state. Sinopé asked for a minimum of 5 minutes between polling now so you can reduce scan_interval to 300. Don't go over 600, the session will expire.
 
-If you have also a GT130 also connected to Neviweb the network parameter is mandatory or it is possible that during the setup, the GT130 network will be picked up accidentally. If you have only two GT125 network, you can omit there names as during setup, the first two network found will be picked up automatically.
+If you have also a GT130 also connected to Neviweb the network parameter is mandatory or it is possible that during the setup, the GT130 network will be picked up accidentally. If you have only two GT125 network, you can omit there names as during setup, the first two network found will be picked up automatically. If you prefer to add networs names make sure that they are written «exactly» as in Neviweb. (first letter capitalized or not).
 
 ## Troubleshooting
 If you get a stack trace related to a Neviweb component in your `home-assistant.log` file, you can fill an issue in this repository.
