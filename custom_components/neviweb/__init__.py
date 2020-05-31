@@ -120,7 +120,7 @@ class NeviwebClient(object):
         _LOGGER.debug("Login response: %s", data)
         if "error" in data:
             if data["error"]["code"] == "ACCSESSEXC":
-                _LOGGER.error("Too many active sessions. Close all neviweb " +
+                _LOGGER.error("Too many active sessions. Close all Neviweb " +
                 "sessions you have opened on other platform (mobile, browser" +
                 ", ...), wait a few minutes, then reboot Home Assistant.")
             return False
@@ -151,27 +151,28 @@ class NeviwebClient(object):
                         _LOGGER.debug("Selecting %s network among: %s",
                             self._network_name, networks)
                         continue
-                    elif network["name"] == self._network_name[0].upper()+self._network_name[1:] OR network["name"] == self._network_name[0].lower()+self._network_name[1:]:
+                    elif (network["name"] == self._network_name.capitalize()) or (network["name"] == self._network_name[0].lower()+self._network_name[1:]):
                         self._gateway_id = network["id"]
                         _LOGGER.debug("Please check first letter of your network name, In capital letter or not? Selecting %s network among: %s",
                             self._network_name, networks)
                         continue
                     else:
-                        _LOGGER.debug("Your network name %s do not correspond to discovered network %s",
+                        _LOGGER.debug("Your network name %s do not correspond to discovered network %s, skipping this one...",
                             self._network_name, network["name"])
-                    if network["name"] == self._network_name2:
-                        self._gateway_id2 = network["id"]
-                        _LOGGER.debug("Selecting %s network among: %s",
-                            self._network_name2, networks)
-                        continue
-                    elif network["name"] == self._network_name2[0].upper()+self._network_name2[1:] OR network["name"] == self._network_name2[0].lower()+self._network_name2[1:]:
-                        self._gateway_id = network["id"]
-                        _LOGGER.debug("Please check first letter of your network2 name, In capital letter or not? Selecting %s network among: %s",
-                            self._network_name2, networks)
-                        continue
-                    else:
-                        _LOGGER.debug("Your network name %s do not correspond to discovered network %s",
-                            self._network_name2, network["name"])
+                    if self._network_name2 is not None:
+                        if network["name"] == self._network_name2:
+                            self._gateway_id2 = network["id"]
+                            _LOGGER.debug("Selecting %s network among: %s",
+                                self._network_name2, networks)
+                            continue
+                        elif (network["name"] == self._network_name2.capitalize()) or (network["name"] == self._network_name2[0].lower()+self._network_name2[1:]):
+                            self._gateway_id = network["id"]
+                            _LOGGER.debug("Please check first letter of your network2 name, In capital letter or not? Selecting %s network among: %s",
+                                self._network_name2, networks)
+                            continue
+                        else:
+                            _LOGGER.debug("Your network name %s do not correspond to discovered network %s, skipping this one...",
+                                self._network_name2, network["name"])
              
         except OSError:
             raise PyNeviwebError("Cannot get networks...")
