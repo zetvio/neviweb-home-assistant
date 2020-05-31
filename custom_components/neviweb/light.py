@@ -25,17 +25,6 @@ DEFAULT_NAME = 'neviweb'
 UPDATE_ATTRIBUTES = [ATTR_POWER_MODE, ATTR_INTENSITY, ATTR_RSSI, 
     ATTR_WATTAGE_OVERRIDE, ATTR_OCCUPANCY]
 
-# STATE_AUTO = 'auto'
-# STATE_MANUAL = 'manual'
-# STATE_AWAY = 'away'
-# STATE_STANDBY = 'bypass'
-# NEVIWEB_TO_HA_STATE = {
-#     1: STATE_MANUAL,
-#     2: STATE_AUTO,
-#     3: STATE_AWAY,
-#     130: STATE_STANDBY
-# }
-
 DEVICE_TYPE_DIMMER = [112]
 DEVICE_TYPE_LIGHT = [102]
 IMPLEMENTED_DEVICE_TYPES = DEVICE_TYPE_LIGHT + DEVICE_TYPE_DIMMER
@@ -53,7 +42,15 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
                 "dimmer" if device_info["signature"]["type"] in DEVICE_TYPE_DIMMER 
                 else "light", device_info["name"])
             devices.append(NeviwebLight(data, device_info, device_name))
-
+    for device_info in data.neviweb_client.gateway_data2:
+        if "signature" in device_info and \
+            "type" in device_info["signature"] and \
+            device_info["signature"]["type"] in IMPLEMENTED_DEVICE_TYPES:
+            device_name = '{} {} {}'.format(DEFAULT_NAME, 
+                "dimmer" if device_info["signature"]["type"] in DEVICE_TYPE_DIMMER 
+                else "light", device_info["name"])
+            devices.append(NeviwebLight(data, device_info, device_name))
+            
     async_add_entities(devices, True)
 
 def brightness_to_percentage(brightness):
@@ -63,13 +60,6 @@ def brightness_to_percentage(brightness):
 def brightness_from_percentage(percent):
     """Convert percentage to absolute value 0..255."""
     return int((percent * 255.0) / 100.0)
-
-# def keyCheck(key, arr, default, name):
-#     if key in arr.keys():
-#         return arr[key]
-#     else:
-#         _LOGGER.debug("Neviweb missing %s for %s", key, name)
-#         return default
 
 class NeviwebLight(LightEntity):
     """Implementation of a neviweb light."""
@@ -82,7 +72,6 @@ class NeviwebLight(LightEntity):
         self._wattage_override = 0 # keyCheck("wattageOverride", device_info, 0, name)
         self._brightness_pct = 0
         self._operation_mode = 1
-        #self._alarm = None
         self._rssi = None
         self._occupancy = None
         self._is_dimmable = device_info["signature"]["type"] in \
@@ -104,7 +93,6 @@ class NeviwebLight(LightEntity):
                     device_data[ATTR_INTENSITY] is not None else 0.0
                 self._operation_mode = device_data[ATTR_POWER_MODE] if \
                     device_data[ATTR_POWER_MODE] is not None else MODE_MANUAL
-                #self._alarm = device_data["alarm"]
                 self._rssi = device_data[ATTR_RSSI]
                 self._wattage_override = device_data[ATTR_WATTAGE_OVERRIDE]
                 self._occupancy = device_data[ATTR_OCCUPANCY]
@@ -139,12 +127,7 @@ class NeviwebLight(LightEntity):
     def is_on(self):
         """Return true if device is on."""
         return self._brightness_pct != 0
-    
-    # For the turn_on and turn_off functions, we would normally check if the
-    # the requested state is different from the actual state to issue the 
-    # command. But since we update the state every 15 minutes, there is good
-    # chance that the current stored state doesn't match with real device 
-    # state. So we force the set_brightness each time.
+
     def turn_on(self, **kwargs):
         """Turn the light on."""
         brightness_pct = 100
@@ -176,10 +159,3 @@ class NeviwebLight(LightEntity):
     @property
     def operation_mode(self):
         return self._operation_mode
-
-    # def to_hass_operation_mode(self, mode):
-    #     """Translate neviweb operation modes to hass operation modes."""
-    #     if mode in NEVIWEB_TO_HA_STATE:
-    #         return NEVIWEB_TO_HA_STATE[mode]
-    #     _LOGGER.error("Operation mode %s could not be mapped to hass", mode)
-    #     return None

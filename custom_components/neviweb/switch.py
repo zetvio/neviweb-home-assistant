@@ -25,17 +25,6 @@ DEFAULT_NAME = 'neviweb switch'
 UPDATE_ATTRIBUTES = [ATTR_POWER_MODE, ATTR_INTENSITY, ATTR_RSSI, 
     ATTR_WATTAGE, ATTR_WATTAGE_INSTANT, ATTR_OCCUPANCY]
 
-# STATE_AUTO = 'auto'
-# STATE_MANUAL = 'manual'
-# STATE_AWAY = 'away'
-# STATE_STANDBY = 'bypass'
-# NEVIWEB_TO_HA_STATE = {
-#     1: STATE_MANUAL,
-#     2: STATE_AUTO,
-#     3: STATE_AWAY,
-#     130: STATE_STANDBY
-# }
-
 IMPLEMENTED_DEVICE_TYPES = [120] #power control device
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
@@ -49,15 +38,14 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             device_info["signature"]["type"] in IMPLEMENTED_DEVICE_TYPES:
             device_name = '{} {}'.format(DEFAULT_NAME, device_info["name"])
             devices.append(NeviwebSwitch(data, device_info, device_name))
-
+    for device_info in data.neviweb_client.gateway_data2:
+        if "signature" in device_info and \
+            "type" in device_info["signature"] and \
+            device_info["signature"]["type"] in IMPLEMENTED_DEVICE_TYPES:
+            device_name = '{} {}'.format(DEFAULT_NAME, device_info["name"])
+            devices.append(NeviwebSwitch(data, device_info, device_name))
+            
     async_add_entities(devices, True)
-    
-# def keyCheck(key, arr, default, name):
-#     if key in arr.keys():
-#         return arr[key]
-#     else:
-#         _LOGGER.debug("Neviweb missing %s for %s", key, name)
-#         return default
 
 class NeviwebSwitch(SwitchEntity):
     """Implementation of a Neviweb switch."""
@@ -70,7 +58,6 @@ class NeviwebSwitch(SwitchEntity):
         self._wattage = 0 # keyCheck("wattage", device_info, 0, name)
         self._brightness = 0
         self._operation_mode = 1
-        #self._alarm = None
         self._current_power_w = None
         self._today_energy_kwh = None
         self._rssi = None
@@ -131,8 +118,7 @@ class NeviwebSwitch(SwitchEntity):
     @property
     def device_state_attributes(self):
         """Return the state attributes."""
-        return {#'alarm': self._alarm,
-                'operation_mode': self.operation_mode,
+        return {'operation_mode': self.operation_mode,
                 'rssi': self._rssi,
                 'occupancy': self._occupancy,
                 'wattage': self._wattage,
@@ -156,10 +142,3 @@ class NeviwebSwitch(SwitchEntity):
     def is_standby(self):
         """Return true if device is in standby."""
         return self._current_power_w == 0
-
-    # def to_hass_operation_mode(self, mode):
-    #     """Translate neviweb operation modes to hass operation modes."""
-    #     if mode in NEVIWEB_TO_HA_STATE:
-    #         return NEVIWEB_TO_HA_STATE[mode]
-    #     _LOGGER.error("Operation mode %s could not be mapped to hass", mode)
-    #     return None

@@ -7,7 +7,9 @@ To support [HACS](https://community.home-assistant.io/t/custom-component-hacs/12
 # Home Assistant Neviweb Custom Components
 
 Here is a custom components to suport [Neviweb](https://neviweb.com/) in [Home Assistant](http://www.home-assistant.io). 
-Neviweb is a platform created by Sinopé Technologies to interact with their smart devices like thermostats, light switches/dimmers and load controllers. It also supports some devices made by [Ouellet](http://www.ouellet.com/en-ca/products/thermostats-and-controls/neviweb%C2%AE-wireless-communication-controls.aspx).
+Neviweb is a platform created by Sinopé Technologies to interact with their smart devices like thermostats, light switches/dimmers and load controllers. It also supports some devices made by [Ouellet](http://www.ouellet.com/en-ca/products/thermostats-and-controls/neviweb%C2%AE-wireless-communication-controls.aspx). 
+
+This custom component originally was able to load devices from one GT125 network connected to Neviweb. It as been updated to be able to load devices from two GT125 network connected to Neviweb. This will give you possibility to load devices from house and office or house and summer house at once. The two gateway should be GT125. Cannot be mixed with GT130. Use Neviweb130 custom component for this one. 
 
 ## Supported Devices
 Here is a list of currently supported devices. Basically, it's everything that can be added in Neviweb.
@@ -33,9 +35,10 @@ Here is a list of currently supported devices. Basically, it's everything that c
 ## Prerequisite
 You need to connect your devices to a GT125 web gateway and add them in your Neviweb portal before being able to interact with them within Home Assistant. Please refer to the instructions manual of your device or visit [Neviweb support](https://www.sinopetech.com/blog/support-cat/plateforme-nevi-web/).
 
-There are two custom component giving you the choice to manage your devices via the neviweb portal or directly via your GT125 gateway:
-- [Neviweb](https://github.com/claudegel/sinope-1) custom component to manage your devices via neviweb portal
-- [Sinope](https://github.com/claudegel/sinope-gt125) custom component to manage your devices directly via your GT125 web gateway
+There are three custom components giving you the choice to manage your devices via the neviweb portal or directly via your GT125 gateway:
+- [Neviweb](https://github.com/claudegel/sinope-1) custom component to manage your devices via Neviweb portal.
+- [Sinope](https://github.com/claudegel/sinope-gt125) custom component to manage your devices directly via your GT125 web gateway.
+- [Neviweb130](https://github.com/claudegel/sinope-130) custom component to manage your devices connected to your GT130 gateway via Neviweb portal.
 
 You need to install only one of them but both can be used at the same time on HA.
 
@@ -59,6 +62,7 @@ There are two methods to install this custom component:
           light.py
           switch.py
           climate.py
+          const.py
       ...
     ```
 
@@ -71,6 +75,8 @@ To enable Neviweb management in your installation, add the following to your `co
 neviweb:
   username: '<your Neviweb username>'
   password: '<your Neviweb password>'
+  network: '<your first network>'
+  network2: '<your second network>'
 ```
 
 **Configuration options:**  
@@ -79,11 +85,14 @@ neviweb:
 | --- | --- | --- | ---
 | **username** | yes |  | Your email address used to log in Neviweb.
 | **password** | yes |  | Your Neviweb password.
-| **network** | no | 1st network found | The name of the network you want to control.
+| **network** | no | 1st network found | The name of the GT125 network you want to control.
+| **network2** | no | 2nd network found | The name of the second GT125 network you want to control.
 | **scan_interval** | no | 540 | The number of seconds between access to Neviweb to update device state. Sinopé asked for a minimum of 5 minutes between polling now so you can reduce scan_interval to 300. Don't go over 600, the session will expire.
 
+If you have also a GT130 also connected to Neviweb the network parameter is mandatory or it is possible that during the setup, the GT130 network will be picked up accidentally. If you have only two GT125 network, you can omit there names as during setup, the first two network found will be picked up automatically. If you prefer to add networs names make sure that they are written «exactly» as in Neviweb. (first letter capitalized or not).
+
 ## Troubleshooting
-If you get a stack trace related to a Neviweb component in your `home-assistant.log` file, you can file an issue in this repository.
+If you get a stack trace related to a Neviweb component in your `home-assistant.log` file, you can fill an issue in this repository.
 
 You can also post in one of those threads to get help:
 - https://community.home-assistant.io/t/sinope-line-voltage-thermostats/17157
