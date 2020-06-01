@@ -4,7 +4,7 @@
   "zip_release": false,
   "filename": false,
   "render_readme": true,
-  "domains": ["switch", "climate", "light"],
+  "domains": ["climate", "light", "switch"],
   "country": ["CA"],
   "homeassistant": "0.110.0",
   "iot_class": "Cloud Polling"
