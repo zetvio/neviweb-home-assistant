@@ -111,9 +111,17 @@ class NeviwebThermostat(ClimateEntity):
                 self._max_temp = device_data[ATTR_ROOM_SETPOINT_MAX]
                 self._wattage = device_data[ATTR_WATTAGE]["value"]
                 return
-            _LOGGER.warning("Error in reading device %s: (%s)", self._name, device_data)
+            else:
+                if device_data["errorCode"] == "ReadTimeout":
+                    _LOGGER.warning("Error in reading device %s: (%s), too slow to respond or busy.", self._name, device_data)
+                else:
+                    _LOGGER.warning("Unknown error code, device: %s, error: %s", self._name, device_data)
             return
-        _LOGGER.warning("Cannot update %s: %s", self._name, device_data)
+        else:
+            if device_data["error"]["code"] == "DVCCOMMTO":  
+                _LOGGER.warning("Cannot update %s: %s. Device is busy or does not respond quickly enough.", self._name, device_data)
+            else:
+                _LOGGER.warning("Unknown error, device: %s, error: %s", self._name, device_data)
 
     @property
     def unique_id(self):
