@@ -99,6 +99,8 @@ class NeviwebSwitch(SwitchEntity):
                 _LOGGER.warning("Cannot update %s: %s. Device is busy or does not respond quickly enough.", self._name, device_data)
             elif device_data["error"]["code"] == "SVCINVREQ":
                 _LOGGER.warning("Invalid or malformed request to Neviweb, %s:",  device_data)
+            elif device_data["error"]["code"] == "DVCACTNSPTD":
+                _LOGGER.warning("Device action not supported, %s:",  device_data)
             else:
                 _LOGGER.warning("Unknown error, device: %s, error: %s", self._name, device_data)    
 
