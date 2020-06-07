@@ -195,10 +195,7 @@ class NeviwebClient(object):
         self._cookies.update(raw_res.cookies)
         # Prepare data
         self.gateway_data = raw_res.json()
-        if self.gateway_data["error"]["code"] == "VALINVLD":
-            _LOGGER.debug("Invalid Gateway_data for location_id,  : %s", self.gateway_data)
-        else:
-            _LOGGER.debug("Gateway_data : %s", self.gateway_data)
+        _LOGGER.debug("Gateway_data : %s", self.gateway_data)
         if self._gateway_id2 is not None:
             try:
                 raw_res2 = requests.get(GATEWAY_DEVICE_URL + str(self._gateway_id2),
