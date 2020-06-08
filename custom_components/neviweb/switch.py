@@ -102,7 +102,7 @@ class NeviwebSwitch(SwitchEntity):
             elif device_data["error"]["code"] == "DVCACTNSPTD":
                 _LOGGER.warning("Device action not supported, %s:",  device_data)
             elif device_data["error"]["code"] == "DVCUNVLB":
-                _LOGGER.warning("Device unavailable, %s:",  device_data)
+                _LOGGER.warning("Device %s unavailable, %s:", self._name,  device_data)
             else:
                 _LOGGER.warning("Unknown error, device: %s, error: %s", self._name, device_data)    
 
