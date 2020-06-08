@@ -122,6 +122,8 @@ class NeviwebThermostat(ClimateEntity):
                 _LOGGER.warning("Cannot update %s: %s. Device is busy or does not respond quickly enough.", self._name, device_data)
             elif device_data["error"]["code"] == "SVCINVREQ":
                 _LOGGER.warning("Invalid or malformed request to Neviweb, %s:",  device_data)
+            elif device_data["error"]["code"] == "DVCUNVLB":
+                _LOGGER.warning("Device unavailable, %s:",  device_data)
             else:
                 _LOGGER.warning("Unknown error, device: %s, error: %s", self._name, device_data)
 
