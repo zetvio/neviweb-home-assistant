@@ -92,7 +92,7 @@ class NeviwebSwitch(SwitchEntity):
                 if device_data["errorCode"] == "ReadTimeout":
                     _LOGGER.warning("Error in reading device %s: (%s), too slow to respond or busy.", self._name, device_data)
                 else:
-                    _LOGGER.warning("Unknown error code, device: %s, error: %s", self._name, device_data)
+                    _LOGGER.warning("Unknown errorCode, device: %s, error: %s", self._name, device_data)
             return
         else:
             if device_data["error"]["code"] == "DVCCOMMTO":  
