@@ -88,9 +88,23 @@ class NeviwebSwitch(SwitchEntity):
                 self._today_energy_kwh = device_daily_stats[0] / 1000 if \
                     device_daily_stats[0] is not None else 0
                 return
-            _LOGGER.warning("Error in reading device %s: (%s)", self._name, device_data)
+            else:
+                if device_data["errorCode"] == "ReadTimeout":
+                    _LOGGER.warning("Error in reading device %s: (%s), too slow to respond or busy.", self._name, device_data)
+                else:
+                    _LOGGER.warning("Unknown errorCode, device: %s, error: %s", self._name, device_data)
             return
-        _LOGGER.warning("Cannot update %s: %s", self._name, device_data)     
+        else:
+            if device_data["error"]["code"] == "DVCCOMMTO":  
+                _LOGGER.warning("Cannot update %s: %s. Device is busy or does not respond quickly enough.", self._name, device_data)
+            elif device_data["error"]["code"] == "SVCINVREQ":
+                _LOGGER.warning("Invalid or malformed request to Neviweb, %s:",  device_data)
+            elif device_data["error"]["code"] == "DVCACTNSPTD":
+                _LOGGER.warning("Device action not supported, %s:",  device_data)
+            elif device_data["error"]["code"] == "DVCUNVLB":
+                _LOGGER.warning("Device %s unavailable, %s:", self._name,  device_data)
+            else:
+                _LOGGER.warning("Unknown error, device: %s, error: %s", self._name, device_data)    
 
     @property
     def unique_id(self):
