@@ -123,7 +123,9 @@ class NeviwebThermostat(ClimateEntity):
             elif device_data["error"]["code"] == "SVCINVREQ":
                 _LOGGER.warning("Invalid or malformed request to Neviweb, %s:",  device_data)
             elif device_data["error"]["code"] == "DVCUNVLB":
-                _LOGGER.warning("Device %s unavailable, %s:", self._name, device_data)
+                _LOGGER.warning("Device %s unavailable, Neviweb maintnance update, %s:", self._name, device_data)
+            elif device_data["error"]["code"] == "SVCERR":
+                _LOGGER.warning("Device %s statistics unavailables, %s:", self._name, device_data)
             else:
                 _LOGGER.warning("Unknown error, device: %s, error: %s", self._name, device_data)
 
