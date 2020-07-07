@@ -35,7 +35,7 @@ DEFAULT_NAME = "neviweb climate"
 
 UPDATE_ATTRIBUTES = [ATTR_SETPOINT_MODE, ATTR_RSSI, ATTR_ROOM_SETPOINT,
     ATTR_OUTPUT_PERCENT_DISPLAY, ATTR_ROOM_TEMPERATURE, ATTR_ROOM_SETPOINT_MIN,
-    ATTR_ROOM_SETPOINT_MAX, ATTR_WATTAGE]
+    ATTR_ROOM_SETPOINT_MAX]
 
 SUPPORTED_HVAC_MODES = [HVAC_MODE_OFF, HVAC_MODE_AUTO, HVAC_MODE_HEAT]
 
@@ -46,7 +46,9 @@ PRESET_MODES = [
     PRESET_BYPASS
 ]
 
-IMPLEMENTED_DEVICE_TYPES = [10, 20, 21]
+IMPLEMENTED_LOW_VOLTAGE = [21]
+IMPLEMENTED_THERMOSTAT = [10, 20]
+IMPLEMENTED_DEVICE_TYPES = IMPLEMENTED_THERMOSTAT + IMPLEMENTED_LOW_VOLTAGE
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the neviweb thermostats."""
@@ -86,13 +88,19 @@ class NeviwebThermostat(ClimateEntity):
         #self._alarm = None
         self._operation_mode = None
         self._heat_level = 0
+        self._is_low_voltage = device_info["signature"]["type"] in \
+            IMPLEMENTED_LOW_VOLTAGE
         _LOGGER.debug("Setting up %s: %s", self._name, device_info)
 
     def update(self):
         """Get the latest data from Neviweb and update the state."""
+        if not self._is_low_voltage:
+            WATT_ATTRIBUTE = [ATTR_WATTAGE]
+        else:
+            WATT_ATTRIBUTE = []
         start = time.time()
         device_data = self._client.get_device_attributes(self._id,
-            UPDATE_ATTRIBUTES)
+            UPDATE_ATTRIBUTES + WATT_ATTRIBUTE)
         end = time.time()
         elapsed = round(end - start, 3)
         _LOGGER.debug("Updating %s (%s sec): %s",
@@ -109,10 +117,8 @@ class NeviwebThermostat(ClimateEntity):
                 self._operation_mode = device_data[ATTR_SETPOINT_MODE]
                 self._min_temp = device_data[ATTR_ROOM_SETPOINT_MIN]
                 self._max_temp = device_data[ATTR_ROOM_SETPOINT_MAX]
-                if ATTR_WATTAGE in device_data:
-                    self._wattage = device_data[ATTR_WATTAGE]["value"]  
-                else:
-                    _LOGGER.debug("No wattage attribute for %s", self._name)
+                if not self._is_low_voltage:
+                    self._wattage = device_data[ATTR_WATTAGE]["value"]
                 return
             else:
                 if device_data["errorCode"] == "ReadTimeout":
@@ -145,10 +151,13 @@ class NeviwebThermostat(ClimateEntity):
     @property
     def device_state_attributes(self):
         """Return the state attributes."""
-        return {'heat_level': self._heat_level,
-                'rssi': self._rssi,
-                'wattage': self._wattage,
-                'id': self._id}
+        data = {}
+        if not self._is_low_voltage:
+            data = {'wattage': self._wattage}
+        data.update ({'heat_level': self._heat_level,
+                      'rssi': self._rssi,
+                      'id': self._id})
+        return data
 
     @property
     def supported_features(self):
