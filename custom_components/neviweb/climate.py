@@ -109,7 +109,10 @@ class NeviwebThermostat(ClimateEntity):
                 self._operation_mode = device_data[ATTR_SETPOINT_MODE]
                 self._min_temp = device_data[ATTR_ROOM_SETPOINT_MIN]
                 self._max_temp = device_data[ATTR_ROOM_SETPOINT_MAX]
-                self._wattage = device_data[ATTR_WATTAGE]["value"]
+                if ATTR_WATTAGE in device_data:
+                    self._wattage = device_data[ATTR_WATTAGE]["value"]  
+                else:
+                    _LOGGER.debug("No wattage attribute for %s", self._name)
                 return
             else:
                 if device_data["errorCode"] == "ReadTimeout":
