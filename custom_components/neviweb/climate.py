@@ -1,8 +1,11 @@
 """
 Support for Neviweb thermostat.
-type 10 = thermostat TH1120RF 3000W and 4000W
-type 20 = thermostat TH1300RF 3600W floor, TH1500RF double pole thermostat,
-type 21 = thermostat TH1400RF low voltage
+type 10 = thermostat TH1120RF 3000W and 4000W,
+type 10 = thermostat TH1121RF 3000W and 4000W, (Public place)
+type 20 = thermostat TH1300RF 3600W floor, 
+type 20 = thermostat TH1500RF double pole thermostat,
+type 21 = thermostat TH1400RF low voltage,
+type 21 = thermostat TH1400WF low voltage, (wifi)
 For more details about this platform, please refer to the documentation at  
 https://www.sinopetech.com/en/support/#api
 """
