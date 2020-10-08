@@ -21,6 +21,7 @@ from .const import (DOMAIN, ATTR_POWER_MODE, ATTR_INTENSITY, ATTR_RSSI,
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME = 'neviweb switch'
+# PARALLEL_UPDATES = 1
 
 UPDATE_ATTRIBUTES = [ATTR_POWER_MODE, ATTR_INTENSITY, ATTR_RSSI, 
     ATTR_WATTAGE, ATTR_WATTAGE_INSTANT, ATTR_OCCUPANCY]
@@ -31,14 +32,9 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     """Set up the Neviweb switch."""
     data = hass.data[DOMAIN]
     
+    # _LOGGER.debug("Entering switch setup with data: %s", data)
     devices = []
-    for device_info in data.neviweb_client.gateway_data:
-        if "signature" in device_info and \
-            "type" in device_info["signature"] and \
-            device_info["signature"]["type"] in IMPLEMENTED_DEVICE_TYPES:
-            device_name = '{} {}'.format(DEFAULT_NAME, device_info["name"])
-            devices.append(NeviwebSwitch(data, device_info, device_name))
-    for device_info in data.neviweb_client.gateway_data2:
+    for device_info in data.devices:
         if "signature" in device_info and \
             "type" in device_info["signature"] and \
             device_info["signature"]["type"] in IMPLEMENTED_DEVICE_TYPES:

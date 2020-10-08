@@ -35,6 +35,7 @@ _LOGGER = logging.getLogger(__name__)
 SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE | SUPPORT_PRESET_MODE)
 
 DEFAULT_NAME = "neviweb climate"
+# PARALLEL_UPDATES = 1
 
 UPDATE_ATTRIBUTES = [ATTR_SETPOINT_MODE, ATTR_RSSI, ATTR_ROOM_SETPOINT,
     ATTR_OUTPUT_PERCENT_DISPLAY, ATTR_ROOM_TEMPERATURE, ATTR_ROOM_SETPOINT_MIN,
@@ -57,14 +58,9 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     """Set up the neviweb thermostats."""
     data = hass.data[DOMAIN]
     
+    # _LOGGER.debug("Entering climate setup with data: %s", data)
     devices = []
-    for device_info in data.neviweb_client.gateway_data:
-        if "signature" in device_info and \
-            "type" in device_info["signature"] and \
-            device_info["signature"]["type"] in IMPLEMENTED_DEVICE_TYPES:
-            device_name = "{} {}".format(DEFAULT_NAME, device_info["name"])
-            devices.append(NeviwebThermostat(data, device_info, device_name))
-    for device_info in data.neviweb_client.gateway_data2:
+    for device_info in data.devices:
         if "signature" in device_info and \
             "type" in device_info["signature"] and \
             device_info["signature"]["type"] in IMPLEMENTED_DEVICE_TYPES:

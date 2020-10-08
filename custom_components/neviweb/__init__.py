@@ -39,32 +39,53 @@ CONFIG_SCHEMA = vol.Schema({
     })
 }, extra=vol.ALLOW_EXTRA)
 
-def setup(hass, hass_config):
+async def async_setup(hass, hass_config):
     """Set up neviweb."""
-    data = NeviwebData(hass_config[DOMAIN])
+    email = hass_config[DOMAIN].get(CONF_USERNAME)
+    password = hass_config[DOMAIN].get(CONF_PASSWORD)
+
+    client = NeviwebClient(email, password)
+    await client.async_post_login_page()
+
+    locations = await client.async_get_locations()
+
+    data = NeviwebData(client, locations)
+    data.devices = []
+    await data.async_get_locations_devices()
     hass.data[DOMAIN] = data
 
     global SCAN_INTERVAL 
     SCAN_INTERVAL = hass_config[DOMAIN].get(CONF_SCAN_INTERVAL)
     _LOGGER.debug("Setting scan interval to: %s", SCAN_INTERVAL)
 
-    discovery.load_platform(hass, 'climate', DOMAIN, {}, hass_config)
-    discovery.load_platform(hass, 'light', DOMAIN, {}, hass_config)
-    discovery.load_platform(hass, 'switch', DOMAIN, {}, hass_config)
+    hass.async_create_task(
+        discovery.async_load_platform(hass, 'climate', DOMAIN, {}, hass_config)
+    )
+    hass.async_create_task(
+        discovery.async_load_platform(hass, 'light', DOMAIN, {}, hass_config)
+    )
+    hass.async_create_task(
+        discovery.async_load_platform(hass, 'switch', DOMAIN, {}, hass_config)
+    )
+    _LOGGER.debug("Tasks created")
 
     return True
 
 class NeviwebData:
     """Get the latest data and update the states."""
 
-    def __init__(self, config):
+    def __init__(self, client, locations):
         """Init the neviweb data object."""
         # from pyneviweb import NeviwebClient
-        username = config.get(CONF_USERNAME)
-        password = config.get(CONF_PASSWORD)
-        network = config.get(CONF_NETWORK)
-        network2 = config.get(CONF_NETWORK2)
-        self.neviweb_client = NeviwebClient(username, password, network, network2)
+        self.neviweb_client = client
+        self.locations = locations
+        self.devices = None
+
+    async def async_get_locations_devices(self):
+        for location in self.locations:
+            self.devices += await \
+                self.neviweb_client.async_get_location_devices(location.id)
+
 
 # According to HA: 
 # https://developers.home-assistant.io/docs/en/creating_component_code_review.html
@@ -77,31 +98,27 @@ class NeviwebData:
 class PyNeviwebError(Exception):
     pass
 
+class NeviwebLocation(object):
+    def __init__(self, id, name, mode):
+        self.id = id
+        self.name = name
+        self.mode = mode
+
 class NeviwebClient(object):
 
-    def __init__(self, email, password, network, network2, timeout=REQUESTS_TIMEOUT):
+    def __init__(self, email, password, timeout=REQUESTS_TIMEOUT):
         """Initialize the client object."""
         self._email = email
         self._password = password
-        self._network_name = network
-        self._network_name2 = network2
-        self._gateway_id = None
-        self._gateway_id2 = None
-        self.gateway_data = {}
-        self.gateway_data2 = {}
         self._headers = None
         self._cookies = None
         self._timeout = timeout
-        self.user = None
+        self.user = None      
 
-        self.__post_login_page()
-        self.__get_network()
-        self.__get_gateway_data()
+    # async def async_update(self):
+    #     await self.__async_get_gateway_data()
 
-    def update(self):
-        self.__get_gateway_data()
-
-    def __post_login_page(self):
+    async def async_post_login_page(self):
         """Login to Neviweb."""
         data = {"username": self._email, "password": self._password, 
             "interface": "neviweb", "stayConnected": 1}
@@ -130,96 +147,52 @@ class NeviwebClient(object):
             _LOGGER.debug("Successfully logged in")
             return True
 
-    def __get_network(self):
-        """Get gateway id associated to the desired network."""
-        # Http request
+    async def async_get_locations(self):
         try:
             raw_res = requests.get(LOCATIONS_URL, headers=self._headers, 
                 cookies=self._cookies, timeout=self._timeout)
-            networks = raw_res.json()
-            _LOGGER.debug("Number of networks found: %s", len(networks))
-            if self._network_name == None and self._network_name2 == None: # Use 1st network found and second if found
-                self._gateway_id = networks[0]["id"]
-                self._network_name = networks[0]["name"]
-                if len(networks) > 1:
-                    self._gateway_id2 = networks[1]["id"]
-                    self._network_name2 = networks[1]["name"]
-                
-            else:
-                for network in networks:
-                    if network["name"] == self._network_name:
-                        self._gateway_id = network["id"]
-                        _LOGGER.debug("Selecting %s network among: %s",
-                            self._network_name, networks)
-                        continue
-                    elif (network["name"] == self._network_name.capitalize()) or (network["name"] == self._network_name[0].lower()+self._network_name[1:]):
-                        self._gateway_id = network["id"]
-                        _LOGGER.debug("Please check first letter of your network name, In capital letter or not? Selecting %s network among: %s",
-                            self._network_name, networks)
-                        continue
-                    else:
-                        _LOGGER.debug("Your network name %s do not correspond to discovered network %s, skipping this one...",
-                            self._network_name, network["name"])
-                    if self._network_name2 is not None:
-                        if network["name"] == self._network_name2:
-                            self._gateway_id2 = network["id"]
-                            _LOGGER.debug("Selecting %s network among: %s",
-                                self._network_name2, networks)
-                            continue
-                        elif (network["name"] == self._network_name2.capitalize()) or (network["name"] == self._network_name2[0].lower()+self._network_name2[1:]):
-                            self._gateway_id = network["id"]
-                            _LOGGER.debug("Please check first letter of your network2 name, In capital letter or not? Selecting %s network among: %s",
-                                self._network_name2, networks)
-                            continue
-                        else:
-                            _LOGGER.debug("Your network name %s do not correspond to discovered network %s, skipping this one...",
-                                self._network_name2, network["name"])
+            locations = raw_res.json()
+            _LOGGER.debug("Found %s locations: %s", len(locations), locations)
              
         except OSError:
-            raise PyNeviwebError("Cannot get networks...")
+            raise PyNeviwebError("Cannot get locations...")
         # Update cookies
         self._cookies.update(raw_res.cookies)
         # Prepare data
-        self.gateway_data = raw_res.json()
+        locations = []
+        response = raw_res.json()
+        for location in response:
+            locations.append(
+                NeviwebLocation(
+                    location["id"], 
+                    location["name"], 
+                    location["mode"]))
+        
+        return locations
 
-    def __get_gateway_data(self):
-        """Get gateway data."""
+    async def async_get_location_devices(self, locationId):
+        """Get all devices linked to a specific location."""
         # Http request
         try:
-            raw_res = requests.get(GATEWAY_DEVICE_URL + str(self._gateway_id),
+            raw_res = requests.get(GATEWAY_DEVICE_URL + str(locationId),
                 headers=self._headers, cookies=self._cookies, 
                 timeout=self._timeout)
-            _LOGGER.debug("Received gateway data: %s", raw_res.json())
+            devices = raw_res.json()
+            _LOGGER.debug("Found %s devices in location %s: %s", len(devices),
+                locationId, devices)
         except OSError:
-            raise PyNeviwebError("Cannot get gateway data")
+            raise PyNeviwebError("Cannot get devices for location %s", 
+                locationId)
         # Update cookies
         self._cookies.update(raw_res.cookies)
-        # Prepare data
-        self.gateway_data = raw_res.json()
-        _LOGGER.debug("Gateway_data : %s", self.gateway_data)
-        if self._gateway_id2 is not None:
-            try:
-                raw_res2 = requests.get(GATEWAY_DEVICE_URL + str(self._gateway_id2),
-                    headers=self._headers, cookies=self._cookies, 
-                    timeout=self._timeout)
-                _LOGGER.debug("Received gateway data 2: %s", raw_res2.json())
-            except OSError:
-                raise PyNeviwebError("Cannot get gateway data 2")
-            # Prepare data
-            self.gateway_data2 = raw_res2.json()
-            _LOGGER.debug("Gateway_data2 : %s", self.gateway_data2)
-        for device in self.gateway_data:
+        
+        for device in devices:
             data = self.get_device_attributes(device["id"], [ATTR_SIGNATURE])
             if ATTR_SIGNATURE in data:
                 device[ATTR_SIGNATURE] = data[ATTR_SIGNATURE]
-            # _LOGGER.debug("Received signature data: %s", data)
-        if self._gateway_id2 is not None:          
-            for device in self.gateway_data2:
-                data2 = self.get_device_attributes(device["id"], [ATTR_SIGNATURE])
-                if ATTR_SIGNATURE in data2:
-                    device[ATTR_SIGNATURE] = data2[ATTR_SIGNATURE]
-                # _LOGGER.debug("Received signature data: %s", data)
-        # _LOGGER.debug("Updated gateway data: %s", self.gateway_data)
+        _LOGGER.debug("Updated location devices: %s", devices)
+
+        return devices
 
     def get_device_attributes(self, device_id, attributes):
         """Get device attributes."""
