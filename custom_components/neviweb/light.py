@@ -21,7 +21,7 @@ from .const import (DOMAIN, ATTR_POWER_MODE, ATTR_INTENSITY, ATTR_RSSI,
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME = 'neviweb'
-# PARALLEL_UPDATES = 1
+PARALLEL_UPDATES = 1
 
 UPDATE_ATTRIBUTES = [ATTR_POWER_MODE, ATTR_INTENSITY, ATTR_RSSI, 
     ATTR_WATTAGE_OVERRIDE, ATTR_OCCUPANCY]
@@ -72,10 +72,10 @@ class NeviwebLight(LightEntity):
             DEVICE_TYPE_DIMMER
         _LOGGER.debug("Setting up %s: %s", self._name, device_info)
         
-    def update(self):
+    async def async_update(self):
         """Get the latest data from neviweb and update the state."""
         start = time.time()
-        device_data = self._client.get_device_attributes(self._id,
+        device_data = await self._client.async_get_device_attributes(self._id,
             UPDATE_ATTRIBUTES)
         end = time.time()
         elapsed = round(end - start, 3)
@@ -138,7 +138,7 @@ class NeviwebLight(LightEntity):
         """Return true if device is on."""
         return self._brightness_pct != 0
 
-    def turn_on(self, **kwargs):
+    async def async_turn_on(self, **kwargs):
         """Turn the light on."""
         brightness_pct = 100
         if kwargs.get(ATTR_BRIGHTNESS):
@@ -146,11 +146,11 @@ class NeviwebLight(LightEntity):
                 brightness_to_percentage(int(kwargs.get(ATTR_BRIGHTNESS)))
         elif self._is_dimmable:
             brightness_pct = 101 # Sets the light to last known brightness.
-        self._client.set_brightness(self._id, brightness_pct)
+        await self._client.async_set_brightness(self._id, brightness_pct)
 
-    def turn_off(self, **kwargs):
+    async def async_turn_off(self, **kwargs):
         """Turn the light off."""
-        self._client.set_brightness(self._id, 0)
+        await self._client.async_set_brightness(self._id, 0)
 
     @property
     def device_state_attributes(self):

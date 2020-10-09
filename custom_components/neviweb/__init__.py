@@ -48,10 +48,9 @@ async def async_setup(hass, hass_config):
     await client.async_post_login_page()
 
     locations = await client.async_get_locations()
+    devices = await locations.async_get_all_locations_devices(client)
 
-    data = NeviwebData(client, locations)
-    data.devices = []
-    await data.async_get_locations_devices()
+    data = NeviwebData(client, locations, devices)
     hass.data[DOMAIN] = data
 
     global SCAN_INTERVAL 
@@ -67,24 +66,17 @@ async def async_setup(hass, hass_config):
     hass.async_create_task(
         discovery.async_load_platform(hass, 'switch', DOMAIN, {}, hass_config)
     )
-    _LOGGER.debug("Tasks created")
 
     return True
 
 class NeviwebData:
-    """Get the latest data and update the states."""
 
-    def __init__(self, client, locations):
+    def __init__(self, client, locations, devices):
         """Init the neviweb data object."""
         # from pyneviweb import NeviwebClient
         self.neviweb_client = client
         self.locations = locations
-        self.devices = None
-
-    async def async_get_locations_devices(self):
-        for location in self.locations:
-            self.devices += await \
-                self.neviweb_client.async_get_location_devices(location.id)
+        self.devices = devices
 
 
 # According to HA: 
@@ -98,11 +90,16 @@ class NeviwebData:
 class PyNeviwebError(Exception):
     pass
 
-class NeviwebLocation(object):
-    def __init__(self, id, name, mode):
-        self.id = id
-        self.name = name
-        self.mode = mode
+class NeviwebLocations(object):
+    def __init__(self, data):
+        self.data = data
+
+    async def async_get_all_locations_devices(self, client):
+        devices = []
+        for location in self.data:
+            devices += await client.async_get_location_devices(location["id"])
+
+        return devices
 
 class NeviwebClient(object):
 
@@ -158,17 +155,8 @@ class NeviwebClient(object):
             raise PyNeviwebError("Cannot get locations...")
         # Update cookies
         self._cookies.update(raw_res.cookies)
-        # Prepare data
-        locations = []
-        response = raw_res.json()
-        for location in response:
-            locations.append(
-                NeviwebLocation(
-                    location["id"], 
-                    location["name"], 
-                    location["mode"]))
         
-        return locations
+        return NeviwebLocations(raw_res.json())
 
     async def async_get_location_devices(self, locationId):
         """Get all devices linked to a specific location."""
@@ -187,14 +175,14 @@ class NeviwebClient(object):
         self._cookies.update(raw_res.cookies)
         
         for device in devices:
-            data = self.get_device_attributes(device["id"], [ATTR_SIGNATURE])
+            data = await self.async_get_device_attributes(device["id"], [ATTR_SIGNATURE])
             if ATTR_SIGNATURE in data:
                 device[ATTR_SIGNATURE] = data[ATTR_SIGNATURE]
         _LOGGER.debug("Updated location devices: %s", devices)
 
         return devices
 
-    def get_device_attributes(self, device_id, attributes):
+    async def async_get_device_attributes(self, device_id, attributes):
         """Get device attributes."""
         # Prepare return
         data = {}
@@ -219,7 +207,7 @@ class NeviwebClient(object):
                 raise PyNeviwebError("Session expired")
         return data
 
-    def get_device_daily_stats(self, device_id):
+    async def async_get_device_daily_stats(self, device_id):
         """Get device power consumption (in Wh) for the last 30 days."""
         # Prepare return
         data = {}
@@ -239,7 +227,7 @@ class NeviwebClient(object):
             return data["values"]
         return []
 
-    def get_device_hourly_stats(self, device_id):
+    async def async_get_device_hourly_stats(self, device_id):
         """Get device power consumption (in Wh) for the last 24 hours."""
         # Prepare return
         data = {}
@@ -258,27 +246,27 @@ class NeviwebClient(object):
             return data["values"]
         return []
 
-    def set_brightness(self, device_id, brightness):
+    async def async_set_brightness(self, device_id, brightness):
         """Set device brightness."""
         data = {ATTR_INTENSITY: brightness}
-        self.set_device_attributes(device_id, data)
+        await self.async_set_device_attributes(device_id, data)
 
-    def set_mode(self, device_id, mode):
+    async def async_set_mode(self, device_id, mode):
         """Set device operation mode."""
         data = {ATTR_POWER_MODE: mode}
-        self.set_device_attributes(device_id, data)
+        await self.async_set_device_attributes(device_id, data)
 
-    def set_setpoint_mode(self, device_id, mode):
+    async def async_set_setpoint_mode(self, device_id, mode):
         """Set thermostat operation mode."""
         data = {ATTR_SETPOINT_MODE: mode}
-        self.set_device_attributes(device_id, data)
+        await self.async_set_device_attributes(device_id, data)
 
-    def set_temperature(self, device_id, temperature):
+    async def async_set_temperature(self, device_id, temperature):
         """Set device temperature."""
         data = {ATTR_ROOM_SETPOINT: temperature}
-        self.set_device_attributes(device_id, data)
+        await self.async_set_device_attributes(device_id, data)
 
-    def set_device_attributes(self, device_id, data):
+    async def async_set_device_attributes(self, device_id, data):
         try:
             requests.put(DEVICE_DATA_URL + str(device_id) + "/attribute",
                 data=data, headers=self._headers, cookies=self._cookies,

@@ -35,7 +35,7 @@ _LOGGER = logging.getLogger(__name__)
 SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE | SUPPORT_PRESET_MODE)
 
 DEFAULT_NAME = "neviweb climate"
-# PARALLEL_UPDATES = 1
+PARALLEL_UPDATES = 1
 
 UPDATE_ATTRIBUTES = [ATTR_SETPOINT_MODE, ATTR_RSSI, ATTR_ROOM_SETPOINT,
     ATTR_OUTPUT_PERCENT_DISPLAY, ATTR_ROOM_TEMPERATURE, ATTR_ROOM_SETPOINT_MIN,
@@ -91,14 +91,14 @@ class NeviwebThermostat(ClimateEntity):
             IMPLEMENTED_LOW_VOLTAGE
         _LOGGER.debug("Setting up %s: %s", self._name, device_info)
 
-    def update(self):
+    async def async_update(self):
         """Get the latest data from Neviweb and update the state."""
         if not self._is_low_voltage:
             WATT_ATTRIBUTE = [ATTR_WATTAGE]
         else:
             WATT_ATTRIBUTE = []
         start = time.time()
-        device_data = self._client.get_device_attributes(self._id,
+        device_data = await self._client.async_get_device_attributes(self._id,
             UPDATE_ATTRIBUTES + WATT_ATTRIBUTE)
         end = time.time()
         elapsed = round(end - start, 3)
@@ -228,37 +228,37 @@ class NeviwebThermostat(ClimateEntity):
         else:
             return CURRENT_HVAC_HEAT
 
-    def set_temperature(self, **kwargs):
+    async def async_set_temperature(self, **kwargs):
         """Set new target temperature."""
         temperature = kwargs.get(ATTR_TEMPERATURE)
         if temperature is None:
             return
-        self._client.set_temperature(self._id, temperature)
+        await self._client.async_set_temperature(self._id, temperature)
         self._target_temp = temperature
 
-    def set_hvac_mode(self, hvac_mode):
+    async def async_set_hvac_mode(self, hvac_mode):
         """Set new hvac mode."""
         if hvac_mode == HVAC_MODE_OFF:
-            self._client.set_setpoint_mode(self._id, MODE_OFF)
+            await self._client.async_set_setpoint_mode(self._id, MODE_OFF)
         elif hvac_mode == HVAC_MODE_HEAT:
-            self._client.set_setpoint_mode(self._id, MODE_MANUAL)
+            await self._client.async_set_setpoint_mode(self._id, MODE_MANUAL)
         elif hvac_mode == HVAC_MODE_AUTO:
-            self._client.set_setpoint_mode(self._id, MODE_AUTO)
+            await self._client.async_set_setpoint_mode(self._id, MODE_AUTO)
         else:
             _LOGGER.error("Unable to set hvac mode: %s.", hvac_mode)
 
-    def set_preset_mode(self, preset_mode):
+    async def async_set_preset_mode(self, preset_mode):
         """Activate a preset."""
         if preset_mode == self.preset_mode:
             return
 
         if preset_mode == PRESET_AWAY:
-            self._client.set_setpoint_mode(self._id, MODE_AWAY)
+            await self._client.async_set_setpoint_mode(self._id, MODE_AWAY)
         elif preset_mode == PRESET_BYPASS:
             if self._operation_mode == MODE_AUTO:
-                self._client.set_setpoint_mode(self._id, MODE_AUTO_BYPASS)
+                await self._client.async_set_setpoint_mode(self._id, MODE_AUTO_BYPASS)
         elif preset_mode == PRESET_NONE:
             # Re-apply current hvac_mode without any preset
-            self.set_hvac_mode(self.hvac_mode)
+            await self.async_set_hvac_mode(self.hvac_mode)
         else:
             _LOGGER.error("Unable to set preset mode: %s.", preset_mode)

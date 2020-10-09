@@ -21,7 +21,7 @@ from .const import (DOMAIN, ATTR_POWER_MODE, ATTR_INTENSITY, ATTR_RSSI,
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME = 'neviweb switch'
-# PARALLEL_UPDATES = 1
+PARALLEL_UPDATES = 1
 
 UPDATE_ATTRIBUTES = [ATTR_POWER_MODE, ATTR_INTENSITY, ATTR_RSSI, 
     ATTR_WATTAGE, ATTR_WATTAGE_INSTANT, ATTR_OCCUPANCY]
@@ -60,12 +60,12 @@ class NeviwebSwitch(SwitchEntity):
         self._occupancy = None
         _LOGGER.debug("Setting up %s: %s", self._name, device_info)
 
-    def update(self):
+    async def async_update(self):
         """Get the latest data from Neviweb and update the state."""
         start = time.time()
-        device_data = self._client.get_device_attributes(self._id,
+        device_data = await self._client.async_get_device_attributes(self._id,
             UPDATE_ATTRIBUTES)
-        device_daily_stats = self._client.get_device_daily_stats(self._id)
+        device_daily_stats = await self._client.async_get_device_daily_stats(self._id)
         end = time.time()
         elapsed = round(end - start, 3)
         _LOGGER.debug("Updating %s (%s sec): %s",
@@ -119,13 +119,13 @@ class NeviwebSwitch(SwitchEntity):
         """Return current operation i.e. ON, OFF """
         return self._brightness != 0
 
-    def turn_on(self, **kwargs):
+    async def async_turn_on(self, **kwargs):
         """Turn the device on."""
-        self._client.set_brightness(self._id, 100)
+        await self._client.async_set_brightness(self._id, 100)
         
-    def turn_off(self, **kwargs):
+    async def async_turn_off(self, **kwargs):
         """Turn the device off."""
-        self._client.set_brightness(self._id, 0)
+        await self._client.async_set_brightness(self._id, 0)
 
     @property
     def device_state_attributes(self):
