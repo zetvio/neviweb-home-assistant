@@ -4,5 +4,5 @@
   "documentation": "https://github.com/claudegel/sinope-1",
   "dependencies": [],
   "codeowners": ["@claudegel"],
-  "requirements": []
+  "requirements": ["ratelimit==2.2.1"]
 }

@@ -1,8 +1,6 @@
 import logging
-import requests
-import json
-import aiohttp
 from datetime import timedelta
+from ratelimit import limits, sleep_and_retry
 
 import voluptuous as vol
 
@@ -10,7 +8,6 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers import discovery
 from homeassistant.const import (CONF_USERNAME, CONF_EMAIL, CONF_PASSWORD,
     CONF_SCAN_INTERVAL)
-from homeassistant.util import Throttle
 from .const import (DOMAIN, CONF_NETWORK, CONF_NETWORK2, ATTR_INTENSITY, ATTR_POWER_MODE,
     ATTR_SETPOINT_MODE, ATTR_ROOM_SETPOINT, ATTR_SIGNATURE)
 
@@ -30,6 +27,7 @@ DEVICE_DATA_URL = "{}/device/".format(API_URL)
 HTTP_GET = "GET"
 HTTP_POST = "POST"
 HTTP_PUT = "PUT"
+RATELIMIT_PER_SECOND = 10
 
 CONFIG_SCHEMA = vol.Schema({
     DOMAIN: vol.Schema({
@@ -196,6 +194,8 @@ class NeviwebClient(object):
         _LOGGER.debug("Setting device %s attributes: %s", device_id, data)
         return await self._async_http_request(HTTP_PUT, url, data=data)
 
+    @sleep_and_retry
+    @limits(calls=RATELIMIT_PER_SECOND, period=1)
     async def _async_http_request(self, method, url, params=None, json=None,
         data=None):
         # _LOGGER.debug("%s %s params=%s, json=%s, data=%s", method, url, 
@@ -203,8 +203,9 @@ class NeviwebClient(object):
         async with self._session.request(
             method, url, headers=self._headers, params=params, json=json,
             data=data) as resp:
-            assert resp.status == 200
-            # _LOGGER.debug("response: %s", resp)
+            if resp.status != 200:
+                _LOGGER.error("Bad response status %s", resp)
+                raise PyNeviwebError("Bad response status")
             ret = await resp.json()
             # _LOGGER.debug("response json: %s", ret)
             self._handle_errors(ret)
@@ -215,11 +216,13 @@ class NeviwebClient(object):
             error_code = response["error"]["code"]
             if error_code == "USRSESSEXP":
                 _LOGGER.error("Session expired. Set a scan_interval less" +
-                "than 10 minutes, otherwise the session will end.")
+                "than 10 minutes, otherwise the session will end. %s",
+                response)
                 raise PyNeviwebError("Session expired")
             if error_code == "ACCSESSEXC":
                 _LOGGER.error("Too many active sessions. Close all Neviweb " +
                 "sessions you have opened on other platform (mobile, browser" +
-                ", ...), wait a few minutes, then reboot Home Assistant.")
+                ", ...), wait a few minutes, then reboot Home Assistant. %s",
+                response)
                 raise PyNeviwebError("Too many sessions")
             # raise PyNeviwebError(f"Unknown neviweb error: {error_code}")
