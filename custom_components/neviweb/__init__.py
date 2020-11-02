@@ -8,8 +8,9 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers import discovery
 from homeassistant.const import (CONF_USERNAME, CONF_EMAIL, CONF_PASSWORD,
     CONF_SCAN_INTERVAL)
-from .const import (DOMAIN, CONF_NETWORK, CONF_NETWORK2, ATTR_INTENSITY, ATTR_POWER_MODE,
-    ATTR_SETPOINT_MODE, ATTR_ROOM_SETPOINT, ATTR_SIGNATURE)
+from .const import (DOMAIN, CONF_NETWORK, CONF_NETWORK2, ATTR_INTENSITY, 
+    ATTR_POWER_MODE, ATTR_OCCUPANCY_MODE, ATTR_SETPOINT_MODE, 
+    ATTR_ROOM_SETPOINT, ATTR_SIGNATURE)
 
 #REQUIREMENTS = ['PY_Sinope==0.1.5']
 VERSION = '1.2.5'
@@ -174,9 +175,14 @@ class NeviwebClient(object):
         data = {ATTR_INTENSITY: brightness}
         await self.async_set_device_attributes(device_id, data)
 
-    async def async_set_mode(self, device_id, mode):
+    async def async_set_operation_mode(self, device_id, mode):
         """Set device operation mode."""
         data = {ATTR_POWER_MODE: mode}
+        await self.async_set_device_attributes(device_id, data)
+
+    async def async_set_occupancy_mode(self, device_id, mode):
+        """Set device occupancy mode."""
+        data = {ATTR_OCCUPANCY_MODE: mode}
         await self.async_set_device_attributes(device_id, data)
 
     async def async_set_setpoint_mode(self, device_id, mode):

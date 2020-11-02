@@ -14,9 +14,12 @@ from . import (SCAN_INTERVAL)
 from homeassistant.components.switch import (SwitchEntity, 
     ATTR_TODAY_ENERGY_KWH, ATTR_CURRENT_POWER_W)
 from datetime import timedelta
-from homeassistant.helpers.event import track_time_interval
+from homeassistant.helpers import (entity_platform, service)
 from .const import (DOMAIN, ATTR_POWER_MODE, ATTR_INTENSITY, ATTR_RSSI,
-    ATTR_WATTAGE, ATTR_WATTAGE_INSTANT, MODE_AUTO, MODE_MANUAL, ATTR_OCCUPANCY)
+    ATTR_WATTAGE, ATTR_WATTAGE_INSTANT, MODE_AUTO, MODE_MANUAL, 
+    ATTR_OCCUPANCY_MODE,
+    SERVICE_SET_SWITCH_OPERATION_MODE, SERVICE_SET_SWITCH_OCCUPANCY_MODE, 
+    SERVICE_SET_OPERATION_MODE_SCHEMA, SERVICE_SET_OCCUPANCY_MODE_SCHEMA)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,7 +27,7 @@ DEFAULT_NAME = 'neviweb switch'
 PARALLEL_UPDATES = 1
 
 UPDATE_ATTRIBUTES = [ATTR_POWER_MODE, ATTR_INTENSITY, ATTR_RSSI, 
-    ATTR_WATTAGE, ATTR_WATTAGE_INSTANT, ATTR_OCCUPANCY]
+    ATTR_WATTAGE, ATTR_WATTAGE_INSTANT, ATTR_OCCUPANCY_MODE]
 
 IMPLEMENTED_DEVICE_TYPES = [120] #power control device
 
@@ -42,6 +45,20 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             devices.append(NeviwebSwitch(data, device_info, device_name))
             
     async_add_entities(devices, True)
+
+    platform = entity_platform.current_platform.get()
+
+    platform.async_register_entity_service(
+        SERVICE_SET_SWITCH_OPERATION_MODE,
+        SERVICE_SET_OPERATION_MODE_SCHEMA,
+        "async_set_operation_mode",
+    )
+
+    platform.async_register_entity_service(
+        SERVICE_SET_SWITCH_OCCUPANCY_MODE,
+        SERVICE_SET_OCCUPANCY_MODE_SCHEMA,
+        "async_set_occupancy_mode",
+    )
 
 class NeviwebSwitch(SwitchEntity):
     """Implementation of a Neviweb switch."""
@@ -80,7 +97,7 @@ class NeviwebSwitch(SwitchEntity):
                 self._current_power_w = device_data[ATTR_WATTAGE_INSTANT]["value"]
                 self._wattage = device_data[ATTR_WATTAGE]["value"]
                 self._rssi = device_data[ATTR_RSSI]
-                self._occupancy = device_data[ATTR_OCCUPANCY]
+                self._occupancy = device_data[ATTR_OCCUPANCY_MODE]
                 self._today_energy_kwh = device_daily_stats[0] / 1000 if \
                     device_daily_stats[0] is not None else 0
                 return
@@ -154,3 +171,13 @@ class NeviwebSwitch(SwitchEntity):
     def is_standby(self):
         """Return true if device is in standby."""
         return self._current_power_w == 0
+
+    async def async_set_operation_mode(self, operation_mode):
+        _LOGGER.debug("async_set_operation_mode %s for %s ", operation_mode,
+            self._name)
+        await self._client.async_set_operation_mode(self._id, operation_mode)
+
+    async def async_set_occupancy_mode(self, occupancy_mode):
+        _LOGGER.debug("async_set_occupancy_mode %s for %s ", occupancy_mode,
+            self._name)
+        await self._client.async_set_occupancy_mode(self._id, occupancy_mode)

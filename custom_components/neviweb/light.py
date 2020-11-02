@@ -14,9 +14,12 @@ import custom_components.neviweb as neviweb
 from . import (SCAN_INTERVAL)
 from homeassistant.components.light import (LightEntity, ATTR_BRIGHTNESS,
     ATTR_BRIGHTNESS_PCT, SUPPORT_BRIGHTNESS)
+from homeassistant.helpers import (entity_platform, service)
 from datetime import timedelta
 from .const import (DOMAIN, ATTR_POWER_MODE, ATTR_INTENSITY, ATTR_RSSI,
-    ATTR_WATTAGE_OVERRIDE, MODE_AUTO, MODE_MANUAL, ATTR_OCCUPANCY)
+    ATTR_WATTAGE_OVERRIDE, MODE_AUTO, MODE_MANUAL, ATTR_OCCUPANCY_MODE, 
+    SERVICE_SET_LIGHT_OPERATION_MODE, SERVICE_SET_LIGHT_OCCUPANCY_MODE, 
+    SERVICE_SET_OPERATION_MODE_SCHEMA, SERVICE_SET_OCCUPANCY_MODE_SCHEMA)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,7 +27,7 @@ DEFAULT_NAME = 'neviweb'
 PARALLEL_UPDATES = 1
 
 UPDATE_ATTRIBUTES = [ATTR_POWER_MODE, ATTR_INTENSITY, ATTR_RSSI, 
-    ATTR_WATTAGE_OVERRIDE, ATTR_OCCUPANCY]
+    ATTR_WATTAGE_OVERRIDE, ATTR_OCCUPANCY_MODE]
 
 DEVICE_TYPE_DIMMER = [112]
 DEVICE_TYPE_LIGHT = [102]
@@ -46,6 +49,20 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             devices.append(NeviwebLight(data, device_info, device_name))
             
     async_add_entities(devices, True)
+
+    platform = entity_platform.current_platform.get()
+
+    platform.async_register_entity_service(
+        SERVICE_SET_LIGHT_OPERATION_MODE,
+        SERVICE_SET_OPERATION_MODE_SCHEMA,
+        "async_set_operation_mode",
+    )
+
+    platform.async_register_entity_service(
+        SERVICE_SET_LIGHT_OCCUPANCY_MODE,
+        SERVICE_SET_OCCUPANCY_MODE_SCHEMA,
+        "async_set_occupancy_mode",
+    )
 
 def brightness_to_percentage(brightness):
     """Convert brightness from absolute 0..255 to percentage."""
@@ -89,7 +106,7 @@ class NeviwebLight(LightEntity):
                     device_data[ATTR_POWER_MODE] is not None else MODE_MANUAL
                 self._rssi = device_data[ATTR_RSSI]
                 self._wattage_override = device_data[ATTR_WATTAGE_OVERRIDE]
-                self._occupancy = device_data[ATTR_OCCUPANCY]
+                self._occupancy = device_data[ATTR_OCCUPANCY_MODE]
                 return
             else:
                 if device_data["errorCode"] == "ReadTimeout":
@@ -169,3 +186,13 @@ class NeviwebLight(LightEntity):
     @property
     def operation_mode(self):
         return self._operation_mode
+
+    async def async_set_operation_mode(self, operation_mode):
+        _LOGGER.debug("async_set_operation_mode %s for %s ", operation_mode,
+            self._name)
+        await self._client.async_set_operation_mode(self._id, operation_mode)
+
+    async def async_set_occupancy_mode(self, occupancy_mode):
+        _LOGGER.debug("async_set_occupancy_mode %s for %s ", occupancy_mode,
+            self._name)
+        await self._client.async_set_occupancy_mode(self._id, occupancy_mode)
