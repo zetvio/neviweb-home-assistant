@@ -196,3 +196,4 @@ class NeviwebLight(LightEntity):
         _LOGGER.debug("async_set_occupancy_mode %s for %s ", occupancy_mode,
             self._name)
         await self._client.async_set_occupancy_mode(self._id, occupancy_mode)
+        
