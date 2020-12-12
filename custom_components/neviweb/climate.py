@@ -20,7 +20,7 @@ from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import (HVAC_MODE_HEAT, 
     HVAC_MODE_OFF, HVAC_MODE_AUTO, SUPPORT_TARGET_TEMPERATURE, 
     SUPPORT_PRESET_MODE, PRESET_AWAY, PRESET_NONE, CURRENT_HVAC_HEAT, 
-    CURRENT_HVAC_IDLE, CURRENT_HVAC_OFF)
+    CURRENT_HVAC_IDLE, CURRENT_HVAC_OFF, ATTR_HVAC_MODE)
 from homeassistant.const import (TEMP_CELSIUS, TEMP_FAHRENHEIT, 
     ATTR_TEMPERATURE)
 from datetime import timedelta
@@ -230,11 +230,14 @@ class NeviwebThermostat(ClimateEntity):
 
     async def async_set_temperature(self, **kwargs):
         """Set new target temperature."""
+        hvac_mode = kwargs.get(ATTR_HVAC_MODE)
         temperature = kwargs.get(ATTR_TEMPERATURE)
-        if temperature is None:
-            return
-        await self._client.async_set_temperature(self._id, temperature)
-        self._target_temp = temperature
+        
+        if hvac_mode is not None:
+            await self.async_set_hvac_mode(hvac_mode)
+        if temperature is not None:
+            await self._client.async_set_temperature(self._id, temperature)
+        
 
     async def async_set_hvac_mode(self, hvac_mode):
         """Set new hvac mode."""
