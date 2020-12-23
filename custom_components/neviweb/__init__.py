@@ -10,7 +10,7 @@ from homeassistant.const import (CONF_USERNAME, CONF_EMAIL, CONF_PASSWORD,
     CONF_SCAN_INTERVAL)
 from .const import (DOMAIN, CONF_NETWORK, CONF_NETWORK2, ATTR_INTENSITY, 
     ATTR_POWER_MODE, ATTR_OCCUPANCY_MODE, ATTR_SETPOINT_MODE, 
-    ATTR_ROOM_SETPOINT, ATTR_SIGNATURE)
+    ATTR_ROOM_SETPOINT, ATTR_SIGNATURE, NEVIWEB_PLATFORMS)
 
 #REQUIREMENTS = ['PY_Sinope==0.1.5']
 VERSION = '1.2.5'
@@ -43,6 +43,11 @@ CONFIG_SCHEMA = vol.Schema({
 
 async def async_setup(hass, hass_config):
     """Set up neviweb."""
+    _LOGGER.debug("async_setup init.py")
+    config = hass_config.get(DOMAIN, {})
+    if not config:
+        _LOGGER.debug("no yaml config")
+        return True
     email = hass_config[DOMAIN].get(CONF_USERNAME)
     password = hass_config[DOMAIN].get(CONF_PASSWORD)
 
@@ -71,6 +76,38 @@ async def async_setup(hass, hass_config):
     )
 
     return True
+
+async def async_setup_entry(hass, entry):
+    """Set up neviweb via a config entry."""
+    _LOGGER.debug("async_setup_entry init.py %s", entry)
+    email = entry.data[CONF_EMAIL]
+    password = entry.data[CONF_PASSWORD]
+
+    session = hass.helpers.aiohttp_client.async_get_clientsession()
+    client = NeviwebClient(session, email, password)
+    await client.async_login()
+
+    locations = await client.async_get_locations()
+    devices = await locations.async_get_all_locations_devices(client)
+
+    if len(devices) == 0:
+        _LOGGER.error("No neviweb devices found.")
+        return False
+    
+    data = NeviwebData(client, locations, devices)
+    hass.data[DOMAIN] = data
+
+    global SCAN_INTERVAL 
+    #SCAN_INTERVAL = hass_config[DOMAIN].get(CONF_SCAN_INTERVAL)
+    _LOGGER.debug("Setting scan interval to: %s", SCAN_INTERVAL)
+
+    for platform in NEVIWEB_PLATFORMS:
+        hass.async_create_task(
+            hass.config_entries.async_forward_entry_setup(entry, platform)
+        )
+
+    return True
+
 
 class NeviwebData:
 
@@ -103,6 +140,12 @@ class NeviwebLocations(object):
             devices += await client.async_get_location_devices(location["id"])
 
         return devices
+    
+    def get_location_data(self, location_id):
+        for location in self.data:
+            if location["id"] == location_id:
+                return location
+        return None
 
 class NeviwebClient(object):
 

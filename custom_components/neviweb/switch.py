@@ -34,14 +34,45 @@ IMPLEMENTED_DEVICE_TYPES = [120] #power control device
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the Neviweb switch."""
     data = hass.data[DOMAIN]
+    _LOGGER.debug("Entering switch setup with data: %s", data)    
     
-    # _LOGGER.debug("Entering switch setup with data: %s", data)
     devices = []
     for device_info in data.devices:
         if "signature" in device_info and \
             "type" in device_info["signature"] and \
             device_info["signature"]["type"] in IMPLEMENTED_DEVICE_TYPES:
             device_name = '{} {}'.format(DEFAULT_NAME, device_info["name"])
+            devices.append(NeviwebSwitch(data, device_info, device_name))
+            
+    async_add_entities(devices, True)
+
+    platform = entity_platform.current_platform.get()
+
+    platform.async_register_entity_service(
+        SERVICE_SET_SWITCH_OPERATION_MODE,
+        SERVICE_SET_OPERATION_MODE_SCHEMA,
+        "async_set_operation_mode",
+    )
+
+    platform.async_register_entity_service(
+        SERVICE_SET_SWITCH_OCCUPANCY_MODE,
+        SERVICE_SET_OCCUPANCY_MODE_SCHEMA,
+        "async_set_occupancy_mode",
+    )
+
+async def async_setup_entry(hass, config_entry, async_add_entities):
+    """Set up neviweb switch."""
+    _LOGGER.debug("Entering switch setup_entry")
+    data = hass.data[DOMAIN]
+    devices = []
+    for device_info in data.devices:
+        if "signature" in device_info and \
+            "type" in device_info["signature"] and \
+            device_info["signature"]["type"] in IMPLEMENTED_DEVICE_TYPES:
+            location_name = data.locations.get_location_data(
+                device_info["location$id"])["name"]
+            device_name = '{} {} {}'.format(DOMAIN, location_name,
+                device_info["name"])
             devices.append(NeviwebSwitch(data, device_info, device_name))
             
     async_add_entities(devices, True)

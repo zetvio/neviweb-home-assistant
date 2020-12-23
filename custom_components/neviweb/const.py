@@ -7,6 +7,8 @@ DOMAIN = "neviweb"
 CONF_NETWORK = 'network'
 CONF_NETWORK2 = 'network2'
 
+NEVIWEB_PLATFORMS = ["climate", "light", "switch"]
+
 ATTR_SIGNATURE = "signature"
 ATTR_POWER_MODE = "powerMode"
 ATTR_INTENSITY = "intensity"

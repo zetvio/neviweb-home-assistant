@@ -10,11 +10,12 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-async def validate_input(hass: core.HomeAssistant, data):
+async def async_validate_input(hass: core.HomeAssistant, data):
     """Validate the user input allows us to connect.
 
     Data has the keys from DATA_SCHEMA with values provided by the user.
     """
+    _LOGGER.debug("Config_flow - Validating input")
     # session = hass.helpers.aiohttp_client.async_get_clientsession()
     # client = NeviwebClient(session, data[CONF_EMAIL], data[CONF_PASSWORD])
     # await client.async_login()
@@ -38,10 +39,11 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
+        _LOGGER.debug("Config_flow - async_step_user, user_input: %s", user_input)
         errors = {}
         if user_input is not None:
             try:
-                info = await validate_input(self.hass, user_input)
+                info = await async_validate_input(self.hass, user_input)
             # except CannotConnect:
             #     errors["base"] = "cannot_connect"
             except Exception:  # pylint: disable=broad-except

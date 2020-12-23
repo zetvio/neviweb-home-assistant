@@ -64,6 +64,37 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         "async_set_occupancy_mode",
     )
 
+async def async_setup_entry(hass, config_entry, async_add_entities):
+    """Set up neviweb light."""
+    _LOGGER.debug("Entering light setup_entry")
+    data = hass.data[DOMAIN]
+    devices = []
+    for device_info in data.devices:
+        if "signature" in device_info and \
+            "type" in device_info["signature"] and \
+            device_info["signature"]["type"] in IMPLEMENTED_DEVICE_TYPES:
+            location_name = data.locations.get_location_data(
+                device_info["location$id"])["name"]
+            device_name = '{} {} {}'.format(DOMAIN, location_name,
+                device_info["name"])
+            devices.append(NeviwebLight(data, device_info, device_name))
+            
+    async_add_entities(devices, True)
+
+    platform = entity_platform.current_platform.get()
+
+    platform.async_register_entity_service(
+        SERVICE_SET_LIGHT_OPERATION_MODE,
+        SERVICE_SET_OPERATION_MODE_SCHEMA,
+        "async_set_operation_mode",
+    )
+
+    platform.async_register_entity_service(
+        SERVICE_SET_LIGHT_OCCUPANCY_MODE,
+        SERVICE_SET_OCCUPANCY_MODE_SCHEMA,
+        "async_set_occupancy_mode",
+    )
+
 def brightness_to_percentage(brightness):
     """Convert brightness from absolute 0..255 to percentage."""
     return int((brightness * 100.0) / 255.0)
