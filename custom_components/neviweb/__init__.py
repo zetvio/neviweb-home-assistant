@@ -2,23 +2,16 @@ import logging
 from datetime import timedelta
 from ratelimit import limits, sleep_and_retry
 
-import voluptuous as vol
-
-import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers import discovery
-from homeassistant.const import (CONF_USERNAME, CONF_EMAIL, CONF_PASSWORD,
-    CONF_SCAN_INTERVAL)
-from .const import (DOMAIN, CONF_NETWORK, CONF_NETWORK2, ATTR_INTENSITY, 
-    ATTR_POWER_MODE, ATTR_OCCUPANCY_MODE, ATTR_SETPOINT_MODE, 
-    ATTR_ROOM_SETPOINT, ATTR_SIGNATURE, NEVIWEB_PLATFORMS)
+from homeassistant.const import (CONF_EMAIL, CONF_PASSWORD, CONF_SCAN_INTERVAL)
+from .const import (DOMAIN, ATTR_INTENSITY, ATTR_POWER_MODE, 
+    ATTR_OCCUPANCY_MODE, ATTR_SETPOINT_MODE, ATTR_ROOM_SETPOINT, 
+    ATTR_SIGNATURE, NEVIWEB_PLATFORMS, DEFAULT_SCAN_INTEVAL)
 
 #REQUIREMENTS = ['PY_Sinope==0.1.5']
 VERSION = '1.2.5'
 
 
 _LOGGER = logging.getLogger(__name__)
-
-SCAN_INTERVAL = timedelta(seconds=540)
 
 API_URL = "https://neviweb.com/api"
 LOGIN_URL = "{}/login".format(API_URL)
@@ -30,56 +23,20 @@ HTTP_POST = "POST"
 HTTP_PUT = "PUT"
 RATELIMIT_PER_SECOND = 10
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        vol.Required(CONF_USERNAME): cv.string,
-        vol.Required(CONF_PASSWORD): cv.string,
-        vol.Optional(CONF_NETWORK): cv.string,
-        vol.Optional(CONF_NETWORK2): cv.string,
-        vol.Optional(CONF_SCAN_INTERVAL, default=SCAN_INTERVAL):
-            cv.time_period
-    })
-}, extra=vol.ALLOW_EXTRA)
-
 async def async_setup(hass, hass_config):
     """Set up neviweb."""
     _LOGGER.debug("async_setup init.py")
     config = hass_config.get(DOMAIN, {})
-    if not config:
-        _LOGGER.debug("no yaml config")
-        return True
-    email = hass_config[DOMAIN].get(CONF_USERNAME)
-    password = hass_config[DOMAIN].get(CONF_PASSWORD)
-
-    session = hass.helpers.aiohttp_client.async_get_clientsession()
-    client = NeviwebClient(session, email, password)
-    await client.async_login()
-
-    locations = await client.async_get_locations()
-    devices = await locations.async_get_all_locations_devices(client)
-
-    data = NeviwebData(client, locations, devices)
-    hass.data[DOMAIN] = data
-
-    global SCAN_INTERVAL 
-    SCAN_INTERVAL = hass_config[DOMAIN].get(CONF_SCAN_INTERVAL)
-    _LOGGER.debug("Setting scan interval to: %s", SCAN_INTERVAL)
-
-    hass.async_create_task(
-        discovery.async_load_platform(hass, 'climate', DOMAIN, {}, hass_config)
-    )
-    hass.async_create_task(
-        discovery.async_load_platform(hass, 'light', DOMAIN, {}, hass_config)
-    )
-    hass.async_create_task(
-        discovery.async_load_platform(hass, 'switch', DOMAIN, {}, hass_config)
-    )
-
+    if config:
+        _LOGGER.error("Neviweb must now be setup via Configuration / \
+        Integrations menu. Please remove your existing yaml config and \
+        restart Home Assistant.")
+        return False
     return True
 
 async def async_setup_entry(hass, entry):
     """Set up neviweb via a config entry."""
-    _LOGGER.debug("async_setup_entry init.py %s", entry)
+    _LOGGER.debug("async_setup_entry init.py")
     email = entry.data[CONF_EMAIL]
     password = entry.data[CONF_PASSWORD]
 
@@ -88,8 +45,9 @@ async def async_setup_entry(hass, entry):
     await client.async_login()
 
     locations = await client.async_get_locations()
-    devices = await locations.async_get_all_locations_devices(client)
-
+    devices = []
+    for location_id in locations:
+        devices += await client.async_get_location_devices(location_id)
     if len(devices) == 0:
         _LOGGER.error("No neviweb devices found.")
         return False
@@ -97,8 +55,9 @@ async def async_setup_entry(hass, entry):
     data = NeviwebData(client, locations, devices)
     hass.data[DOMAIN] = data
 
-    global SCAN_INTERVAL 
-    #SCAN_INTERVAL = hass_config[DOMAIN].get(CONF_SCAN_INTERVAL)
+    global SCAN_INTERVAL
+    SCAN_INTERVAL = timedelta(seconds=entry.data.get(CONF_SCAN_INTERVAL, 
+        DEFAULT_SCAN_INTEVAL))
     _LOGGER.debug("Setting scan interval to: %s", SCAN_INTERVAL)
 
     for platform in NEVIWEB_PLATFORMS:
@@ -130,22 +89,23 @@ class NeviwebData:
 class PyNeviwebError(Exception):
     pass
 
-class NeviwebLocations(object):
-    def __init__(self, data):
-        self.data = data
+class NeviwebLocation(object):
+    def __init__(self, location_data):
+        self.id = location_data.get("id")
+        self.name = location_data.get("name")
+        self.mode = location_data.get("mode")
 
-    async def async_get_all_locations_devices(self, client):
-        devices = []
-        for location in self.data:
-            devices += await client.async_get_location_devices(location["id"])
-
-        return devices
-    
-    def get_location_data(self, location_id):
-        for location in self.data:
-            if location["id"] == location_id:
-                return location
-        return None
+class NeviwebDeviceInfo(object):
+    def __init__(self, device_info: dict):
+        self.id = device_info.get("id")
+        self.identifier = device_info.get("identifier")
+        self.name = device_info.get("name")
+        self.vendor = device_info.get("vendor")
+        self.sku = device_info.get("sku")
+        self.software_version = "{}.{}.{}".format(
+            device_info["signature"]["softVersion"]["major"],
+            device_info["signature"]["softVersion"]["middle"],
+            device_info["signature"]["softVersion"]["minor"])
 
 class NeviwebClient(object):
 
@@ -171,7 +131,12 @@ class NeviwebClient(object):
         url = API_URL + "/locations"
         response = await self._async_http_request(HTTP_GET, url)
         _LOGGER.debug("Found %s location(s): %s", len(response), response)
-        return NeviwebLocations(response)
+        
+        locations = {}
+        for location_data in response:
+            locations[location_data["id"]] = NeviwebLocation(location_data)
+
+        return locations
 
     async def async_get_location_devices(self, location_id):
         url = API_URL + "/devices"

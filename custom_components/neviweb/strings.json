@@ -6,7 +6,8 @@
                 "description": "Enter the credentials you use to connect in neviweb.",
                 "data": {
                     "email": "[%key:common::config_flow::data::email%]",
-                    "password": "[%key:common::config_flow::data::password%]"
+                    "password": "[%key:common::config_flow::data::password%]",
+                    "scan_interval": "Scan interval (seconds)"
                 }
             }
         },

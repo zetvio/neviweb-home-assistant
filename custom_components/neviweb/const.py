@@ -1,13 +1,11 @@
 """Constants for neviweb component."""
 
 import voluptuous as vol
-import homeassistant.helpers.config_validation as cv
 
 DOMAIN = "neviweb"
-CONF_NETWORK = 'network'
-CONF_NETWORK2 = 'network2'
 
 NEVIWEB_PLATFORMS = ["climate", "light", "switch"]
+DEFAULT_SCAN_INTEVAL = 540
 
 ATTR_SIGNATURE = "signature"
 ATTR_POWER_MODE = "powerMode"

@@ -2,11 +2,12 @@
     "config": {
         "step": {
             "user": {
-                "title": "Set up neviweb",
-                "description": "Enter the credentials you use to connect in neviweb.",
+                "title": "Connexion à neviweb",
+                "description": "Entrer les informations de connexion que vous utilisez pour vous connecter à neviweb.",
                 "data": {
                     "email": "Courriel",
-                    "password": "Mot de passe"
+                    "password": "Mot de passe",
+                    "scan_interval": "Intervalle d'actualisation (secondes)"
                 }
             }
         },

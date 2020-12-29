@@ -3,10 +3,10 @@ import logging
 import voluptuous as vol
 
 from homeassistant import config_entries, core
-from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
+from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, CONF_SCAN_INTERVAL
 
 from . import NeviwebClient
-from .const import DOMAIN
+from .const import DOMAIN, DEFAULT_SCAN_INTEVAL
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -59,6 +59,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user", 
             data_schema=vol.Schema({
                 vol.Required(CONF_EMAIL): str,
-                vol.Required(CONF_PASSWORD): str
+                vol.Required(CONF_PASSWORD): str,
+                vol.Optional(CONF_SCAN_INTERVAL, 
+                    default=DEFAULT_SCAN_INTEVAL): int
             })
         )

@@ -78,8 +78,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         if "signature" in device_info and \
             "type" in device_info["signature"] and \
             device_info["signature"]["type"] in IMPLEMENTED_DEVICE_TYPES:
-            location_name = data.locations.get_location_data(
-                device_info["location$id"])["name"]
+            location_name = data.locations[device_info["location$id"]].name
             device_name = '{} {} {}'.format(DOMAIN, location_name,
                 device_info["name"])
             devices.append(NeviwebThermostat(data, device_info, device_name))

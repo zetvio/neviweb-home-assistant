@@ -6,7 +6,8 @@
                 "description": "Enter the credentials you use to connect in neviweb.",
                 "data": {
                     "email": "Email",
-                    "password": "Password"
+                    "password": "Password",
+                    "scan_interval": "Scan interval (seconds)"
                 }
             }
         },

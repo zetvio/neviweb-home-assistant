@@ -10,11 +10,10 @@ import voluptuous as vol
 import time
 
 import custom_components.neviweb as neviweb
-from . import (SCAN_INTERVAL)
-from homeassistant.components.switch import (SwitchEntity, 
-    ATTR_TODAY_ENERGY_KWH, ATTR_CURRENT_POWER_W)
+from . import (NeviwebDeviceInfo, SCAN_INTERVAL)
+from homeassistant.components.switch import (SwitchEntity)
 from datetime import timedelta
-from homeassistant.helpers import (entity_platform, service)
+from homeassistant.helpers import (entity_platform)
 from .const import (DOMAIN, ATTR_POWER_MODE, ATTR_INTENSITY, ATTR_RSSI,
     ATTR_WATTAGE, ATTR_WATTAGE_INSTANT, MODE_AUTO, MODE_MANUAL, 
     ATTR_OCCUPANCY_MODE,
@@ -31,35 +30,6 @@ UPDATE_ATTRIBUTES = [ATTR_POWER_MODE, ATTR_INTENSITY, ATTR_RSSI,
 
 IMPLEMENTED_DEVICE_TYPES = [120] #power control device
 
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    """Set up the Neviweb switch."""
-    data = hass.data[DOMAIN]
-    _LOGGER.debug("Entering switch setup with data: %s", data)    
-    
-    devices = []
-    for device_info in data.devices:
-        if "signature" in device_info and \
-            "type" in device_info["signature"] and \
-            device_info["signature"]["type"] in IMPLEMENTED_DEVICE_TYPES:
-            device_name = '{} {}'.format(DEFAULT_NAME, device_info["name"])
-            devices.append(NeviwebSwitch(data, device_info, device_name))
-            
-    async_add_entities(devices, True)
-
-    platform = entity_platform.current_platform.get()
-
-    platform.async_register_entity_service(
-        SERVICE_SET_SWITCH_OPERATION_MODE,
-        SERVICE_SET_OPERATION_MODE_SCHEMA,
-        "async_set_operation_mode",
-    )
-
-    platform.async_register_entity_service(
-        SERVICE_SET_SWITCH_OCCUPANCY_MODE,
-        SERVICE_SET_OCCUPANCY_MODE_SCHEMA,
-        "async_set_occupancy_mode",
-    )
-
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up neviweb switch."""
     _LOGGER.debug("Entering switch setup_entry")
@@ -69,8 +39,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         if "signature" in device_info and \
             "type" in device_info["signature"] and \
             device_info["signature"]["type"] in IMPLEMENTED_DEVICE_TYPES:
-            location_name = data.locations.get_location_data(
-                device_info["location$id"])["name"]
+            location_name = data.locations[device_info["location$id"]].name
             device_name = '{} {} {}'.format(DOMAIN, location_name,
                 device_info["name"])
             devices.append(NeviwebSwitch(data, device_info, device_name))
@@ -96,9 +65,9 @@ class NeviwebSwitch(SwitchEntity):
 
     def __init__(self, data, device_info, name):
         """Initialize."""
+        self._device_info = NeviwebDeviceInfo(device_info)
         self._name = name
         self._client = data.neviweb_client
-        self._id = device_info["id"]
         self._wattage = 0 # keyCheck("wattage", device_info, 0, name)
         self._brightness = 0
         self._operation_mode = 1
@@ -111,9 +80,9 @@ class NeviwebSwitch(SwitchEntity):
     async def async_update(self):
         """Get the latest data from Neviweb and update the state."""
         start = time.time()
-        device_data = await self._client.async_get_device_attributes(self._id,
+        device_data = await self._client.async_get_device_attributes(self.unique_id,
             UPDATE_ATTRIBUTES)
-        device_daily_stats = await self._client.async_get_device_daily_stats(self._id)
+        device_daily_stats = await self._client.async_get_device_daily_stats(self.unique_id)
         end = time.time()
         elapsed = round(end - start, 3)
         _LOGGER.debug("Updating %s (%s sec): %s",
@@ -155,12 +124,25 @@ class NeviwebSwitch(SwitchEntity):
     @property
     def unique_id(self):
         """Return unique ID based on Neviweb device ID."""
-        return self._id
+        return self._device_info.id
 
     @property
     def name(self):
         """Return the name of the switch."""
         return self._name
+
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {
+                (DOMAIN, self.unique_id),
+                (DOMAIN, self._device_info.identifier)
+            },
+            "name": self.name,
+            "manufacturer": self._device_info.vendor,
+            "model": self._device_info.sku,
+            "sw_version": self._device_info.software_version
+        }
 
     @property  
     def is_on(self):
@@ -181,8 +163,7 @@ class NeviwebSwitch(SwitchEntity):
         return {'operation_mode': self.operation_mode,
                 'rssi': self._rssi,
                 'occupancy': self._occupancy,
-                'wattage': self._wattage,
-                'id': self._id}
+                'wattage': self._wattage}
        
     @property
     def operation_mode(self):
@@ -206,9 +187,9 @@ class NeviwebSwitch(SwitchEntity):
     async def async_set_operation_mode(self, operation_mode):
         _LOGGER.debug("async_set_operation_mode %s for %s ", operation_mode,
             self._name)
-        await self._client.async_set_operation_mode(self._id, operation_mode)
+        await self._client.async_set_operation_mode(self.unique_id, operation_mode)
 
     async def async_set_occupancy_mode(self, occupancy_mode):
         _LOGGER.debug("async_set_occupancy_mode %s for %s ", occupancy_mode,
             self._name)
-        await self._client.async_set_occupancy_mode(self._id, occupancy_mode)
+        await self._client.async_set_occupancy_mode(self.unique_id, occupancy_mode)
