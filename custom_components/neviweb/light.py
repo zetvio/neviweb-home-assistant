@@ -117,7 +117,7 @@ class NeviwebLight(LightEntity):
         self._occupancy = None
         self._is_dimmable = device_info["signature"]["type"] in \
             DEVICE_TYPE_DIMMER
-        _LOGGER.debug("Setting up %s: %s", self._name, device_info)
+        _LOGGER.debug("Setting up light %s: %s", self._name, device_info)
         
     async def async_update(self):
         """Get the latest data from neviweb and update the state."""

@@ -105,7 +105,7 @@ class NeviwebThermostat(ClimateEntity):
         self._heat_level = 0
         self._is_low_voltage = device_info["signature"]["type"] in \
             IMPLEMENTED_LOW_VOLTAGE
-        _LOGGER.debug("Setting up %s: %s", self._name, device_info)
+        _LOGGER.debug("Setting up climate %s: %s", self._name, device_info)
 
     async def async_update(self):
         """Get the latest data from Neviweb and update the state."""

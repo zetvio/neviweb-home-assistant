@@ -75,7 +75,7 @@ class NeviwebSwitch(SwitchEntity):
         self._today_energy_kwh = None
         self._rssi = None
         self._occupancy = None
-        _LOGGER.debug("Setting up %s: %s", self._name, device_info)
+        _LOGGER.debug("Setting up switch %s: %s", self._name, device_info)
 
     async def async_update(self):
         """Get the latest data from Neviweb and update the state."""
@@ -151,11 +151,11 @@ class NeviwebSwitch(SwitchEntity):
 
     async def async_turn_on(self, **kwargs):
         """Turn the device on."""
-        await self._client.async_set_brightness(self._id, 100)
+        await self._client.async_set_brightness(self._device_info.id, 100)
         
     async def async_turn_off(self, **kwargs):
         """Turn the device off."""
-        await self._client.async_set_brightness(self._id, 0)
+        await self._client.async_set_brightness(self._device_info.id, 0)
 
     @property
     def device_state_attributes(self):
