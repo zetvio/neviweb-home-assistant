@@ -90,10 +90,16 @@ class PyNeviwebError(Exception):
     pass
 
 class NeviwebLocation(object):
-    def __init__(self, location_data):
+    def __init__(self, location_data, groups_data):
         self.id = location_data.get("id")
         self.name = location_data.get("name")
         self.mode = location_data.get("mode")
+        self.groups = groups_data
+
+class NeviwebGroup(object):
+    def __init__(self, group_data):
+        self.id = group_data.get("id")
+        self.name = group_data.get("name")
 
 class NeviwebDeviceInfo(object):
     def __init__(self, device_info: dict):
@@ -134,7 +140,9 @@ class NeviwebClient(object):
         
         locations = {}
         for location_data in response:
-            locations[location_data["id"]] = NeviwebLocation(location_data)
+            groups = await self.async_get_location_groups(location_data["id"])
+            locations[location_data["id"]] = NeviwebLocation(location_data,
+                groups)
 
         return locations
 
@@ -154,6 +162,22 @@ class NeviwebClient(object):
             location_id, devices)
 
         return devices
+
+    async def async_get_location_groups(self, location_id):
+        url = API_URL + "/groups"
+        params = {
+            "location$id": location_id
+        }
+        response = await self._async_http_request(HTTP_GET, url, params=params)
+        _LOGGER.debug("Found %s group(s) in location %s: %s", len(response),
+            location_id, response)
+
+        groups = {}
+        for group_data in response:
+            groups[group_data["id"]] = NeviwebGroup(group_data)
+        _LOGGER.debug("formatted groups = %s", groups)
+        
+        return groups
 
     async def async_get_device_attributes(self, device_id, attributes):
         url = API_URL + f"/device/{device_id}/attribute"

@@ -42,6 +42,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
             location_name = data.locations[device_info["location$id"]].name
             device_name = '{} {} {}'.format(DOMAIN, location_name,
                 device_info["name"])
+
             devices.append(NeviwebSwitch(data, device_info, device_name))
             
     async_add_entities(devices, True)
@@ -68,6 +69,9 @@ class NeviwebSwitch(SwitchEntity):
         self._device_info = NeviwebDeviceInfo(device_info)
         self._name = name
         self._client = data.neviweb_client
+        self._group_name = data.locations[device_info["location$id"]]. \
+            groups[device_info["group$id"]].name if \
+            device_info["group$id"] is not None else ""
         self._wattage = 0 # keyCheck("wattage", device_info, 0, name)
         self._brightness = 0
         self._operation_mode = 1
@@ -141,7 +145,8 @@ class NeviwebSwitch(SwitchEntity):
             "name": self.name,
             "manufacturer": self._device_info.vendor,
             "model": self._device_info.sku,
-            "sw_version": self._device_info.software_version
+            "sw_version": self._device_info.software_version,
+            "suggested_area": self._group_name
         }
 
     @property  
