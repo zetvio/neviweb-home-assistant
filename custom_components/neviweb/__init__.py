@@ -3,9 +3,11 @@ from datetime import timedelta
 from ratelimit import limits, sleep_and_retry
 
 from homeassistant.const import (CONF_EMAIL, CONF_PASSWORD, CONF_SCAN_INTERVAL)
+from homeassistant.helpers import device_registry as dr
 from .const import (DOMAIN, ATTR_INTENSITY, ATTR_POWER_MODE, 
     ATTR_OCCUPANCY_MODE, ATTR_SETPOINT_MODE, ATTR_ROOM_SETPOINT, 
-    ATTR_SIGNATURE, NEVIWEB_PLATFORMS, DEFAULT_SCAN_INTEVAL)
+    ATTR_SIGNATURE, NEVIWEB_PLATFORMS, DEFAULT_SCAN_INTEVAL,
+    NEVIWEB_GATEWAY_SKU)
 
 #REQUIREMENTS = ['PY_Sinope==0.1.5']
 VERSION = '1.2.5'
@@ -46,19 +48,41 @@ async def async_setup_entry(hass, entry):
 
     locations = await client.async_get_locations()
     devices = []
-    for location_id in locations:
-        devices += await client.async_get_location_devices(location_id)
+    for location in locations:
+        raw_devices = await client.async_get_location_devices(location.id)
+        groups = await client.async_get_location_groups(location.id)
+        for device_data in raw_devices:
+            group = groups[device_data["group$id"]] \
+                if device_data["group$id"] is not None else NeviwebGroup(None)
+            devices.append(NeviwebDeviceInfo(device_data, location, group))
+    
     if len(devices) == 0:
         _LOGGER.error("No neviweb devices found.")
         return False
     
-    data = NeviwebData(client, locations, devices)
+    data = NeviwebData(client, devices)
     hass.data[DOMAIN] = data
 
     global SCAN_INTERVAL
     SCAN_INTERVAL = timedelta(seconds=entry.data.get(CONF_SCAN_INTERVAL, 
         DEFAULT_SCAN_INTEVAL))
     _LOGGER.debug("Setting scan interval to: %s", SCAN_INTERVAL)
+
+    device_registry = await dr.async_get_registry(hass)
+    for device in devices:
+        if device.sku in NEVIWEB_GATEWAY_SKU:
+            device_registry.async_get_or_create(
+                config_entry_id=entry.entry_id,
+                identifiers={
+                    (DOMAIN, device.id),
+                    (DOMAIN, device.identifier)
+                },
+                manufacturer=device.vendor,
+                name=device.name,
+                model=device.sku,
+                sw_version=device.software_version,
+                suggested_area=device.group.name
+            )
 
     for platform in NEVIWEB_PLATFORMS:
         hass.async_create_task(
@@ -70,11 +94,10 @@ async def async_setup_entry(hass, entry):
 
 class NeviwebData:
 
-    def __init__(self, client, locations, devices):
+    def __init__(self, client, devices):
         """Init the neviweb data object."""
         # from pyneviweb import NeviwebClient
         self.neviweb_client = client
-        self.locations = locations
         self.devices = devices
 
 
@@ -90,21 +113,27 @@ class PyNeviwebError(Exception):
     pass
 
 class NeviwebLocation(object):
-    def __init__(self, location_data, groups_data):
+    def __init__(self, location_data):
         self.id = location_data.get("id")
         self.name = location_data.get("name")
         self.mode = location_data.get("mode")
-        self.groups = groups_data
 
 class NeviwebGroup(object):
     def __init__(self, group_data):
-        self.id = group_data.get("id")
-        self.name = group_data.get("name")
+        self.id = ""
+        self.name = ""
+        if group_data is not None:
+            self.id = group_data.get("id")
+            self.name = group_data.get("name")
 
 class NeviwebDeviceInfo(object):
-    def __init__(self, device_info: dict):
+    def __init__(self, 
+        device_info: dict, 
+        location: NeviwebLocation, 
+        group: NeviwebGroup):
         self.id = device_info.get("id")
         self.identifier = device_info.get("identifier")
+        self.parent_id = device_info.get("parentDevice$id")
         self.name = device_info.get("name")
         self.vendor = device_info.get("vendor")
         self.sku = device_info.get("sku")
@@ -112,6 +141,12 @@ class NeviwebDeviceInfo(object):
             device_info["signature"]["softVersion"]["major"],
             device_info["signature"]["softVersion"]["middle"],
             device_info["signature"]["softVersion"]["minor"])
+        self.type = device_info["signature"]["type"] if "type" in \
+            device_info["signature"] else ""
+        self.location = location
+        self.group = group
+        self.formatted_name = '{} {} {}'.format(DOMAIN, self.location.name,
+                self.name)
 
 class NeviwebClient(object):
 
@@ -138,11 +173,9 @@ class NeviwebClient(object):
         response = await self._async_http_request(HTTP_GET, url)
         _LOGGER.debug("Found %s location(s): %s", len(response), response)
         
-        locations = {}
+        locations = []
         for location_data in response:
-            groups = await self.async_get_location_groups(location_data["id"])
-            locations[location_data["id"]] = NeviwebLocation(location_data,
-                groups)
+            locations.append(NeviwebLocation(location_data))
 
         return locations
 
@@ -175,7 +208,6 @@ class NeviwebClient(object):
         groups = {}
         for group_data in response:
             groups[group_data["id"]] = NeviwebGroup(group_data)
-        _LOGGER.debug("formatted groups = %s", groups)
         
         return groups
 
