@@ -1,8 +1,10 @@
 {
   "domain": "neviweb",
-  "name": "Sinope Neviweb",
+  "name": "neviweb (by sinopé)",
+  "version": "1.2.1",
   "documentation": "https://github.com/claudegel/sinope-1",
   "dependencies": [],
   "codeowners": ["@claudegel"],
-  "requirements": []
+  "requirements": ["ratelimit==2.2.1"],
+  "config_flow": true
 }

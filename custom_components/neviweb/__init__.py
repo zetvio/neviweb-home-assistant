@@ -1,17 +1,13 @@
 import logging
-import requests
-import json
 from datetime import timedelta
+from ratelimit import limits, sleep_and_retry
 
-import voluptuous as vol
-
-import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers import discovery
-from homeassistant.const import (CONF_USERNAME, CONF_EMAIL, CONF_PASSWORD,
-    CONF_SCAN_INTERVAL)
-from homeassistant.util import Throttle
-from .const import (DOMAIN, CONF_NETWORK, CONF_NETWORK2, ATTR_INTENSITY, ATTR_POWER_MODE,
-    ATTR_SETPOINT_MODE, ATTR_ROOM_SETPOINT, ATTR_SIGNATURE)
+from homeassistant.const import (CONF_EMAIL, CONF_PASSWORD, CONF_SCAN_INTERVAL)
+from homeassistant.helpers import device_registry as dr
+from .const import (DOMAIN, ATTR_INTENSITY, ATTR_POWER_MODE, 
+    ATTR_OCCUPANCY_MODE, ATTR_SETPOINT_MODE, ATTR_ROOM_SETPOINT, 
+    ATTR_SIGNATURE, NEVIWEB_PLATFORMS, DEFAULT_SCAN_INTEVAL,
+    NEVIWEB_GATEWAY_SKU)
 
 #REQUIREMENTS = ['PY_Sinope==0.1.5']
 VERSION = '1.2.5'
@@ -19,52 +15,91 @@ VERSION = '1.2.5'
 
 _LOGGER = logging.getLogger(__name__)
 
-SCAN_INTERVAL = timedelta(seconds=540)
+API_URL = "https://neviweb.com/api"
+LOGIN_URL = "{}/login".format(API_URL)
+LOCATIONS_URL = "{}/locations".format(API_URL)
+GATEWAY_DEVICE_URL = "{}/devices?location$id=".format(API_URL)
+DEVICE_DATA_URL = "{}/device/".format(API_URL)
+HTTP_GET = "GET"
+HTTP_POST = "POST"
+HTTP_PUT = "PUT"
+RATELIMIT_PER_SECOND = 10
 
-REQUESTS_TIMEOUT = 30
-HOST = "https://neviweb.com"
-LOGIN_URL = "{}/api/login".format(HOST)
-LOCATIONS_URL = "{}/api/locations".format(HOST)
-GATEWAY_DEVICE_URL = "{}/api/devices?location$id=".format(HOST)
-DEVICE_DATA_URL = "{}/api/device/".format(HOST)
-
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        vol.Required(CONF_USERNAME): cv.string,
-        vol.Required(CONF_PASSWORD): cv.string,
-        vol.Optional(CONF_NETWORK): cv.string,
-        vol.Optional(CONF_NETWORK2): cv.string,
-        vol.Optional(CONF_SCAN_INTERVAL, default=SCAN_INTERVAL):
-            cv.time_period
-    })
-}, extra=vol.ALLOW_EXTRA)
-
-def setup(hass, hass_config):
+async def async_setup(hass, hass_config):
     """Set up neviweb."""
-    data = NeviwebData(hass_config[DOMAIN])
+    _LOGGER.debug("async_setup init.py")
+    config = hass_config.get(DOMAIN, {})
+    if config:
+        _LOGGER.error("Neviweb must now be setup via Configuration / \
+        Integrations menu. Please remove your existing yaml config and \
+        restart Home Assistant.")
+        return False
+    return True
+
+async def async_setup_entry(hass, entry):
+    """Set up neviweb via a config entry."""
+    _LOGGER.debug("async_setup_entry init.py")
+    email = entry.data[CONF_EMAIL]
+    password = entry.data[CONF_PASSWORD]
+
+    session = hass.helpers.aiohttp_client.async_get_clientsession()
+    client = NeviwebClient(session, email, password)
+    await client.async_login()
+
+    locations = await client.async_get_locations()
+    devices = []
+    for location in locations:
+        raw_devices = await client.async_get_location_devices(location.id)
+        groups = await client.async_get_location_groups(location.id)
+        for device_data in raw_devices:
+            group = groups[device_data["group$id"]] \
+                if device_data["group$id"] is not None else NeviwebGroup(None)
+            devices.append(NeviwebDeviceInfo(device_data, location, group))
+    
+    if len(devices) == 0:
+        _LOGGER.error("No neviweb devices found.")
+        return False
+    
+    data = NeviwebData(client, devices)
     hass.data[DOMAIN] = data
 
-    global SCAN_INTERVAL 
-    SCAN_INTERVAL = hass_config[DOMAIN].get(CONF_SCAN_INTERVAL)
+    global SCAN_INTERVAL
+    SCAN_INTERVAL = timedelta(seconds=entry.data.get(CONF_SCAN_INTERVAL, 
+        DEFAULT_SCAN_INTEVAL))
     _LOGGER.debug("Setting scan interval to: %s", SCAN_INTERVAL)
 
-    discovery.load_platform(hass, 'climate', DOMAIN, {}, hass_config)
-    discovery.load_platform(hass, 'light', DOMAIN, {}, hass_config)
-    discovery.load_platform(hass, 'switch', DOMAIN, {}, hass_config)
+    device_registry = await dr.async_get_registry(hass)
+    for device in devices:
+        if device.sku in NEVIWEB_GATEWAY_SKU:
+            device_registry.async_get_or_create(
+                config_entry_id=entry.entry_id,
+                identifiers={
+                    (DOMAIN, device.id),
+                    (DOMAIN, device.identifier)
+                },
+                manufacturer=device.vendor,
+                name=device.name,
+                model=device.sku,
+                sw_version=device.software_version,
+                suggested_area=device.group.name
+            )
+
+    for platform in NEVIWEB_PLATFORMS:
+        hass.async_create_task(
+            hass.config_entries.async_forward_entry_setup(entry, platform)
+        )
 
     return True
 
-class NeviwebData:
-    """Get the latest data and update the states."""
 
-    def __init__(self, config):
+class NeviwebData:
+
+    def __init__(self, client, devices):
         """Init the neviweb data object."""
         # from pyneviweb import NeviwebClient
-        username = config.get(CONF_USERNAME)
-        password = config.get(CONF_PASSWORD)
-        network = config.get(CONF_NETWORK)
-        network2 = config.get(CONF_NETWORK2)
-        self.neviweb_client = NeviwebClient(username, password, network, network2)
+        self.neviweb_client = client
+        self.devices = devices
+
 
 # According to HA: 
 # https://developers.home-assistant.io/docs/en/creating_component_code_review.html
@@ -77,239 +112,188 @@ class NeviwebData:
 class PyNeviwebError(Exception):
     pass
 
+class NeviwebLocation(object):
+    def __init__(self, location_data):
+        self.id = location_data.get("id")
+        self.name = location_data.get("name")
+        self.mode = location_data.get("mode")
+
+class NeviwebGroup(object):
+    def __init__(self, group_data):
+        self.id = ""
+        self.name = ""
+        if group_data is not None:
+            self.id = group_data.get("id")
+            self.name = group_data.get("name")
+
+class NeviwebDeviceInfo(object):
+    def __init__(self, 
+        device_info: dict, 
+        location: NeviwebLocation, 
+        group: NeviwebGroup):
+        self.id = device_info.get("id")
+        self.identifier = device_info.get("identifier")
+        self.parent_id = device_info.get("parentDevice$id")
+        self.name = device_info.get("name")
+        self.vendor = device_info.get("vendor")
+        self.sku = device_info.get("sku")
+        self.software_version = "{}.{}.{}".format(
+            device_info["signature"]["softVersion"]["major"],
+            device_info["signature"]["softVersion"]["middle"],
+            device_info["signature"]["softVersion"]["minor"])
+        self.type = device_info["signature"]["type"] if "type" in \
+            device_info["signature"] else ""
+        self.location = location
+        self.group = group
+        self.formatted_name = '{} {} {}'.format(DOMAIN, self.location.name,
+                self.name)
+
 class NeviwebClient(object):
 
-    def __init__(self, email, password, network, network2, timeout=REQUESTS_TIMEOUT):
+    def __init__(self, session, email, password):
         """Initialize the client object."""
+        self._session = session
         self._email = email
         self._password = password
-        self._network_name = network
-        self._network_name2 = network2
-        self._gateway_id = None
-        self._gateway_id2 = None
-        self.gateway_data = {}
-        self.gateway_data2 = {}
-        self._headers = None
-        self._cookies = None
-        self._timeout = timeout
-        self.user = None
+        self._headers = {}
 
-        self.__post_login_page()
-        self.__get_network()
-        self.__get_gateway_data()
+    async def async_login(self):
+        url = API_URL + "/login"
+        json = {
+            "username": self._email, 
+            "password": self._password, 
+            "interface": "neviweb", 
+            "stayConnected": 1
+        }
+        response = await self._async_http_request(HTTP_POST, url, json=json)
+        self._headers["Session-Id"] = response["session"]
 
-    def update(self):
-        self.__get_gateway_data()
+    async def async_get_locations(self):
+        url = API_URL + "/locations"
+        response = await self._async_http_request(HTTP_GET, url)
+        _LOGGER.debug("Found %s location(s): %s", len(response), response)
+        
+        locations = []
+        for location_data in response:
+            locations.append(NeviwebLocation(location_data))
 
-    def __post_login_page(self):
-        """Login to Neviweb."""
-        data = {"username": self._email, "password": self._password, 
-            "interface": "neviweb", "stayConnected": 1}
-        try:
-            raw_res = requests.post(LOGIN_URL, data=data, 
-                cookies=self._cookies, allow_redirects=False, 
-                timeout=self._timeout)
-        except OSError:
-            raise PyNeviwebError("Cannot submit login form")
-        if raw_res.status_code != 200:
-            raise PyNeviwebError("Cannot log in")
+        return locations
 
-        # Update session
-        self._cookies = raw_res.cookies
-        data = raw_res.json()
-        _LOGGER.debug("Login response: %s", data)
-        if "error" in data:
-            if data["error"]["code"] == "ACCSESSEXC":
-                _LOGGER.error("Too many active sessions. Close all Neviweb " +
-                "sessions you have opened on other platform (mobile, browser" +
-                ", ...), wait a few minutes, then reboot Home Assistant.")
-            return False
-        else:
-            self.user = data["user"]
-            self._headers = {"Session-Id": data["session"]}
-            _LOGGER.debug("Successfully logged in")
-            return True
+    async def async_get_location_devices(self, location_id):
+        url = API_URL + "/devices"
+        params = {
+            "location$id": location_id
+        }
+        devices = await self._async_http_request(HTTP_GET, url, params=params)
 
-    def __get_network(self):
-        """Get gateway id associated to the desired network."""
-        # Http request
-        try:
-            raw_res = requests.get(LOCATIONS_URL, headers=self._headers, 
-                cookies=self._cookies, timeout=self._timeout)
-            networks = raw_res.json()
-            _LOGGER.debug("Number of networks found: %s", len(networks))
-            if self._network_name == None and self._network_name2 == None: # Use 1st network found and second if found
-                self._gateway_id = networks[0]["id"]
-                self._network_name = networks[0]["name"]
-                if len(networks) > 1:
-                    self._gateway_id2 = networks[1]["id"]
-                    self._network_name2 = networks[1]["name"]
-                
-            else:
-                for network in networks:
-                    if network["name"] == self._network_name:
-                        self._gateway_id = network["id"]
-                        _LOGGER.debug("Selecting %s network among: %s",
-                            self._network_name, networks)
-                        continue
-                    elif (network["name"] == self._network_name.capitalize()) or (network["name"] == self._network_name[0].lower()+self._network_name[1:]):
-                        self._gateway_id = network["id"]
-                        _LOGGER.debug("Please check first letter of your network name, In capital letter or not? Selecting %s network among: %s",
-                            self._network_name, networks)
-                        continue
-                    else:
-                        _LOGGER.debug("Your network name %s do not correspond to discovered network %s, skipping this one...",
-                            self._network_name, network["name"])
-                    if self._network_name2 is not None:
-                        if network["name"] == self._network_name2:
-                            self._gateway_id2 = network["id"]
-                            _LOGGER.debug("Selecting %s network among: %s",
-                                self._network_name2, networks)
-                            continue
-                        elif (network["name"] == self._network_name2.capitalize()) or (network["name"] == self._network_name2[0].lower()+self._network_name2[1:]):
-                            self._gateway_id = network["id"]
-                            _LOGGER.debug("Please check first letter of your network2 name, In capital letter or not? Selecting %s network among: %s",
-                                self._network_name2, networks)
-                            continue
-                        else:
-                            _LOGGER.debug("Your network name %s do not correspond to discovered network %s, skipping this one...",
-                                self._network_name2, network["name"])
-             
-        except OSError:
-            raise PyNeviwebError("Cannot get networks...")
-        # Update cookies
-        self._cookies.update(raw_res.cookies)
-        # Prepare data
-        self.gateway_data = raw_res.json()
+        for device in devices:
+            attributes = await self.async_get_device_attributes(device["id"], 
+                [ATTR_SIGNATURE])
+            if ATTR_SIGNATURE in attributes:
+                device[ATTR_SIGNATURE] = attributes[ATTR_SIGNATURE]
+        _LOGGER.debug("Found %s device(s) in location %s: %s", len(devices),
+            location_id, devices)
 
-    def __get_gateway_data(self):
-        """Get gateway data."""
-        # Http request
-        try:
-            raw_res = requests.get(GATEWAY_DEVICE_URL + str(self._gateway_id),
-                headers=self._headers, cookies=self._cookies, 
-                timeout=self._timeout)
-            _LOGGER.debug("Received gateway data: %s", raw_res.json())
-        except OSError:
-            raise PyNeviwebError("Cannot get gateway data")
-        # Update cookies
-        self._cookies.update(raw_res.cookies)
-        # Prepare data
-        self.gateway_data = raw_res.json()
-        _LOGGER.debug("Gateway_data : %s", self.gateway_data)
-        if self._gateway_id2 is not None:
-            try:
-                raw_res2 = requests.get(GATEWAY_DEVICE_URL + str(self._gateway_id2),
-                    headers=self._headers, cookies=self._cookies, 
-                    timeout=self._timeout)
-                _LOGGER.debug("Received gateway data 2: %s", raw_res2.json())
-            except OSError:
-                raise PyNeviwebError("Cannot get gateway data 2")
-            # Prepare data
-            self.gateway_data2 = raw_res2.json()
-            _LOGGER.debug("Gateway_data2 : %s", self.gateway_data2)
-        for device in self.gateway_data:
-            data = self.get_device_attributes(device["id"], [ATTR_SIGNATURE])
-            if ATTR_SIGNATURE in data:
-                device[ATTR_SIGNATURE] = data[ATTR_SIGNATURE]
-            # _LOGGER.debug("Received signature data: %s", data)
-        if self._gateway_id2 is not None:          
-            for device in self.gateway_data2:
-                data2 = self.get_device_attributes(device["id"], [ATTR_SIGNATURE])
-                if ATTR_SIGNATURE in data2:
-                    device[ATTR_SIGNATURE] = data2[ATTR_SIGNATURE]
-                # _LOGGER.debug("Received signature data: %s", data)
-        # _LOGGER.debug("Updated gateway data: %s", self.gateway_data)
+        return devices
 
-    def get_device_attributes(self, device_id, attributes):
-        """Get device attributes."""
-        # Prepare return
-        data = {}
-        # Http request
-        try:
-            raw_res = requests.get(DEVICE_DATA_URL + str(device_id) +
-                "/attribute?attributes=" + ",".join(attributes), 
-                headers=self._headers, cookies=self._cookies,
-                timeout=self._timeout)
-        except requests.exceptions.ReadTimeout:
-            return {"errorCode": "ReadTimeout"}
-        except Exception as e:
-            raise PyNeviwebError("Cannot get device attributes", e)
-        # Update cookies
-        self._cookies.update(raw_res.cookies)
-        # Prepare data
-        data = raw_res.json()
-        if "error" in data:
-            if data["error"]["code"] == "USRSESSEXP":
-                _LOGGER.error("Session expired. Set a scan_interval less" +
-                "than 10 minutes, otherwise the session will end.")
-                raise PyNeviwebError("Session expired")
-        return data
+    async def async_get_location_groups(self, location_id):
+        url = API_URL + "/groups"
+        params = {
+            "location$id": location_id
+        }
+        response = await self._async_http_request(HTTP_GET, url, params=params)
+        _LOGGER.debug("Found %s group(s) in location %s: %s", len(response),
+            location_id, response)
 
-    def get_device_daily_stats(self, device_id):
-        """Get device power consumption (in Wh) for the last 30 days."""
-        # Prepare return
-        data = {}
-        # Http request
-        try:
-            raw_res = requests.get(DEVICE_DATA_URL + str(device_id) +
-                    "/statistics/30days", headers=self._headers,
-                    cookies=self._cookies, timeout=self._timeout)
-            _LOGGER.debug("Devices daily stat for %s: %s", device_id, raw_res.json())
-        except OSError:
-            raise PyNeviwebError("Cannot get device daily stats")
-        # Update cookies
-        self._cookies.update(raw_res.cookies)
-        # Prepare data
-        data = raw_res.json()
-        if "values" in data:
-            return data["values"]
+        groups = {}
+        for group_data in response:
+            groups[group_data["id"]] = NeviwebGroup(group_data)
+        
+        return groups
+
+    async def async_get_device_attributes(self, device_id, attributes):
+        url = API_URL + f"/device/{device_id}/attribute"
+        params = {
+            "attributes": ",".join(attributes)
+        }
+        return await self._async_http_request(HTTP_GET, url, params=params) 
+
+    async def async_get_device_daily_stats(self, device_id):
+        url = API_URL + f"/device/{device_id}/statistics/30days"
+        response = await self._async_http_request(HTTP_GET, url)
+        _LOGGER.debug("Daily stats for %s: %s", device_id, response)
+        if "values" in response:
+            return response["values"]
         return []
 
-    def get_device_hourly_stats(self, device_id):
-        """Get device power consumption (in Wh) for the last 24 hours."""
-        # Prepare return
-        data = {}
-        # Http request
-        try:
-            raw_res = requests.get(DEVICE_DATA_URL + str(device_id) +
-                "/statistics/24hours", headers=self._headers,
-                cookies=self._cookies, timeout=self._timeout)
-        except OSError:
-            raise PyNeviwebError("Cannot get device hourly stats")
-        # Update cookies
-        self._cookies.update(raw_res.cookies)
-        # Prepare data
-        data = raw_res.json()
-        if "values" in data:
-            return data["values"]
+    async def async_get_device_hourly_stats(self, device_id):
+        url = API_URL + f"/device/{device_id}/statistics/24hours"
+        response = await self._async_http_request(HTTP_GET, url)
+        _LOGGER.debug("Hourly stats for %s: %s", device_id, response)
+        if "values" in response:
+            return response["values"]
         return []
 
-    def set_brightness(self, device_id, brightness):
+    async def async_set_brightness(self, device_id, brightness):
         """Set device brightness."""
         data = {ATTR_INTENSITY: brightness}
-        self.set_device_attributes(device_id, data)
+        await self.async_set_device_attributes(device_id, data)
 
-    def set_mode(self, device_id, mode):
+    async def async_set_operation_mode(self, device_id, mode):
         """Set device operation mode."""
         data = {ATTR_POWER_MODE: mode}
-        self.set_device_attributes(device_id, data)
+        await self.async_set_device_attributes(device_id, data)
 
-    def set_setpoint_mode(self, device_id, mode):
+    async def async_set_occupancy_mode(self, device_id, mode):
+        """Set device occupancy mode."""
+        data = {ATTR_OCCUPANCY_MODE: mode}
+        await self.async_set_device_attributes(device_id, data)
+
+    async def async_set_setpoint_mode(self, device_id, mode):
         """Set thermostat operation mode."""
         data = {ATTR_SETPOINT_MODE: mode}
-        self.set_device_attributes(device_id, data)
+        await self.async_set_device_attributes(device_id, data)
 
-    def set_temperature(self, device_id, temperature):
+    async def async_set_temperature(self, device_id, temperature):
         """Set device temperature."""
         data = {ATTR_ROOM_SETPOINT: temperature}
-        self.set_device_attributes(device_id, data)
+        await self.async_set_device_attributes(device_id, data)
 
-    def set_device_attributes(self, device_id, data):
-        try:
-            requests.put(DEVICE_DATA_URL + str(device_id) + "/attribute",
-                data=data, headers=self._headers, cookies=self._cookies,
-                timeout=self._timeout)
-        except OSError:
-            raise PyNeviwebError("Cannot set device %s attributes: %s", 
-                device_id, data)
+    async def async_set_device_attributes(self, device_id, data):
+        url = API_URL + f"/device/{device_id}/attribute"
+        _LOGGER.debug("Setting device %s attributes: %s", device_id, data)
+        return await self._async_http_request(HTTP_PUT, url, data=data)
+
+    @sleep_and_retry
+    @limits(calls=RATELIMIT_PER_SECOND, period=1)
+    async def _async_http_request(self, method, url, params=None, json=None,
+        data=None):
+        # _LOGGER.debug("%s %s params=%s, json=%s, data=%s", method, url, 
+        #     params, json, data)
+        async with self._session.request(
+            method, url, headers=self._headers, params=params, json=json,
+            data=data) as resp:
+            if resp.status != 200:
+                _LOGGER.error("Bad response status %s", resp)
+                raise PyNeviwebError("Bad response status")
+            ret = await resp.json()
+            # _LOGGER.debug("response json: %s", ret)
+            self._handle_errors(ret)
+            return ret
+
+    def _handle_errors(self, response):
+        if "error" in response:
+            error_code = response["error"]["code"]
+            if error_code == "USRSESSEXP":
+                _LOGGER.error("Session expired. Set a scan_interval less" +
+                "than 10 minutes, otherwise the session will end. %s",
+                response)
+                raise PyNeviwebError("Session expired")
+            if error_code == "ACCSESSEXC":
+                _LOGGER.error("Too many active sessions. Close all Neviweb " +
+                "sessions you have opened on other platform (mobile, browser" +
+                ", ...), wait a few minutes, then reboot Home Assistant. %s",
+                response)
+                raise PyNeviwebError("Too many sessions")
+            # raise PyNeviwebError(f"Unknown neviweb error: {error_code}")
+            

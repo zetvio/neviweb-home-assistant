@@ -1,0 +1,39 @@
+set_light_operation_mode:
+  description: Set device operation mode in neviweb for light.* entities.
+  fields:
+    entity_id:
+      description: Name(s) of entities that will have the operation mode set.
+      example: "light.neviweb_light_kitchen"
+    operation_mode:
+      description: Name of the operation mode to set. (auto, manual)
+      example: "auto"
+
+set_light_occupancy_mode:
+  description: Set device occupancy mode in neviweb for light.* entities.
+  fields:
+    entity_id:
+      description: Name(s) of entities that will have the occupancy mode set.
+      example: "light.neviweb_dimmer_living_room"
+    occupancy_mode:
+      description: Name of the occupancy mode to set. (home, away)
+      example: "away"
+
+set_switch_operation_mode:
+  description: Set device operation mode in neviweb for switch.* entities.
+  fields:
+    entity_id:
+      description: Name(s) of entities that will have the operation mode set.
+      example: "switch.neviweb_switch_pool"
+    operation_mode:
+      description: Name of the operation mode to set. (auto, manual)
+      example: "auto"
+
+set_switch_occupancy_mode:
+  description: Set device occupancy mode in neviweb for switch.* entities.
+  fields:
+    entity_id:
+      description: Name(s) of entities that will have the occupancy mode set.
+      example: "switch.neviweb_switch_water_heater"
+    occupancy_mode:
+      description: Name of the occupancy mode to set. (home, away)
+      example: "away"

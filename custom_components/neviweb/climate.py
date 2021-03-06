@@ -15,12 +15,12 @@ import voluptuous as vol
 import time
 
 import custom_components.neviweb as neviweb
-from . import (SCAN_INTERVAL)
+from . import (NeviwebClient, NeviwebDeviceInfo, SCAN_INTERVAL)
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import (HVAC_MODE_HEAT, 
     HVAC_MODE_OFF, HVAC_MODE_AUTO, SUPPORT_TARGET_TEMPERATURE, 
     SUPPORT_PRESET_MODE, PRESET_AWAY, PRESET_NONE, CURRENT_HVAC_HEAT, 
-    CURRENT_HVAC_IDLE, CURRENT_HVAC_OFF)
+    CURRENT_HVAC_IDLE, CURRENT_HVAC_OFF, ATTR_HVAC_MODE)
 from homeassistant.const import (TEMP_CELSIUS, TEMP_FAHRENHEIT, 
     ATTR_TEMPERATURE)
 from datetime import timedelta
@@ -35,6 +35,7 @@ _LOGGER = logging.getLogger(__name__)
 SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE | SUPPORT_PRESET_MODE)
 
 DEFAULT_NAME = "neviweb climate"
+PARALLEL_UPDATES = 1
 
 UPDATE_ATTRIBUTES = [ATTR_SETPOINT_MODE, ATTR_RSSI, ATTR_ROOM_SETPOINT,
     ATTR_OUTPUT_PERCENT_DISPLAY, ATTR_ROOM_TEMPERATURE, ATTR_ROOM_SETPOINT_MIN,
@@ -53,34 +54,24 @@ IMPLEMENTED_LOW_VOLTAGE = [21]
 IMPLEMENTED_THERMOSTAT = [10, 20]
 IMPLEMENTED_DEVICE_TYPES = IMPLEMENTED_THERMOSTAT + IMPLEMENTED_LOW_VOLTAGE
 
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    """Set up the neviweb thermostats."""
+async def async_setup_entry(hass, config_entry, async_add_entities):
+    """Set up neviweb thermostats."""
+    _LOGGER.debug("Entering climate setup_entry")
     data = hass.data[DOMAIN]
-    
-    devices = []
-    for device_info in data.neviweb_client.gateway_data:
-        if "signature" in device_info and \
-            "type" in device_info["signature"] and \
-            device_info["signature"]["type"] in IMPLEMENTED_DEVICE_TYPES:
-            device_name = "{} {}".format(DEFAULT_NAME, device_info["name"])
-            devices.append(NeviwebThermostat(data, device_info, device_name))
-    for device_info in data.neviweb_client.gateway_data2:
-        if "signature" in device_info and \
-            "type" in device_info["signature"] and \
-            device_info["signature"]["type"] in IMPLEMENTED_DEVICE_TYPES:
-            device_name = "{} {}".format(DEFAULT_NAME, device_info["name"])
-            devices.append(NeviwebThermostat(data, device_info, device_name))
+    entities = []
+    for device in data.devices:
+        if device.type in IMPLEMENTED_DEVICE_TYPES:
+            entities.append(NeviwebThermostat(data.neviweb_client, device))
             
-    async_add_entities(devices, True)
+    async_add_entities(entities, True)
 
 class NeviwebThermostat(ClimateEntity):
     """Implementation of a Neviweb thermostat."""
 
-    def __init__(self, data, device_info, name):
+    def __init__(self, client: NeviwebClient, device: NeviwebDeviceInfo):
         """Initialize."""
-        self._name = name
-        self._client = data.neviweb_client
-        self._id = device_info["id"]
+        self._device = device
+        self._client = client
         self._wattage = 0
         #self._wattage_override = device_info["wattageOverride"]
         self._min_temp = 0
@@ -91,23 +82,22 @@ class NeviwebThermostat(ClimateEntity):
         #self._alarm = None
         self._operation_mode = None
         self._heat_level = 0
-        self._is_low_voltage = device_info["signature"]["type"] in \
-            IMPLEMENTED_LOW_VOLTAGE
-        _LOGGER.debug("Setting up %s: %s", self._name, device_info)
+        self._is_low_voltage = device.type in IMPLEMENTED_LOW_VOLTAGE
+        _LOGGER.debug("Setting up climate %s", self._device.name)
 
-    def update(self):
+    async def async_update(self):
         """Get the latest data from Neviweb and update the state."""
         if not self._is_low_voltage:
             WATT_ATTRIBUTE = [ATTR_WATTAGE]
         else:
             WATT_ATTRIBUTE = []
         start = time.time()
-        device_data = self._client.get_device_attributes(self._id,
-            UPDATE_ATTRIBUTES + WATT_ATTRIBUTE)
+        device_data = await self._client.async_get_device_attributes(
+            self.unique_id, UPDATE_ATTRIBUTES + WATT_ATTRIBUTE)
         end = time.time()
         elapsed = round(end - start, 3)
         _LOGGER.debug("Updating %s (%s sec): %s",
-            self._name, elapsed, device_data)
+            self._device.name, elapsed, device_data)
 
         if "error" not in device_data:
             if "errorCode" not in device_data:
@@ -125,31 +115,46 @@ class NeviwebThermostat(ClimateEntity):
                 return
             else:
                 if device_data["errorCode"] == "ReadTimeout":
-                    _LOGGER.warning("Error in reading device %s: (%s), too slow to respond or busy.", self._name, device_data)
+                    _LOGGER.warning("Error in reading device %s: (%s), too slow to respond or busy.", self._device.name, device_data)
                 else:
-                    _LOGGER.warning("Unknown errorCode, device: %s, error: %s", self._name, device_data)
+                    _LOGGER.warning("Unknown errorCode, device: %s, error: %s", self._device.name, device_data)
             return
         else:
             if device_data["error"]["code"] == "DVCCOMMTO":  
-                _LOGGER.warning("Cannot update %s: %s. Device is busy or does not respond quickly enough.", self._name, device_data)
+                _LOGGER.warning("Cannot update %s: %s. Device is busy or does not respond quickly enough.", self._device.name, device_data)
             elif device_data["error"]["code"] == "SVCINVREQ":
-                _LOGGER.warning("Invalid or malformed request to Neviweb, %s:",  device_data)
+                _LOGGER.warning("Invalid or malformed request to Neviweb, %s:", device_data)
             elif device_data["error"]["code"] == "DVCUNVLB":
-                _LOGGER.warning("Device %s unavailable, Neviweb maintnance update, %s:", self._name, device_data)
+                _LOGGER.warning("Device %s unavailable, Neviweb maintnance update, %s:", self._device.name, device_data)
             elif device_data["error"]["code"] == "SVCERR":
-                _LOGGER.warning("Device %s statistics unavailables, %s:", self._name, device_data)
+                _LOGGER.warning("Device %s statistics unavailables, %s:", self._device.name, device_data)
             else:
-                _LOGGER.warning("Unknown error, device: %s, error: %s", self._name, device_data)
+                _LOGGER.warning("Unknown error, device: %s, error: %s", self._device.name, device_data)
 
     @property
     def unique_id(self):
         """Return unique ID based on Neviweb device ID."""
-        return self._id
+        return self._device.id
 
     @property
     def name(self):
         """Return the name of the thermostat."""
-        return self._name
+        return self._device.formatted_name
+
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {
+                (DOMAIN, self.unique_id),
+                (DOMAIN, self._device.identifier)
+            },
+            "name": self._device.name,
+            "manufacturer": self._device.vendor,
+            "model": self._device.sku,
+            "sw_version": self._device.software_version,
+            "suggested_area": self._device.group.name,
+            "via_device": (DOMAIN, self._device.parent_id)
+        }
 
     @property
     def device_state_attributes(self):
@@ -158,8 +163,7 @@ class NeviwebThermostat(ClimateEntity):
         if not self._is_low_voltage:
             data = {'wattage': self._wattage}
         data.update ({'heat_level': self._heat_level,
-                      'rssi': self._rssi,
-                      'id': self._id})
+                      'rssi': self._rssi})
         return data
 
     @property
@@ -232,37 +236,40 @@ class NeviwebThermostat(ClimateEntity):
         else:
             return CURRENT_HVAC_HEAT
 
-    def set_temperature(self, **kwargs):
+    async def async_set_temperature(self, **kwargs):
         """Set new target temperature."""
+        hvac_mode = kwargs.get(ATTR_HVAC_MODE)
         temperature = kwargs.get(ATTR_TEMPERATURE)
-        if temperature is None:
-            return
-        self._client.set_temperature(self._id, temperature)
-        self._target_temp = temperature
+        
+        if hvac_mode is not None:
+            await self.async_set_hvac_mode(hvac_mode)
+        if temperature is not None:
+            await self._client.async_set_temperature(self.unique_id, temperature)
+        
 
-    def set_hvac_mode(self, hvac_mode):
+    async def async_set_hvac_mode(self, hvac_mode):
         """Set new hvac mode."""
         if hvac_mode == HVAC_MODE_OFF:
-            self._client.set_setpoint_mode(self._id, MODE_OFF)
+            await self._client.async_set_setpoint_mode(self.unique_id, MODE_OFF)
         elif hvac_mode == HVAC_MODE_HEAT:
-            self._client.set_setpoint_mode(self._id, MODE_MANUAL)
+            await self._client.async_set_setpoint_mode(self.unique_id, MODE_MANUAL)
         elif hvac_mode == HVAC_MODE_AUTO:
-            self._client.set_setpoint_mode(self._id, MODE_AUTO)
+            await self._client.async_set_setpoint_mode(self.unique_id, MODE_AUTO)
         else:
             _LOGGER.error("Unable to set hvac mode: %s.", hvac_mode)
 
-    def set_preset_mode(self, preset_mode):
+    async def async_set_preset_mode(self, preset_mode):
         """Activate a preset."""
         if preset_mode == self.preset_mode:
             return
 
         if preset_mode == PRESET_AWAY:
-            self._client.set_setpoint_mode(self._id, MODE_AWAY)
+            await self._client.async_set_setpoint_mode(self.unique_id, MODE_AWAY)
         elif preset_mode == PRESET_BYPASS:
             if self._operation_mode == MODE_AUTO:
-                self._client.set_setpoint_mode(self._id, MODE_AUTO_BYPASS)
+                await self._client.async_set_setpoint_mode(self.unique_id, MODE_AUTO_BYPASS)
         elif preset_mode == PRESET_NONE:
             # Re-apply current hvac_mode without any preset
-            self.set_hvac_mode(self.hvac_mode)
+            await self.async_set_hvac_mode(self.hvac_mode)
         else:
             _LOGGER.error("Unable to set preset mode: %s.", preset_mode)
