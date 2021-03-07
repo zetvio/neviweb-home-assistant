@@ -4,9 +4,17 @@ from ratelimit import limits, sleep_and_retry
 
 from homeassistant.const import (CONF_EMAIL, CONF_PASSWORD, CONF_SCAN_INTERVAL)
 from homeassistant.helpers import device_registry as dr
-from .const import (DOMAIN, ATTR_INTENSITY, ATTR_POWER_MODE, 
-    ATTR_OCCUPANCY_MODE, ATTR_SETPOINT_MODE, ATTR_ROOM_SETPOINT, 
-    ATTR_SIGNATURE, NEVIWEB_PLATFORMS, DEFAULT_SCAN_INTEVAL,
+from .const import (
+    DOMAIN, 
+    ATTR_INTENSITY, 
+    ATTR_POWER_MODE, 
+    ATTR_MOTOR_TARGET_POSITION, 
+    ATTR_OCCUPANCY_MODE, 
+    ATTR_SETPOINT_MODE, 
+    ATTR_ROOM_SETPOINT, 
+    ATTR_SIGNATURE, 
+    NEVIWEB_PLATFORMS, 
+    DEFAULT_SCAN_INTEVAL,
     NEVIWEB_GATEWAY_SKU)
 
 #REQUIREMENTS = ['PY_Sinope==0.1.5']
@@ -257,6 +265,11 @@ class NeviwebClient(object):
     async def async_set_temperature(self, device_id, temperature):
         """Set device temperature."""
         data = {ATTR_ROOM_SETPOINT: temperature}
+        await self.async_set_device_attributes(device_id, data)
+
+    async def async_set_motor_position(self, device_id, position):
+        """Set device motor position."""
+        data = {ATTR_MOTOR_TARGET_POSITION: position}
         await self.async_set_device_attributes(device_id, data)
 
     async def async_set_device_attributes(self, device_id, data):

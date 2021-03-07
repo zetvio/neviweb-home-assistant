@@ -24,6 +24,8 @@ ATTR_ROOM_SETPOINT_MAX = "roomSetpointMax"
 ATTR_OCCUPANCY_MODE = "occupancyMode"
 ATTR_SERVICE_OPERATION_MODE = "operation_mode"
 ATTR_SERVICE_OCCUPANCY_MODE = "occupancy_mode"
+ATTR_MOTOR_POSITION = "motorPosition"
+ATTR_MOTOR_TARGET_POSITION = "motorTargetPosition"
 
 MODE_AUTO = "auto"
 MODE_AUTO_BYPASS = "autoBypass"
