@@ -12,6 +12,10 @@ import time
 
 import custom_components.neviweb as neviweb
 from . import (NeviwebClient, NeviwebDeviceInfo, SCAN_INTERVAL)
+from homeassistant.const import (
+    STATE_ON,
+    STATE_OFF
+)
 from homeassistant.components.switch import (
     SwitchEntity,
     DEVICE_CLASS_OUTLET
@@ -24,6 +28,7 @@ from .const import (
     ATTR_MOTOR_POSITION,
     ATTR_MOTOR_TARGET_POSITION,
     ATTR_OCCUPANCY_MODE,
+    ATTR_ONOFF,
     ATTR_POWER_MODE,
     ATTR_RSSI,
     ATTR_WATTAGE,
@@ -40,14 +45,29 @@ _LOGGER = logging.getLogger(__name__)
 
 PARALLEL_UPDATES = 1
 
-UPDATE_ATTRIBUTES = [ATTR_POWER_MODE, ATTR_INTENSITY, ATTR_RSSI,
-    ATTR_WATTAGE, ATTR_WATTAGE_INSTANT, ATTR_OCCUPANCY_MODE]
+UPDATE_ATTRIBUTES_LOAD_CONTROLLER = [
+    ATTR_POWER_MODE, 
+    ATTR_INTENSITY, 
+    ATTR_RSSI, 
+    ATTR_WATTAGE, 
+    ATTR_WATTAGE_INSTANT, 
+    ATTR_OCCUPANCY_MODE
+]
 
-UPDATE_ATTRIBUTES_VALVE = [ATTR_MOTOR_POSITION, ATTR_MOTOR_TARGET_POSITION]
+UPDATE_ATTRIBUTES_VALVE = [
+    ATTR_MOTOR_POSITION, 
+    ATTR_MOTOR_TARGET_POSITION
+]
 # motorPosition,motorTargetPosition,temperatureAlarmStatus,batteryStatus,valveClosureSource,batteryVoltage
 
-IMPLEMENTED_DEVICE_TYPES = [120] #power control device
+UPDATE_ATTRIBUTES_OUTLET = [
+    ATTR_ONOFF,
+    ATTR_WATTAGE_INSTANT
+]
+
+IMPLEMENTED_LOAD_CONTROLLER_TYPES = [120] #power control device
 IMPLEMENTED_VALVE_SKU = ["VA4200WZ", "VA4201WZ"]
+IMPLEMENTED_OUTLET_SKU = ["SP2600ZB", "SP2610ZB"]
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up neviweb switch."""
@@ -55,10 +75,12 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     data = hass.data[DOMAIN]
     entities = []
     for device in data.devices:
-        if device.type in IMPLEMENTED_DEVICE_TYPES:
+        if device.type in IMPLEMENTED_LOAD_CONTROLLER_TYPES:
             entities.append(NeviwebSwitchLoadController(data.neviweb_client, device))
         elif device.sku in IMPLEMENTED_VALVE_SKU:
             entities.append(NeviwebSwitchValve(data.neviweb_client, device))
+        elif device.sku in IMPLEMENTED_OUTLET_SKU:
+            entities.append(NeviwebSwitchOutlet(data.neviweb_client, device))
 
     async_add_entities(entities, True)
 
@@ -138,7 +160,7 @@ class NeviwebSwitchLoadController(NeviwebSwitchBase):
         """Get the latest data from Neviweb and update the state."""
         start = time.time()
         device_data = await self._client.async_get_device_attributes(
-            self.unique_id, UPDATE_ATTRIBUTES)
+            self.unique_id, UPDATE_ATTRIBUTES_LOAD_CONTROLLER)
         device_daily_stats = await self._client.async_get_device_daily_stats(
             self.unique_id)
         end = time.time()
@@ -285,15 +307,70 @@ class NeviwebSwitchValve(NeviwebSwitchBase):
         return {'motor_target_position': self._motor_target_position}
 
 
+class NeviwebSwitchOutlet(NeviwebSwitchBase):
+    """Implementation of a Neviweb outlet switch."""
+    def __init__(self, client: NeviwebClient, device: NeviwebDeviceInfo):
+        """Initialize."""
+        super().__init__(client, device)
+        self._on_off = ""
+        self._wattage_instant = 0
+        _LOGGER.debug("Setting up outlet %s", self._device.name)
 
+    async def async_update(self):
+        """Get the latest data from Neviweb and update the state."""
+        start = time.time()
+        device_data = await self._client.async_get_device_attributes(
+            self.unique_id, UPDATE_ATTRIBUTES_OUTLET)
+        end = time.time()
+        elapsed = round(end - start, 3)
+        _LOGGER.debug("Updating %s (%s sec): %s",
+            self._device.name, elapsed, device_data)
+        if "error" not in device_data:
+            if "errorCode" not in device_data:
+                self._on_off = device_data[ATTR_ONOFF] if \
+                    device_data[ATTR_ONOFF] is not None else ""
+                self._wattage_instant = device_data[ATTR_WATTAGE_INSTANT] if \
+                    device_data[ATTR_WATTAGE_INSTANT] is not None else 0
+                return
+            else:
+                if device_data["errorCode"] == "ReadTimeout":
+                    _LOGGER.warning("Error in reading device %s: (%s), too slow to respond or busy.", self._device.name, device_data)
+                else:
+                    _LOGGER.warning("Unknown errorCode, device: %s, error: %s", self._device.name, device_data)
+            return
+        else:
+            if device_data["error"]["code"] == "DVCCOMMTO":
+                _LOGGER.warning("Cannot update %s: %s. Device is busy or does not respond quickly enough.", self._device.name, device_data)
+            elif device_data["error"]["code"] == "SVCINVREQ":
+                _LOGGER.warning("Invalid or malformed request to Neviweb, %s:",  device_data)
+            elif device_data["error"]["code"] == "DVCACTNSPTD":
+                _LOGGER.warning("Device action not supported, %s:",  device_data)
+            elif device_data["error"]["code"] == "DVCUNVLB":
+                _LOGGER.warning("Device %s unavailable, Neviweb maintnance update, %s:", self._device.name, device_data)
+            elif device_data["error"]["code"] == "SVCERR":
+                _LOGGER.warning("Device %s statistics unavailables, %s:", self._device.name, device_data)
+            else:
+                _LOGGER.warning("Unknown error, device: %s, error: %s", self._device.name, device_data)
 
+    @property
+    def is_on(self):
+        """Return current operation i.e. ON, OFF """
+        return self._on_off == STATE_ON
 
+    async def async_turn_on(self, **kwargs):
+        """Turn the device on."""
+        await self._client.async_set_on_off(self.unique_id, STATE_ON)
 
+    async def async_turn_off(self, **kwargs):
+        """Turn the device off."""
+        await self._client.async_set_on_off(self.unique_id, STATE_OFF)
 
+    @property
+    def current_power_w(self):
+        """Return the current power usage in W."""
+        return self._wattage_instant
 
-
-
-    # @property
-    # def device_class(self):
-    #     """Return the class of this device"""
-    #     return DEVICE_CLASS_OUTLET
+    @property
+    def device_class(self):
+        """Return the class of this device"""
+        return DEVICE_CLASS_OUTLET

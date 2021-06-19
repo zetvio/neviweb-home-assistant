@@ -6,6 +6,7 @@ from homeassistant.const import (CONF_EMAIL, CONF_PASSWORD, CONF_SCAN_INTERVAL)
 from homeassistant.helpers import device_registry as dr
 from .const import (
     DOMAIN, 
+    ATTR_ONOFF,
     ATTR_INTENSITY, 
     ATTR_POWER_MODE, 
     ATTR_MOTOR_TARGET_POSITION, 
@@ -270,6 +271,11 @@ class NeviwebClient(object):
     async def async_set_motor_position(self, device_id, position):
         """Set device motor position."""
         data = {ATTR_MOTOR_TARGET_POSITION: position}
+        await self.async_set_device_attributes(device_id, data)
+
+    async def async_set_on_off(self, device_id, state):
+        """Set device on/off state."""
+        data = {ATTR_ONOFF: state}
         await self.async_set_device_attributes(device_id, data)
 
     async def async_set_device_attributes(self, device_id, data):
