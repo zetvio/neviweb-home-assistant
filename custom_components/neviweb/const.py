@@ -4,6 +4,7 @@ import voluptuous as vol
 
 DOMAIN = "neviweb"
 
+NEVIWEB_URL = "https://neviweb.com"
 NEVIWEB_PLATFORMS = ["climate", "light", "switch"]
 NEVIWEB_GATEWAY_SKU = ["GT125", "GT130"]
 DEFAULT_SCAN_INTEVAL = 540

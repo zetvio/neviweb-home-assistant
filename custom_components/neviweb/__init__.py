@@ -14,6 +14,7 @@ from .const import (
     ATTR_SETPOINT_MODE, 
     ATTR_ROOM_SETPOINT, 
     ATTR_SIGNATURE, 
+    NEVIWEB_URL,
     NEVIWEB_PLATFORMS, 
     DEFAULT_SCAN_INTEVAL,
     NEVIWEB_GATEWAY_SKU)
@@ -156,6 +157,7 @@ class NeviwebDeviceInfo(object):
         self.group = group
         self.formatted_name = '{} {} {}'.format(DOMAIN, self.location.name,
                 self.name)
+        self.configuration_url = f"{NEVIWEB_URL}/locations/{self.location.id}/devices/{self.id}/settings"
 
 class NeviwebClient(object):
 

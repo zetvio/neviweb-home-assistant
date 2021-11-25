@@ -128,7 +128,8 @@ class NeviwebSwitchBase(SwitchEntity):
             "model": self._device.sku,
             "sw_version": self._device.software_version,
             "suggested_area": self._device.group.name,
-            "via_device": (DOMAIN, self._device.parent_id)
+            "via_device": (DOMAIN, self._device.parent_id),
+            "configuration_url": self._device.configuration_url
         }
 
     async def async_set_operation_mode(self, operation_mode):
