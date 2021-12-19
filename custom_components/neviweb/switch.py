@@ -46,16 +46,16 @@ _LOGGER = logging.getLogger(__name__)
 PARALLEL_UPDATES = 1
 
 UPDATE_ATTRIBUTES_LOAD_CONTROLLER = [
-    ATTR_POWER_MODE, 
-    ATTR_INTENSITY, 
-    ATTR_RSSI, 
-    ATTR_WATTAGE, 
-    ATTR_WATTAGE_INSTANT, 
+    ATTR_POWER_MODE,
+    ATTR_INTENSITY,
+    ATTR_RSSI,
+    ATTR_WATTAGE,
+    ATTR_WATTAGE_INSTANT,
     ATTR_OCCUPANCY_MODE
 ]
 
 UPDATE_ATTRIBUTES_VALVE = [
-    ATTR_MOTOR_POSITION, 
+    ATTR_MOTOR_POSITION,
     ATTR_MOTOR_TARGET_POSITION
 ]
 # motorPosition,motorTargetPosition,temperatureAlarmStatus,batteryStatus,valveClosureSource,batteryVoltage

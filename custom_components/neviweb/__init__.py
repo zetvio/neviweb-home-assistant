@@ -5,17 +5,17 @@ from ratelimit import limits, sleep_and_retry
 from homeassistant.const import (CONF_EMAIL, CONF_PASSWORD, CONF_SCAN_INTERVAL)
 from homeassistant.helpers import device_registry as dr
 from .const import (
-    DOMAIN, 
+    DOMAIN,
     ATTR_ONOFF,
-    ATTR_INTENSITY, 
-    ATTR_POWER_MODE, 
-    ATTR_MOTOR_TARGET_POSITION, 
-    ATTR_OCCUPANCY_MODE, 
-    ATTR_SETPOINT_MODE, 
-    ATTR_ROOM_SETPOINT, 
-    ATTR_SIGNATURE, 
+    ATTR_INTENSITY,
+    ATTR_POWER_MODE,
+    ATTR_MOTOR_TARGET_POSITION,
+    ATTR_OCCUPANCY_MODE,
+    ATTR_SETPOINT_MODE,
+    ATTR_ROOM_SETPOINT,
+    ATTR_SIGNATURE,
     NEVIWEB_URL,
-    NEVIWEB_PLATFORMS, 
+    NEVIWEB_PLATFORMS,
     DEFAULT_SCAN_INTEVAL,
     NEVIWEB_GATEWAY_SKU)
 
@@ -74,7 +74,7 @@ async def async_setup_entry(hass, entry):
     hass.data[DOMAIN] = data
 
     global SCAN_INTERVAL
-    SCAN_INTERVAL = timedelta(seconds=entry.data.get(CONF_SCAN_INTERVAL, 
+    SCAN_INTERVAL = timedelta(seconds=entry.data.get(CONF_SCAN_INTERVAL,
         DEFAULT_SCAN_INTEVAL))
     _LOGGER.debug("Setting scan interval to: %s", SCAN_INTERVAL)
 
