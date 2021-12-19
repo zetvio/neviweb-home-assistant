@@ -177,7 +177,7 @@ class NeviwebLight(LightEntity):
         await self._client.async_set_brightness(self.unique_id, 0)
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         """Return the state attributes."""
         data = {}
         if self._is_dimmable and self._brightness_pct:

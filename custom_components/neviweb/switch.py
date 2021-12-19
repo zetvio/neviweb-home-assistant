@@ -18,7 +18,7 @@ from homeassistant.const import (
 )
 from homeassistant.components.switch import (
     SwitchEntity,
-    DEVICE_CLASS_OUTLET
+    SwitchDeviceClass
 )
 from datetime import timedelta
 from homeassistant.helpers import (entity_platform)
@@ -216,7 +216,7 @@ class NeviwebSwitchLoadController(NeviwebSwitchBase):
         await self._client.async_set_brightness(self.unique_id, 0)
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         """Return the state attributes."""
         return {'operation_mode': self.operation_mode,
                 'rssi': self._rssi,
@@ -303,7 +303,7 @@ class NeviwebSwitchValve(NeviwebSwitchBase):
         await asyncio.sleep(7)
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         """Return the state attributes."""
         return {'motor_target_position': self._motor_target_position}
 
@@ -374,4 +374,4 @@ class NeviwebSwitchOutlet(NeviwebSwitchBase):
     @property
     def device_class(self):
         """Return the class of this device"""
-        return DEVICE_CLASS_OUTLET
+        return SwitchDeviceClass.OUTLET
