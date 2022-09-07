@@ -26,10 +26,6 @@ VERSION = '1.2.5'
 _LOGGER = logging.getLogger(__name__)
 
 API_URL = "https://neviweb.com/api"
-LOGIN_URL = "{}/login".format(API_URL)
-LOCATIONS_URL = "{}/locations".format(API_URL)
-GATEWAY_DEVICE_URL = "{}/devices?location$id=".format(API_URL)
-DEVICE_DATA_URL = "{}/device/".format(API_URL)
 HTTP_GET = "GET"
 HTTP_POST = "POST"
 HTTP_PUT = "PUT"
@@ -122,6 +118,10 @@ class NeviwebData:
 class PyNeviwebError(Exception):
     pass
 
+class NeviwebAccount(object):
+    def __init__(self, account_data):
+        self.id = account_data.get("id")
+
 class NeviwebLocation(object):
     def __init__(self, location_data):
         self.id = location_data.get("id")
@@ -167,21 +167,26 @@ class NeviwebClient(object):
         self._email = email
         self._password = password
         self._headers = {}
+        self._account = None
 
     async def async_login(self):
         url = API_URL + "/login"
         json = {
-            "username": self._email, 
-            "password": self._password, 
-            "interface": "neviweb", 
+            "username": self._email,
+            "password": self._password,
+            "interface": "neviweb",
             "stayConnected": 1
         }
         response = await self._async_http_request(HTTP_POST, url, json=json)
         self._headers["Session-Id"] = response["session"]
+        self._account = NeviwebAccount(response["account"])
 
     async def async_get_locations(self):
         url = API_URL + "/locations"
-        response = await self._async_http_request(HTTP_GET, url)
+        params = {
+            "account$id": self._account.id
+        }
+        response = await self._async_http_request(HTTP_GET, url, params=params)
         _LOGGER.debug("Found %s location(s): %s", len(response), response)
         
         locations = []
@@ -191,7 +196,7 @@ class NeviwebClient(object):
         return locations
 
     async def async_get_location_devices(self, location_id):
-        url = API_URL + "/devices"
+        url = API_URL + "/devices" #TODO: use /devices?account$id=9999 to get all devices no matter the location
         params = {
             "location$id": location_id
         }
