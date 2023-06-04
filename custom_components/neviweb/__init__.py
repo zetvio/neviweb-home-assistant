@@ -74,7 +74,7 @@ async def async_setup_entry(hass, entry):
         DEFAULT_SCAN_INTEVAL))
     _LOGGER.debug("Setting scan interval to: %s", SCAN_INTERVAL)
 
-    device_registry = await dr.async_get_registry(hass)
+    device_registry = dr.async_get(hass)
     for device in devices:
         if device.sku in NEVIWEB_GATEWAY_SKU:
             device_registry.async_get_or_create(
