@@ -68,6 +68,7 @@ UPDATE_ATTRIBUTES_OUTLET = [
 IMPLEMENTED_LOAD_CONTROLLER_TYPES = [120] #power control device
 IMPLEMENTED_VALVE_SKU = ["VA4200WZ", "VA4201WZ"]
 IMPLEMENTED_OUTLET_SKU = ["SP2600ZB", "SP2610ZB"]
+IMPLEMENTED_CALYPSO_SKU = ["RM3500ZB"]
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up neviweb switch."""
@@ -79,7 +80,8 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
             entities.append(NeviwebSwitchLoadController(data.neviweb_client, device))
         elif device.sku in IMPLEMENTED_VALVE_SKU:
             entities.append(NeviwebSwitchValve(data.neviweb_client, device))
-        elif device.sku in IMPLEMENTED_OUTLET_SKU:
+        elif device.sku in IMPLEMENTED_OUTLET_SKU or \
+            device.sku in IMPLEMENTED_CALYPSO_SKU:
             entities.append(NeviwebSwitchOutlet(data.neviweb_client, device))
 
     async_add_entities(entities, True)
@@ -374,4 +376,6 @@ class NeviwebSwitchOutlet(NeviwebSwitchBase):
     @property
     def device_class(self):
         """Return the class of this device"""
+        if self._device.sku in IMPLEMENTED_CALYPSO_SKU:
+            return SwitchDeviceClass.SWITCH
         return SwitchDeviceClass.OUTLET
