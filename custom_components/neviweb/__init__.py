@@ -1,6 +1,8 @@
 import logging
+import asyncio
 from datetime import timedelta
-from ratelimit import limits, sleep_and_retry
+from ratelimit import limits, RateLimitException
+from tenacity import retry, wait_random_exponential, retry_if_exception_type
 
 from homeassistant.const import (CONF_EMAIL, CONF_PASSWORD, CONF_SCAN_INTERVAL)
 from homeassistant.helpers import device_registry as dr
@@ -137,11 +139,11 @@ class NeviwebGroup(object):
             self.name = group_data.get("name")
 
 class NeviwebDeviceInfo(object):
-    def __init__(self, 
-        device_info: dict, 
-        location: NeviwebLocation, 
+    def __init__(self,
+        device_info: dict,
+        location: NeviwebLocation,
         group: NeviwebGroup):
-        self.id = device_info.get("id")
+        self.id = str(device_info.get("id"))
         self.identifier = device_info.get("identifier")
         self.parent_id = device_info.get("parentDevice$id")
         self.name = device_info.get("name")
@@ -203,7 +205,7 @@ class NeviwebClient(object):
         devices = await self._async_http_request(HTTP_GET, url, params=params)
 
         for device in devices:
-            attributes = await self.async_get_device_attributes(device["id"], 
+            attributes = await self.async_get_device_attributes(device["id"],
                 [ATTR_SIGNATURE])
             if ATTR_SIGNATURE in attributes:
                 device[ATTR_SIGNATURE] = attributes[ATTR_SIGNATURE]
@@ -290,7 +292,9 @@ class NeviwebClient(object):
         _LOGGER.debug("Setting device %s attributes: %s", device_id, data)
         return await self._async_http_request(HTTP_PUT, url, data=data)
 
-    @sleep_and_retry
+    @retry(wait=wait_random_exponential(multiplier=1, max=15),
+           retry=retry_if_exception_type(RateLimitException),
+           sleep=asyncio.sleep)
     @limits(calls=RATELIMIT_PER_SECOND, period=1)
     async def _async_http_request(self, method, url, params=None, json=None,
         data=None):
