@@ -14,39 +14,75 @@ import logging
 import voluptuous as vol
 import time
 
-import custom_components.neviweb as neviweb
-from . import (NeviwebClient, NeviwebDeviceInfo, SCAN_INTERVAL)
-from homeassistant.components.climate import ClimateEntity
-from homeassistant.components.climate.const import (HVAC_MODE_HEAT, 
-    HVAC_MODE_OFF, HVAC_MODE_AUTO, SUPPORT_TARGET_TEMPERATURE, 
-    SUPPORT_PRESET_MODE, PRESET_AWAY, PRESET_NONE, CURRENT_HVAC_HEAT, 
-    CURRENT_HVAC_IDLE, CURRENT_HVAC_OFF, ATTR_HVAC_MODE)
-from homeassistant.const import (TEMP_CELSIUS, TEMP_FAHRENHEIT, 
-    ATTR_TEMPERATURE)
+from homeassistant.components.climate import (
+    ATTR_HVAC_MODE,
+    PRESET_AWAY,
+    PRESET_NONE,
+    HVACMode,
+    HVACAction,
+    ClimateEntity,
+    ClimateEntityFeature,
+)
+from homeassistant.const import (
+    UnitOfTemperature,
+    ATTR_TEMPERATURE,
+)
+
 from datetime import timedelta
-from homeassistant.helpers.event import track_time_interval
-from .const import (DOMAIN, ATTR_RSSI, ATTR_SETPOINT_MODE, ATTR_ROOM_SETPOINT,
-    ATTR_OUTPUT_PERCENT_DISPLAY, ATTR_ROOM_TEMPERATURE, ATTR_ROOM_SETPOINT_MIN,
-    ATTR_ROOM_SETPOINT_MAX, ATTR_WATTAGE, MODE_AUTO, MODE_AUTO_BYPASS, 
-    MODE_MANUAL, MODE_OFF, MODE_AWAY)
+
+import custom_components.neviweb as neviweb
+from . import (
+    NeviwebClient,
+    NeviwebDeviceInfo,
+    SCAN_INTERVAL
+)
+from .const import (
+    DOMAIN,
+    ATTR_RSSI,
+    ATTR_SETPOINT_MODE,
+    ATTR_ROOM_SETPOINT,
+    ATTR_OUTPUT_PERCENT_DISPLAY,
+    ATTR_ROOM_TEMPERATURE,
+    ATTR_ROOM_SETPOINT_MIN,
+    ATTR_ROOM_SETPOINT_MAX,
+    ATTR_WATTAGE,
+    MODE_AUTO,
+    MODE_AUTO_BYPASS,
+    MODE_MANUAL,
+    MODE_OFF,
+    MODE_AWAY,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
-SUPPORT_FLAGS = (SUPPORT_TARGET_TEMPERATURE | SUPPORT_PRESET_MODE)
+SUPPORT_FLAGS = (
+    ClimateEntityFeature.TARGET_TEMPERATURE |
+    ClimateEntityFeature.PRESET_MODE
+)
 
 PARALLEL_UPDATES = 1
 
-UPDATE_ATTRIBUTES = [ATTR_SETPOINT_MODE, ATTR_RSSI, ATTR_ROOM_SETPOINT,
-    ATTR_OUTPUT_PERCENT_DISPLAY, ATTR_ROOM_TEMPERATURE, ATTR_ROOM_SETPOINT_MIN,
-    ATTR_ROOM_SETPOINT_MAX]
+UPDATE_ATTRIBUTES = [
+    ATTR_SETPOINT_MODE,
+    ATTR_RSSI,
+    ATTR_ROOM_SETPOINT,
+    ATTR_OUTPUT_PERCENT_DISPLAY,
+    ATTR_ROOM_TEMPERATURE,
+    ATTR_ROOM_SETPOINT_MIN,
+    ATTR_ROOM_SETPOINT_MAX,
+]
 
-SUPPORTED_HVAC_MODES = [HVAC_MODE_OFF, HVAC_MODE_AUTO, HVAC_MODE_HEAT]
+SUPPORTED_HVAC_MODES = [
+    HVACMode.OFF,
+    HVACMode.AUTO,
+    HVACMode.HEAT,
+]
 
 PRESET_BYPASS = 'temporary'
 PRESET_MODES = [
     PRESET_NONE,
     PRESET_AWAY,
-    PRESET_BYPASS
+    PRESET_BYPASS,
 ]
 
 IMPLEMENTED_LOW_VOLTAGE = [21]
@@ -184,17 +220,17 @@ class NeviwebThermostat(ClimateEntity):
     @property
     def temperature_unit(self):
         """Return the unit of measurement."""
-        return TEMP_CELSIUS
+        return UnitOfTemperature.CELSIUS
 
     @property
     def hvac_mode(self):
         """Return current operation"""
         if self._operation_mode == MODE_OFF:
-            return HVAC_MODE_OFF
+            return HVACMode.OFF
         elif self._operation_mode in [MODE_AUTO, MODE_AUTO_BYPASS]:
-            return HVAC_MODE_AUTO
+            return HVACMode.AUTO
         else:
-            return HVAC_MODE_HEAT
+            return HVACMode.HEAT
 
     @property
     def hvac_modes(self):
@@ -230,11 +266,11 @@ class NeviwebThermostat(ClimateEntity):
     def hvac_action(self):
         """Return current HVAC action."""
         if self._operation_mode == MODE_OFF:
-            return CURRENT_HVAC_OFF
+            return HVACAction.OFF
         elif self._heat_level == 0:
-            return CURRENT_HVAC_IDLE
+            return HVACAction.IDLE
         else:
-            return CURRENT_HVAC_HEAT
+            return HVACAction.HEATING
 
     async def async_set_temperature(self, **kwargs):
         """Set new target temperature."""
@@ -249,11 +285,11 @@ class NeviwebThermostat(ClimateEntity):
 
     async def async_set_hvac_mode(self, hvac_mode):
         """Set new hvac mode."""
-        if hvac_mode == HVAC_MODE_OFF:
+        if hvac_mode == HVACMode.OFF:
             await self._client.async_set_setpoint_mode(self.unique_id, MODE_OFF)
-        elif hvac_mode == HVAC_MODE_HEAT:
+        elif hvac_mode == HVACMode.HEAT:
             await self._client.async_set_setpoint_mode(self.unique_id, MODE_MANUAL)
-        elif hvac_mode == HVAC_MODE_AUTO:
+        elif hvac_mode == HVACMode.AUTO:
             await self._client.async_set_setpoint_mode(self.unique_id, MODE_AUTO)
         else:
             _LOGGER.error("Unable to set hvac mode: %s.", hvac_mode)

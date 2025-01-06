@@ -4,7 +4,11 @@ from datetime import timedelta
 from ratelimit import limits, RateLimitException
 from tenacity import retry, wait_random_exponential, retry_if_exception_type
 
-from homeassistant.const import (CONF_EMAIL, CONF_PASSWORD, CONF_SCAN_INTERVAL)
+from homeassistant.const import (
+    CONF_EMAIL,
+    CONF_PASSWORD,
+    CONF_SCAN_INTERVAL,
+)
 from homeassistant.helpers import device_registry as dr
 from .const import (
     DOMAIN,
@@ -19,7 +23,8 @@ from .const import (
     NEVIWEB_URL,
     NEVIWEB_PLATFORMS,
     DEFAULT_SCAN_INTEVAL,
-    NEVIWEB_GATEWAY_SKU)
+    NEVIWEB_GATEWAY_SKU,
+)
 
 #REQUIREMENTS = ['PY_Sinope==0.1.5']
 VERSION = '1.2.5'
@@ -63,11 +68,11 @@ async def async_setup_entry(hass, entry):
             group = groups[device_data["group$id"]] \
                 if device_data["group$id"] is not None else NeviwebGroup(None)
             devices.append(NeviwebDeviceInfo(device_data, location, group))
-    
+  
     if len(devices) == 0:
         _LOGGER.error("No neviweb devices found.")
         return False
-    
+
     data = NeviwebData(client, devices)
     hass.data[DOMAIN] = data
 
@@ -109,7 +114,7 @@ class NeviwebData:
         self.devices = devices
 
 
-# According to HA: 
+# According to HA:
 # https://developers.home-assistant.io/docs/en/creating_component_code_review.html
 # "All API specific code has to be part of a third party library hosted on PyPi. 
 # Home Assistant should only interact with objects and not make direct calls to the API."

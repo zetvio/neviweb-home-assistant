@@ -10,8 +10,6 @@ import asyncio
 import voluptuous as vol
 import time
 
-import custom_components.neviweb as neviweb
-from . import (NeviwebClient, NeviwebDeviceInfo, SCAN_INTERVAL)
 from homeassistant.const import (
     STATE_ON,
     STATE_OFF
@@ -22,6 +20,13 @@ from homeassistant.components.switch import (
 )
 from datetime import timedelta
 from homeassistant.helpers import (entity_platform)
+
+import custom_components.neviweb as neviweb
+from . import (
+    NeviwebClient,
+    NeviwebDeviceInfo,
+    SCAN_INTERVAL,
+)
 from .const import (
     DOMAIN,
     ATTR_INTENSITY,
@@ -33,12 +38,12 @@ from .const import (
     ATTR_RSSI,
     ATTR_WATTAGE,
     ATTR_WATTAGE_INSTANT,
-    MODE_AUTO,
+    # MODE_AUTO,
     MODE_MANUAL,
     SERVICE_SET_SWITCH_OPERATION_MODE,
     SERVICE_SET_SWITCH_OCCUPANCY_MODE,
     SERVICE_SET_OPERATION_MODE_SCHEMA,
-    SERVICE_SET_OCCUPANCY_MODE_SCHEMA
+    SERVICE_SET_OCCUPANCY_MODE_SCHEMA,
 )
 
 _LOGGER = logging.getLogger(__name__)

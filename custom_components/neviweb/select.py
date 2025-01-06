@@ -4,17 +4,21 @@ import asyncio
 import voluptuous as vol
 import time
 
-import custom_components.neviweb as neviweb
-from . import (NeviwebClient, NeviwebDeviceInfo, SCAN_INTERVAL)
-
 from homeassistant.components.select import SelectEntity
-    
+
 from datetime import timedelta
+
+import custom_components.neviweb as neviweb
+from . import (
+    NeviwebClient,
+    NeviwebDeviceInfo,
+    SCAN_INTERVAL,
+)
 from .const import (
     DOMAIN,
     MODE_AUTO,
     MODE_MANUAL,
-    ATTR_POWER_MODE
+    ATTR_POWER_MODE,
 )
 
 _LOGGER = logging.getLogger(__name__)
