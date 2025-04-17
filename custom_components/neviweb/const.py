@@ -4,7 +4,8 @@ import voluptuous as vol
 
 DOMAIN = "neviweb"
 
-NEVIWEB_PLATFORMS = ["climate", "light", "switch"]
+NEVIWEB_URL = "https://neviweb.com"
+NEVIWEB_PLATFORMS = ["climate", "light", "switch", "select"]
 NEVIWEB_GATEWAY_SKU = ["GT125", "GT130"]
 DEFAULT_SCAN_INTEVAL = 540
 
@@ -24,6 +25,9 @@ ATTR_ROOM_SETPOINT_MAX = "roomSetpointMax"
 ATTR_OCCUPANCY_MODE = "occupancyMode"
 ATTR_SERVICE_OPERATION_MODE = "operation_mode"
 ATTR_SERVICE_OCCUPANCY_MODE = "occupancy_mode"
+ATTR_MOTOR_POSITION = "motorPosition"
+ATTR_MOTOR_TARGET_POSITION = "motorTargetPosition"
+ATTR_ONOFF = "onOff"
 
 MODE_AUTO = "auto"
 MODE_AUTO_BYPASS = "autoBypass"

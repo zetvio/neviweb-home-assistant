@@ -1,13 +1,30 @@
 import logging
+import asyncio
 from datetime import timedelta
-from ratelimit import limits, sleep_and_retry
+from ratelimit import limits, RateLimitException
+from tenacity import retry, wait_random_exponential, retry_if_exception_type
 
-from homeassistant.const import (CONF_EMAIL, CONF_PASSWORD, CONF_SCAN_INTERVAL)
+from homeassistant.const import (
+    CONF_EMAIL,
+    CONF_PASSWORD,
+    CONF_SCAN_INTERVAL,
+)
 from homeassistant.helpers import device_registry as dr
-from .const import (DOMAIN, ATTR_INTENSITY, ATTR_POWER_MODE, 
-    ATTR_OCCUPANCY_MODE, ATTR_SETPOINT_MODE, ATTR_ROOM_SETPOINT, 
-    ATTR_SIGNATURE, NEVIWEB_PLATFORMS, DEFAULT_SCAN_INTEVAL,
-    NEVIWEB_GATEWAY_SKU)
+from .const import (
+    DOMAIN,
+    ATTR_ONOFF,
+    ATTR_INTENSITY,
+    ATTR_POWER_MODE,
+    ATTR_MOTOR_TARGET_POSITION,
+    ATTR_OCCUPANCY_MODE,
+    ATTR_SETPOINT_MODE,
+    ATTR_ROOM_SETPOINT,
+    ATTR_SIGNATURE,
+    NEVIWEB_URL,
+    NEVIWEB_PLATFORMS,
+    DEFAULT_SCAN_INTEVAL,
+    NEVIWEB_GATEWAY_SKU,
+)
 
 #REQUIREMENTS = ['PY_Sinope==0.1.5']
 VERSION = '1.2.5'
@@ -16,10 +33,6 @@ VERSION = '1.2.5'
 _LOGGER = logging.getLogger(__name__)
 
 API_URL = "https://neviweb.com/api"
-LOGIN_URL = "{}/login".format(API_URL)
-LOCATIONS_URL = "{}/locations".format(API_URL)
-GATEWAY_DEVICE_URL = "{}/devices?location$id=".format(API_URL)
-DEVICE_DATA_URL = "{}/device/".format(API_URL)
 HTTP_GET = "GET"
 HTTP_POST = "POST"
 HTTP_PUT = "PUT"
@@ -55,20 +68,20 @@ async def async_setup_entry(hass, entry):
             group = groups[device_data["group$id"]] \
                 if device_data["group$id"] is not None else NeviwebGroup(None)
             devices.append(NeviwebDeviceInfo(device_data, location, group))
-    
+  
     if len(devices) == 0:
         _LOGGER.error("No neviweb devices found.")
         return False
-    
+
     data = NeviwebData(client, devices)
     hass.data[DOMAIN] = data
 
     global SCAN_INTERVAL
-    SCAN_INTERVAL = timedelta(seconds=entry.data.get(CONF_SCAN_INTERVAL, 
+    SCAN_INTERVAL = timedelta(seconds=entry.data.get(CONF_SCAN_INTERVAL,
         DEFAULT_SCAN_INTEVAL))
     _LOGGER.debug("Setting scan interval to: %s", SCAN_INTERVAL)
 
-    device_registry = await dr.async_get_registry(hass)
+    device_registry = dr.async_get(hass)
     for device in devices:
         if device.sku in NEVIWEB_GATEWAY_SKU:
             device_registry.async_get_or_create(
@@ -101,7 +114,7 @@ class NeviwebData:
         self.devices = devices
 
 
-# According to HA: 
+# According to HA:
 # https://developers.home-assistant.io/docs/en/creating_component_code_review.html
 # "All API specific code has to be part of a third party library hosted on PyPi. 
 # Home Assistant should only interact with objects and not make direct calls to the API."
@@ -111,6 +124,10 @@ class NeviwebData:
 
 class PyNeviwebError(Exception):
     pass
+
+class NeviwebAccount(object):
+    def __init__(self, account_data):
+        self.id = account_data.get("id")
 
 class NeviwebLocation(object):
     def __init__(self, location_data):
@@ -127,11 +144,11 @@ class NeviwebGroup(object):
             self.name = group_data.get("name")
 
 class NeviwebDeviceInfo(object):
-    def __init__(self, 
-        device_info: dict, 
-        location: NeviwebLocation, 
+    def __init__(self,
+        device_info: dict,
+        location: NeviwebLocation,
         group: NeviwebGroup):
-        self.id = device_info.get("id")
+        self.id = str(device_info.get("id"))
         self.identifier = device_info.get("identifier")
         self.parent_id = device_info.get("parentDevice$id")
         self.name = device_info.get("name")
@@ -147,6 +164,7 @@ class NeviwebDeviceInfo(object):
         self.group = group
         self.formatted_name = '{} {} {}'.format(DOMAIN, self.location.name,
                 self.name)
+        self.configuration_url = f"{NEVIWEB_URL}/locations/{self.location.id}/devices/{self.id}/settings"
 
 class NeviwebClient(object):
 
@@ -156,21 +174,26 @@ class NeviwebClient(object):
         self._email = email
         self._password = password
         self._headers = {}
+        self._account = None
 
     async def async_login(self):
         url = API_URL + "/login"
         json = {
-            "username": self._email, 
-            "password": self._password, 
-            "interface": "neviweb", 
+            "username": self._email,
+            "password": self._password,
+            "interface": "neviweb",
             "stayConnected": 1
         }
         response = await self._async_http_request(HTTP_POST, url, json=json)
         self._headers["Session-Id"] = response["session"]
+        self._account = NeviwebAccount(response["account"])
 
     async def async_get_locations(self):
         url = API_URL + "/locations"
-        response = await self._async_http_request(HTTP_GET, url)
+        params = {
+            "account$id": self._account.id
+        }
+        response = await self._async_http_request(HTTP_GET, url, params=params)
         _LOGGER.debug("Found %s location(s): %s", len(response), response)
         
         locations = []
@@ -180,14 +203,14 @@ class NeviwebClient(object):
         return locations
 
     async def async_get_location_devices(self, location_id):
-        url = API_URL + "/devices"
+        url = API_URL + "/devices" #TODO: use /devices?account$id=9999 to get all devices no matter the location
         params = {
             "location$id": location_id
         }
         devices = await self._async_http_request(HTTP_GET, url, params=params)
 
         for device in devices:
-            attributes = await self.async_get_device_attributes(device["id"], 
+            attributes = await self.async_get_device_attributes(device["id"],
                 [ATTR_SIGNATURE])
             if ATTR_SIGNATURE in attributes:
                 device[ATTR_SIGNATURE] = attributes[ATTR_SIGNATURE]
@@ -259,12 +282,24 @@ class NeviwebClient(object):
         data = {ATTR_ROOM_SETPOINT: temperature}
         await self.async_set_device_attributes(device_id, data)
 
+    async def async_set_motor_position(self, device_id, position):
+        """Set device motor position."""
+        data = {ATTR_MOTOR_TARGET_POSITION: position}
+        await self.async_set_device_attributes(device_id, data)
+
+    async def async_set_on_off(self, device_id, state):
+        """Set device on/off state."""
+        data = {ATTR_ONOFF: state}
+        await self.async_set_device_attributes(device_id, data)
+
     async def async_set_device_attributes(self, device_id, data):
         url = API_URL + f"/device/{device_id}/attribute"
         _LOGGER.debug("Setting device %s attributes: %s", device_id, data)
         return await self._async_http_request(HTTP_PUT, url, data=data)
 
-    @sleep_and_retry
+    @retry(wait=wait_random_exponential(multiplier=1, max=15),
+           retry=retry_if_exception_type(RateLimitException),
+           sleep=asyncio.sleep)
     @limits(calls=RATELIMIT_PER_SECOND, period=1)
     async def _async_http_request(self, method, url, params=None, json=None,
         data=None):

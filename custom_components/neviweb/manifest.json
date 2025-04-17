@@ -5,6 +5,7 @@
   "documentation": "https://github.com/claudegel/sinope-1",
   "dependencies": [],
   "codeowners": ["@claudegel"],
-  "requirements": ["ratelimit==2.2.1"],
-  "config_flow": true
+  "requirements": ["ratelimit==2.2.1", "tenacity~=8.5.0"],
+  "config_flow": true,
+  "iot_class": "cloud_polling"
 }

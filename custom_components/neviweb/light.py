@@ -10,24 +10,47 @@ import logging
 import voluptuous as vol
 import time
 
-import custom_components.neviweb as neviweb
-from . import (NeviwebClient, NeviwebDeviceInfo, SCAN_INTERVAL)
-from homeassistant.components.light import (LightEntity, ATTR_BRIGHTNESS,
-    ATTR_BRIGHTNESS_PCT, SUPPORT_BRIGHTNESS)
+from homeassistant.components.light import ( 
+    ATTR_BRIGHTNESS,
+    ATTR_BRIGHTNESS_PCT,
+    ColorMode,
+    LightEntity,
+)
 from homeassistant.helpers import (entity_platform, service)
 from datetime import timedelta
-from .const import (DOMAIN, ATTR_POWER_MODE, ATTR_INTENSITY, ATTR_RSSI,
-    ATTR_WATTAGE_OVERRIDE, MODE_AUTO, MODE_MANUAL, ATTR_OCCUPANCY_MODE, 
-    SERVICE_SET_LIGHT_OPERATION_MODE, SERVICE_SET_LIGHT_OCCUPANCY_MODE, 
-    SERVICE_SET_OPERATION_MODE_SCHEMA, SERVICE_SET_OCCUPANCY_MODE_SCHEMA)
+
+import custom_components.neviweb as neviweb
+from . import (
+    NeviwebClient,
+    NeviwebDeviceInfo,
+    SCAN_INTERVAL,
+)
+from .const import (
+    DOMAIN,
+    ATTR_POWER_MODE,
+    ATTR_INTENSITY,
+    ATTR_RSSI,
+    ATTR_WATTAGE_OVERRIDE,
+    # MODE_AUTO,
+    MODE_MANUAL,
+    ATTR_OCCUPANCY_MODE,
+    SERVICE_SET_LIGHT_OPERATION_MODE,
+    SERVICE_SET_LIGHT_OCCUPANCY_MODE,
+    SERVICE_SET_OPERATION_MODE_SCHEMA,
+    SERVICE_SET_OCCUPANCY_MODE_SCHEMA,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_NAME = 'neviweb'
 PARALLEL_UPDATES = 1
 
-UPDATE_ATTRIBUTES = [ATTR_POWER_MODE, ATTR_INTENSITY, ATTR_RSSI, 
-    ATTR_WATTAGE_OVERRIDE, ATTR_OCCUPANCY_MODE]
+UPDATE_ATTRIBUTES = [
+    ATTR_POWER_MODE,
+    ATTR_INTENSITY,
+    ATTR_RSSI,
+    ATTR_WATTAGE_OVERRIDE,
+    ATTR_OCCUPANCY_MODE,
+]
 
 DEVICE_TYPE_DIMMER = [112]
 DEVICE_TYPE_LIGHT = [102]
@@ -41,7 +64,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     for device in data.devices:
         if device.type in IMPLEMENTED_DEVICE_TYPES:
             entities.append(NeviwebLight(data.neviweb_client, device))
-            
+
     async_add_entities(entities, True)
 
     platform = entity_platform.current_platform.get()
@@ -80,7 +103,7 @@ class NeviwebLight(LightEntity):
         self._occupancy = None
         self._is_dimmable = device.type in DEVICE_TYPE_DIMMER
         _LOGGER.debug("Setting up light %s", self._device.name)
-        
+
     async def async_update(self):
         """Get the latest data from neviweb and update the state."""
         start = time.time()
@@ -118,15 +141,22 @@ class NeviwebLight(LightEntity):
             elif device_data["error"]["code"] == "SVCERR":
                 _LOGGER.warning("Device %s statistics unavailables, %s:", self._device.name, device_data)
             else:
-                _LOGGER.warning("Unknown error, device: %s, error: %s", self._device.name, device_data)   
-        
+                _LOGGER.warning("Unknown error, device: %s, error: %s", self._device.name, device_data)
+
     @property
-    def supported_features(self):
-        """Return the list of supported features."""
+    def supported_color_modes(self):
+        """Return the list of supported ColorMode."""
         if self._is_dimmable:
-            return SUPPORT_BRIGHTNESS
-        return 0
-    
+            return {ColorMode.BRIGHTNESS}
+        return {ColorMode.ONOFF}
+
+    @property
+    def color_mode(self):
+        """Get ColorMode."""
+        if self._is_dimmable:
+            return ColorMode.BRIGHTNESS
+        return ColorMode.ONOFF
+
     @property
     def unique_id(self):
         """Return unique ID based on Neviweb device ID."""
@@ -136,7 +166,7 @@ class NeviwebLight(LightEntity):
     def name(self):
         """Return the name of the light."""
         return self._device.formatted_name
-    
+
     @property
     def device_info(self):
         return {
@@ -149,7 +179,8 @@ class NeviwebLight(LightEntity):
             "model": self._device.sku,
             "sw_version": self._device.software_version,
             "suggested_area": self._device.group.name,
-            "via_device": (DOMAIN, self._device.parent_id)
+            "via_device": (DOMAIN, self._device.parent_id),
+            "configuration_url": self._device.configuration_url
         }
 
     @property
@@ -177,7 +208,7 @@ class NeviwebLight(LightEntity):
         await self._client.async_set_brightness(self.unique_id, 0)
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         """Return the state attributes."""
         data = {}
         if self._is_dimmable and self._brightness_pct:
@@ -188,7 +219,7 @@ class NeviwebLight(LightEntity):
                      'occupancy': self._occupancy,
                      'wattage_override': self._wattage_override})
         return data
- 
+
     @property
     def operation_mode(self):
         return self._operation_mode
