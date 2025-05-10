@@ -9,6 +9,7 @@ from homeassistant.const import (
     CONF_PASSWORD,
     CONF_SCAN_INTERVAL,
 )
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers import device_registry as dr
 from .const import (
     DOMAIN,
@@ -55,7 +56,7 @@ async def async_setup_entry(hass, entry):
     email = entry.data[CONF_EMAIL]
     password = entry.data[CONF_PASSWORD]
 
-    session = hass.helpers.aiohttp_client.async_get_clientsession()
+    session = async_get_clientsession(hass)
     client = NeviwebClient(session, email, password)
     await client.async_login()
 
