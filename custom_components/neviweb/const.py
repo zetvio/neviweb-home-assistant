@@ -1,11 +1,17 @@
 """Constants for neviweb component."""
 
+from homeassistant.const import Platform
 import voluptuous as vol
 
 DOMAIN = "neviweb"
 
 NEVIWEB_URL = "https://neviweb.com"
-NEVIWEB_PLATFORMS = ["climate", "light", "switch", "select"]
+NEVIWEB_PLATFORMS = [
+    Platform.CLIMATE,
+    Platform.LIGHT,
+    Platform.SWITCH,
+    Platform.SELECT,
+]
 NEVIWEB_GATEWAY_SKU = ["GT125", "GT130"]
 DEFAULT_SCAN_INTEVAL = 540
 
