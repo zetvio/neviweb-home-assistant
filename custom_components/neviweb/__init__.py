@@ -27,9 +27,6 @@ from .const import (
     NEVIWEB_GATEWAY_SKU,
 )
 
-#REQUIREMENTS = ['PY_Sinope==0.1.5']
-VERSION = '1.2.5'
-
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -338,5 +335,9 @@ class NeviwebClient(object):
                 ", ...), wait a few minutes, then reboot Home Assistant. %s",
                 response)
                 raise PyNeviwebError("Too many sessions")
-            # raise PyNeviwebError(f"Unknown neviweb error: {error_code}")
+            if error_code == "USRINVUP":
+                # This error is expected during login with bad credentials
+                raise PyNeviwebError("Invalid credentials")
+            _LOGGER.error("Unknown neviweb error: %s. Full response: %s", error_code, response)
+            raise PyNeviwebError(f"Unknown neviweb error: {error_code}")
             
