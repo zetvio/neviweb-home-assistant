@@ -80,9 +80,10 @@ async def async_setup_entry(hass, entry):
     _LOGGER.debug("Setting scan interval to: %s", SCAN_INTERVAL)
 
     device_registry = dr.async_get(hass)
+    gateway_registry_ids = {}
     for device in devices:
         if device.sku in NEVIWEB_GATEWAY_SKU:
-            device_registry.async_get_or_create(
+            registry_device = device_registry.async_get_or_create(
                 config_entry_id=entry.entry_id,
                 identifiers={
                     (DOMAIN, device.id),
@@ -94,6 +95,11 @@ async def async_setup_entry(hass, entry):
                 sw_version=device.software_version,
                 suggested_area=device.group.name
             )
+            gateway_registry_ids[device.id] = registry_device.id
+
+    for device in devices:
+        if device.parent_id is not None:
+            device.via_device_id = gateway_registry_ids.get(str(device.parent_id))
     
     await hass.config_entries.async_forward_entry_setups(entry, NEVIWEB_PLATFORMS)
 
@@ -167,6 +173,7 @@ class NeviwebDeviceInfo(object):
             device_info["signature"] else ""
         self.location = location
         self.group = group
+        self.via_device_id = None
         self.formatted_name = '{} {} {}'.format(DOMAIN, self.location.name,
                 self.name)
         self.configuration_url = f"{NEVIWEB_URL}/locations/{self.location.id}/devices/{self.id}/settings"

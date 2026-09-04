@@ -169,7 +169,7 @@ class NeviwebLight(LightEntity):
 
     @property
     def device_info(self):
-        return {
+        device_info = {
             "identifiers": {
                 (DOMAIN, self.unique_id),
                 (DOMAIN, self._device.identifier)
@@ -179,9 +179,11 @@ class NeviwebLight(LightEntity):
             "model": self._device.sku,
             "sw_version": self._device.software_version,
             "suggested_area": self._device.group.name,
-            "via_device": (DOMAIN, self._device.parent_id),
             "configuration_url": self._device.configuration_url
         }
+        if self._device.via_device_id:
+            device_info["via_device_id"] = self._device.via_device_id
+        return device_info
 
     @property
     def brightness(self):
